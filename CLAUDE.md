@@ -19,7 +19,7 @@ umbrella directory:
 | `tone-trixter/daisy/` | `daisy-tone-trixter` (public) | this — Daisy firmware |
 | `tone-trixter/pico/` | `pico-tone-trixter` (public) | RP2350 firmware |
 | `tone-trixter/blog/` | `tone-trixter` (public) | the build-log site, both platforms |
-| `tone-trixter/private/` | `pico-tone-trixter-private` | bench docs, debug sessions, per-build BOMs |
+| `tone-trixter/private/` | `tone-trixter-private` | bench docs, debug sessions, per-build BOMs |
 | `../electronics-inventory-private/` | `electronics-inventory-private` | parts stock, orders, receipts |
 
 Debug material and work-in-progress go in the **private** repo. Only finished, polished stories
