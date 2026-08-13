@@ -1,0 +1,9 @@
+build/
+cmake-build-debug/
+.idea/
+.claude/settings.json
+.DS_Store
+
+# Local validation outputs — not part of the repo
+tools/output/
+tools/.venv/
