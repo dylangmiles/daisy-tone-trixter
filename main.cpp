@@ -1,0 +1,192 @@
+// Tone Trixter — Daisy Seed3 bring-up diagnostics.
+//
+// Purpose: prove the board is alive and correctly wired BEFORE any audio or DSP code exists.
+// Every check here answers one question and reports pass/fail on its own, so a failure points at
+// a specific joint rather than "it doesn't work".
+//
+// This follows the project's hard-won bench rule: separate the variables. On the Pico build,
+// three separate faults (a compressor left on, an uncompensated probe, a debug probe radiating
+// into a high-Z input) each produced a believable-but-wrong answer because more than one thing
+// was in play at once. Diagnostics exist to make that impossible.
+//
+// Flash:  make program-dfu   (hold BOOT, tap RESET, then run)
+// Watch:  screen /dev/tty.usbmodem* 115200   — or any serial terminal at 115200
+
+#include "daisy_seed.h"
+#include "board.h"
+
+using namespace daisy;
+
+static DaisySeed hw;
+
+// Inputs that read LOW when active. Encoder C and SW2 go to the DGND rail, and the footswitches
+// ground their signal line, so every one of these needs an internal pull-up.
+struct Input
+{
+    const char* name;
+    uint8_t     pin;
+    GPIO        gpio;
+    bool        last;
+};
+
+static Input inputs[] = {
+    {"encoder A", tt::kEncA, {}, true},
+    {"encoder B", tt::kEncB, {}, true},
+    {"encoder SW", tt::kEncSw, {}, true},
+    {"footsw bypass", tt::kFswBypass, {}, true},
+    {"footsw tuner", tt::kFswTuner, {}, true},
+};
+constexpr size_t kNumInputs = sizeof(inputs) / sizeof(inputs[0]);
+
+static const char* BoardName(DaisySeed::BoardVersion v)
+{
+    switch(v)
+    {
+        case DaisySeed::BoardVersion::DAISY_SEED: return "Daisy Seed (rev4)";
+        case DaisySeed::BoardVersion::DAISY_SEED_1_1: return "Daisy Seed 1.1";
+        case DaisySeed::BoardVersion::DAISY_SEED_2_DFM: return "Daisy Seed 2 DFM";
+        case DaisySeed::BoardVersion::DAISY_SEED_1_2: return "Daisy Seed 1.2";
+        case DaisySeed::BoardVersion::DAISY_SEED_3: return "Daisy Seed3";
+        default: return "unknown";
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Test 1 — board identity.
+// Seed3 is detected at RUNTIME (PH6 tied to GND), not by a compile-time define. If this reports
+// anything else, libDaisy will configure the wrong codec and every audio result would be junk.
+static bool CheckBoard()
+{
+    auto v = hw.CheckBoardVersion();
+    hw.PrintLine("  detected: %s", BoardName(v));
+    return v == DaisySeed::BoardVersion::DAISY_SEED_3;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Test 2 — I2C bus scan.
+// Proves the OLED's converted links, its address strap, and the two cut-and-jumper power runs, in
+// one shot and WITHOUT any display driver. A blank screen cannot tell a bad link from a driver
+// bug; an address answering can.
+static bool ScanI2c(I2CHandle& i2c)
+{
+    int  found      = 0;
+    bool saw_target = false;
+
+    for(uint8_t addr = 0x08; addr < 0x78; addr++)
+    {
+        // Zero-length write is the standard probe: it addresses the device and looks for the ACK
+        // without writing a register. libDaisy takes 7-BIT addresses and shifts internally.
+        if(i2c.TransmitBlocking(addr, nullptr, 0, 10) == I2CHandle::Result::OK)
+        {
+            hw.PrintLine("  responder at 0x%02X%s",
+                         addr,
+                         addr == tt::kOledI2cAddr ? "   <- OLED, as expected" : "");
+            found++;
+            if(addr == tt::kOledI2cAddr)
+                saw_target = true;
+        }
+    }
+
+    if(found == 0)
+        hw.PrintLine("  NOTHING on the bus.");
+    if(!saw_target)
+    {
+        // 0x3D is the same display with DC strapped high instead of low — a wrong-rail jumper,
+        // not a dead module. Worth calling out by name so it is not mistaken for a bus fault.
+        hw.PrintLine("  0x%02X did not answer.", tt::kOledI2cAddr);
+        hw.PrintLine("  If 0x3D answered, the DC strap went to +3V3D instead of ground.");
+        hw.PrintLine("  If nothing answered, check the row 19 (GND) and row 20 (VCC) jumpers first");
+        hw.PrintLine("  -- they are the only OLED pins needing a cut AND a jumper.");
+    }
+    return saw_target;
+}
+
+int main(void)
+{
+    hw.Init();
+    hw.StartLog(true); // wait for a terminal, so the boot report is never missed
+
+    hw.PrintLine("");
+    hw.PrintLine("=============================================");
+    hw.PrintLine(" Tone Trixter -- Daisy Seed3 bring-up");
+    hw.PrintLine(" built " __DATE__ " " __TIME__);
+    hw.PrintLine("=============================================");
+
+    int failures = 0;
+
+    hw.PrintLine("");
+    hw.PrintLine("[1] board identity");
+    bool board_ok = CheckBoard();
+    hw.PrintLine("  %s", board_ok ? "PASS" : "FAIL -- expected Daisy Seed3");
+    failures += board_ok ? 0 : 1;
+
+    hw.PrintLine("");
+    hw.PrintLine("[2] I2C1 bus scan (SCL=D%d SDA=D%d)", tt::kOledScl, tt::kOledSda);
+    I2CHandle        i2c;
+    I2CHandle::Config cfg;
+    cfg.periph         = I2CHandle::Config::Peripheral::I2C_1;
+    cfg.speed          = I2CHandle::Config::Speed::I2C_400KHZ;
+    cfg.mode           = I2CHandle::Config::Mode::I2C_MASTER;
+    cfg.pin_config.scl = tt::P(tt::kOledScl);
+    cfg.pin_config.sda = tt::P(tt::kOledSda);
+
+    bool i2c_ok = false;
+    if(i2c.Init(cfg) != I2CHandle::Result::OK)
+        hw.PrintLine("  I2C init FAILED");
+    else
+        i2c_ok = ScanI2c(i2c);
+    hw.PrintLine("  %s", i2c_ok ? "PASS" : "FAIL");
+    failures += i2c_ok ? 0 : 1;
+
+    hw.PrintLine("");
+    hw.PrintLine("[3] digital inputs -- all active LOW, internal pull-ups");
+    for(size_t i = 0; i < kNumInputs; i++)
+    {
+        inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        inputs[i].last = inputs[i].gpio.Read();
+        hw.PrintLine("  D%-2d %-14s idle=%s",
+                     inputs[i].pin,
+                     inputs[i].name,
+                     inputs[i].last ? "HIGH (ok)" : "LOW  <- stuck? check for a short to ground");
+    }
+
+    hw.PrintLine("");
+    hw.PrintLine("---------------------------------------------");
+    if(failures == 0)
+        hw.PrintLine(" ALL AUTOMATED CHECKS PASSED");
+    else
+        hw.PrintLine(" %d CHECK(S) FAILED -- see above", failures);
+    hw.PrintLine("---------------------------------------------");
+    hw.PrintLine("");
+    hw.PrintLine("Live input monitor. Turn the encoder, press the switches.");
+    hw.PrintLine("Onboard LED blinks once a second while this loop runs.");
+    hw.PrintLine("");
+
+    // ⚠ The encoder is quadrature: one detent produces transitions on BOTH A and B. Seeing only
+    // one of them move is the classic signature of a single bad joint, which is exactly why these
+    // are reported as raw edges rather than decoded counts at this stage.
+    uint32_t last_blink = System::GetNow();
+    bool     led        = false;
+
+    while(true)
+    {
+        for(size_t i = 0; i < kNumInputs; i++)
+        {
+            bool now = inputs[i].gpio.Read();
+            if(now != inputs[i].last)
+            {
+                hw.PrintLine("  %-14s %s", inputs[i].name, now ? "released" : "PRESSED");
+                inputs[i].last = now;
+            }
+        }
+
+        uint32_t t = System::GetNow();
+        if(t - last_blink >= 1000)
+        {
+            last_blink = t;
+            led        = !led;
+            hw.SetLed(led);
+        }
+        System::Delay(1);
+    }
+}

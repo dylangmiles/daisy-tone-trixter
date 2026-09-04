@@ -6,8 +6,8 @@ shared between them.
 
 ## Status
 
-**Scaffold only.** No firmware written yet, no SDK fetched. See "Environment" for what is and is
-not set up on this machine.
+**Bring-up diagnostics build.** `main.cpp` + `board.h` compile and link for the Seed3
+(81 KB of 128 KB flash). Not yet flashed to hardware — the board is mid-assembly.
 
 ## Related repos
 
@@ -52,16 +52,54 @@ no header and no probe.
 | `dfu-util` | ✅ `/opt/homebrew/bin/dfu-util` — this is the normal flashing path |
 | `cmake` | ✅ `/opt/homebrew/bin/cmake` |
 | `openocd` | ❌ **not installed** — needed only for ST-LINK SWD step/breakpoint debug |
-| libDaisy | ❌ **not fetched** |
-| DaisySP | ❌ **not fetched** |
+| libDaisy | ✅ `/Users/dylan/dev/sdk/daisy/libDaisy` — ⚠ **branch `seed3-updates`, pinned to `e1f740a`** |
+| DaisySP | ✅ `/Users/dylan/dev/sdk/daisy/DaisySP`, built |
 
 ## Build and flash
 
-To be filled in once libDaisy is fetched and a first target builds. Expected shape:
+- **Build:** `make` (libDaisy's Makefile flow). Override the SDK path with
+  `make LIBDAISY_DIR=/path/to/libDaisy` if needed.
+- **Flash:** `make program-dfu` — hold BOOT, tap RESET to enter DFU, then run it.
+- **Watch:** `screen /dev/tty.usbmodem* 115200`. The diagnostics call `StartLog(true)`, which
+  **waits for a terminal**, so the boot report is never missed — but the board will appear to hang
+  until something opens the port.
+- **Debug:** ST-LINK over SWD needs the debug header soldered **and** openocd installed.
 
-- Build: `make` (libDaisy's Makefile-based flow) or CMake, TBD
-- Flash: `make program-dfu` — hold BOOT, tap RESET to enter DFU, then flash over USB-C
-- Debug: ST-LINK over SWD, requires soldering the debug header **and** installing openocd
+### ⚠ libDaisy must be the `seed3-updates` branch
+
+**Seed3 support is not on main.** Main's `BoardVersion` enum stops at `DAISY_SEED_2_DFM` and the
+tree contains no TAC5242 reference at all, so a stock libDaisy configures the wrong codec.
+
+The branch adds `DAISY_SEED_1_2` and `DAISY_SEED_3` in a small, focused diff (~76 lines over
+`daisy_seed.h/.cpp`, `sai.h/.cpp`). **Pinned to `e1f740a` (2026-08-06, "add 192kHz samplerate to
+sai")** on a local branch `seed3-pinned`, because an unmerged branch can be rebased or force-pushed
+underneath you. Do not track the branch tip.
+
+⚠ Note the pin is slightly *behind* main — it loses main's post-Aug-6 commits, which at the time of
+pinning were a README change and a TCA9534 driver. Neither matters here.
+
+**Seed3 is detected at runtime**, not by a compile-time define: `CheckBoardVersion()` reads `PH6`
+tied to GND. So the first diagnostic is simply "does the board say Seed3".
+
+⚠ **There is no TAC5242 driver in libDaisy.** The built codec drivers are `ak4556`, `pcm3060` and
+`wm8731`; the branch comment says the Seed3 shares Seed Rev4's SAI configuration. The codec is
+therefore hardware-strapped, not software-configured. Do not go looking for a codec init call.
+
+## Bring-up diagnostics
+
+`main.cpp` runs a boot report then a live input monitor. Each check answers one question and
+reports pass/fail on its own, so a failure points at a specific joint:
+
+1. **Board identity** — must report Daisy Seed3.
+2. **I²C1 bus scan** — expects exactly `0x3C`. This proves the OLED's converted links, its address
+   strap and both cut-and-jumper power runs **without any display driver**: a blank screen cannot
+   distinguish a bad link from a driver bug, but an address answering can. If `0x3D` answers
+   instead, the DC strap went to +3V3D rather than ground.
+3. **Digital inputs** — encoder A/B/SW and both footswitches, all active-LOW with internal
+   pull-ups, reported idle-state first and then as live edges.
+
+⚠ The encoder is quadrature: one detent moves **both** A and B. Seeing only one is the signature of
+a single bad joint, which is why edges are reported raw rather than decoded at this stage.
 
 **Do not copy the RP2350 debug setup.** The Pico build's `openocd.cfg` carries a `gdb-attach` hook
 that resumes core1, working around core1 freezing in `__wfe()` when a probe attaches. The H750 is
