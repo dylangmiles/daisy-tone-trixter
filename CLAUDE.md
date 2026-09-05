@@ -6,10 +6,24 @@ shared between them.
 
 ## Status
 
-**Board bring-up COMPLETE for all digital peripherals (2026-09-05).** Verified on hardware, on both
-USB and 9 V-jack power: board reports Seed3 · OLED answers at `0x3C` · microSD CMD0 returns `0x01` ·
-encoder A/B show correct quadrature (lead/lag swaps with direction) and SW works · no shorts on any
-GPIO row. Remaining: footswitches, front-end daughter, and the analogue path.
+**ALL DIGITAL PERIPHERALS VERIFIED ON HARDWARE (2026-09-05)**, on both USB and 9 V-jack power:
+
+| Subsystem | Evidence |
+|---|---|
+| Board identity | reports **Daisy Seed3** — confirms the pinned `seed3-updates` branch |
+| OLED | answers at **`0x3C`** — proves the I²C conversion, the `DC` ground strap (not `0x3D`), and both cut-and-jumper power runs |
+| microSD | **CMD0 = `0x01`** with a card, **`0xFF`** without — and ⚠ *not* `0x00`, so MISO is not shorted |
+| Encoder | A/B show **correct quadrature** — lead/lag swaps with direction — plus SW |
+| Footswitches | both give clean edges, **no crosstalk** between the two ribbon leads |
+| GPIO rows | no shorts, established on the bare board before anything was attached |
+| Power | jack → D1 → rail → VIN, loaded at **8.86 V** from a 9.12 V supply |
+
+⚠ An elegant cross-check falls out of this: the row 24 cut isolates the OLED's `DC` **and** encoder
+`SW1` still works on D14. If that cut had failed, the `DC` strap would ground D14 and `SW` would read
+stuck LOW. Both halves of the D14 conflict confirmed by independent readings.
+
+**Remaining: the front-end daughter, and then the analogue path** — where it stops being a wiring
+exercise and becomes an audio one.
 
 ## Related repos
 
