@@ -60,9 +60,23 @@ no header and no probe.
 - **Build:** `make` (libDaisy's Makefile flow). Override the SDK path with
   `make LIBDAISY_DIR=/path/to/libDaisy` if needed.
 - **Flash:** `make program-dfu` — hold BOOT, tap RESET to enter DFU, then run it.
-- **Watch:** `screen /dev/tty.usbmodem* 115200`. The diagnostics call `StartLog(true)`, which
-  **waits for a terminal**, so the boot report is never missed — but the board will appear to hang
-  until something opens the port.
+- **Watch:** `screen /dev/tty.usbmodem* 115200`. ⚠ The diagnostics call **`StartLog(false)`** — they
+  never wait for a terminal. The verdict is **re-printed every 5 s** in the monitor loop, so a console
+  attached at any time sees the state.
+
+  ⚠ **Do not go back to `StartLog(true)`.** It blocks until a PC opens the port, so on a 9 V supply
+  with no USB the board hangs before the diagnostics run at all — which makes the onboard LED useless
+  as a "did it boot" indicator on adapter or battery power. Cost bench time 2026-09-05.
+
+### LED boot signal
+
+- **6 fast flashes** immediately after `Init()` — booted. Deliberately before anything that can block
+  or fail, so it works with no console attached.
+- **then 1 Hz** — reached the monitor loop, all checks ran.
+- ⚠ **Flashes but no 1 Hz** = hung between `Init()` and the loop, which points at the I²C init — the
+  only hardware touched in between.
+
+Verified 2026-09-05 on **both** USB and 9 V-jack power.
 - **Debug:** ST-LINK over SWD needs the debug header soldered **and** openocd installed.
 
 ### ⚠ libDaisy must be the `seed3-updates` branch

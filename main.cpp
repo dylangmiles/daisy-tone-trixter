@@ -104,7 +104,24 @@ static bool ScanI2c(I2CHandle& i2c)
 int main(void)
 {
     hw.Init();
-    hw.StartLog(true); // wait for a terminal, so the boot report is never missed
+    // ⚠ StartLog(FALSE) -- do NOT wait for a PC.
+    //
+    // StartLog(true) blocks until a terminal opens, which means on a 9 V supply with no USB the
+    // board hangs here forever and never reaches the diagnostics at all. That made the onboard LED
+    // useless as a "did it boot" indicator on battery/adapter power (2026-09-05).
+    //
+    // The boot report is instead REPEATED periodically in the monitor loop, so a terminal attached
+    // at any time still sees the results. Better than blocking: the board always runs.
+    hw.StartLog(false);
+
+    // Heartbeat immediately, before anything that could block or fail, so the LED proves the board
+    // booted even with no console attached at all.
+    for(int i = 0; i < 6; i++)
+    {
+        hw.SetLed(i % 2 == 0);
+        System::Delay(80);
+    }
+    hw.SetLed(false);
 
     hw.PrintLine("");
     hw.PrintLine("=============================================");
@@ -177,8 +194,9 @@ int main(void)
     // ⚠ The encoder is quadrature: one detent produces transitions on BOTH A and B. Seeing only
     // one of them move is the classic signature of a single bad joint, which is exactly why these
     // are reported as raw edges rather than decoded counts at this stage.
-    uint32_t last_blink = System::GetNow();
-    bool     led        = false;
+    uint32_t last_blink  = System::GetNow();
+    uint32_t last_report = last_blink;
+    bool     led         = false;
 
     while(true)
     {
@@ -193,6 +211,21 @@ int main(void)
         }
 
         uint32_t t = System::GetNow();
+
+        // ⚠ Re-print the verdict every 5 s. StartLog(false) means the board no longer waits for a
+        // terminal, so the boot report may already have scrolled past -- or never been seen at all
+        // if the board was powered from the 9 V jack. This makes the state observable whenever a
+        // console is attached, instead of only in the first second after reset.
+        if(t - last_report >= 5000)
+        {
+            last_report = t;
+            hw.PrintLine("[%lus] board=Seed3 ok · i2c 0x%02X %s · inputs %s",
+                         (unsigned long)(t / 1000),
+                         tt::kOledI2cAddr,
+                         i2c_ok ? "FOUND" : "absent",
+                         "see edges below");
+        }
+
         if(t - last_blink >= 1000)
         {
             last_blink = t;
