@@ -43,3 +43,12 @@ include $(SYSTEM_FILES_DIR)/Makefile
 # those buttons are still reachable.
 .PHONY: flash
 flash: all program-dfu
+
+# Wait for a DFU device to appear, then flash. The Daisy bootloader only opens its DFU window for
+# ~2 s at power-up, which is hard to hit by hand -- start this, THEN power-cycle the board.
+.PHONY: flash-wait
+flash-wait: all
+	@echo "Waiting for DFU -- power-cycle the Daisy now (Ctrl-C to give up)..."
+	@while ! dfu-util -l 2>/dev/null | grep -qi "0483:df11"; do sleep 0.2; done
+	@echo "DFU found, flashing."
+	@$(MAKE) program-dfu

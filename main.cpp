@@ -77,8 +77,18 @@ static bool g_board_ok = false, g_i2c_ok = false, g_sd_ok = false;
 static fftconvolver::TwoStageFFTConvolver g_convolver;
 static volatile bool                      g_ir_active = false;   // false until an IR is loaded
 
-static constexpr size_t kBlock = 64;      // FFT convolution wants a real block; 64 = 1.33 ms @ 48k
-static float            g_work[kBlock];
+static constexpr size_t kBlock    = 64;   // FFT convolution wants a real block; 64 = 1.33 ms @ 48k
+static constexpr size_t kWorkMax = 256;  // libDaisy's ceiling (kAudioMaxBufferSize/4). Sized to the
+                                         // MAXIMUM, not to kBlock: if the hardware ever hands us a
+                                         // bigger block than we asked for, a kBlock-sized buffer
+                                         // would overflow silently and corrupt whatever follows.
+static float            g_work[kWorkMax];
+
+// What the callback ACTUALLY receives, surfaced in the repeating summary line. ⚠ The boot report is
+// routinely lost to USB CDC enumeration, so a number that only prints at boot is a number nobody
+// reads -- which is how the block size stayed unverified while we guessed at it.
+static volatile uint32_t g_cb_size = 0;
+static volatile uint32_t g_cb_count = 0;
 
 static volatile float    g_peak  = 0.f;   // peak |sample| since the display last read it
 static volatile uint32_t g_clips = 0;
@@ -86,6 +96,11 @@ static volatile uint32_t g_clips = 0;
 static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
 {
     float pk = 0.f;
+
+    g_cb_size = (uint32_t)size;
+    g_cb_count++;
+    if(size > kWorkMax)
+        return;                             // refuse rather than overflow
 
     // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
     for(size_t i = 0; i < size; i++)
@@ -495,7 +510,9 @@ int main(void)
 
     hw.PrintLine("");
     hw.PrintLine("[5] audio passthrough");
-    hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
+    // ⚠ Do NOT call SetAudioSampleRate here. 48 kHz is already libDaisy's default, the working
+    // passthrough never called it, and the seed3-updates branch modifies sai.h -- so it is a new
+    // variable touching the SAI for no benefit. Removed 2026-09-05 while chasing silent output.
     hw.SetAudioBlockSize(kBlock);
 
     // ⚠ Unity output level and global bypass ON: complete passthrough at boot, by design.
@@ -503,7 +520,10 @@ int main(void)
     g_dsp_bypass = true;
 
     hw.StartAudio(AudioCb);
-    hw.PrintLine("  48 kHz, block %u, IN 1 -> OUT 1+2", (unsigned)kBlock);
+    // Report what the hardware ACTUALLY runs at, rather than what we asked for. If these disagree
+    // with 48000 / kBlock, that is the bug rather than anything in the chain.
+    hw.PrintLine("  actual: %d Hz, block %u, IN 1 -> OUT 1+2",
+                 (int)hw.AudioSampleRate(), (unsigned)hw.AudioBlockSize());
     hw.PrintLine("  DSP chain loaded, GLOBAL BYPASS ON -- pure passthrough");
     hw.PrintLine("  IR: none (loads from SD when a preset asks)");
     hw.PrintLine("  ⚠ 0 dBFS is the CODEC ceiling (1.8 V pk), not the buffer's limit");
@@ -563,9 +583,13 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
-            hw.PrintLine("        audio: clips=%lu  (9 V JACK for valid audio -- on USB the rail",
-                         (unsigned long)g_clips);
-            hw.PrintLine("        sits ~4.9 V and the op-amp daughter is out of CM spec)");
+            hw.PrintLine("        audio: sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
+                         (int)hw.AudioSampleRate(),
+                         (unsigned long)g_cb_size,
+                         (unsigned long)g_cb_count,
+                         (unsigned long)g_clips,
+                         g_dsp_bypass ? "BYPASS" : "on");
+
         }
 
         // ---- HOLD THE ENCODER SWITCH FOR 2 s TO ENTER DFU ----
