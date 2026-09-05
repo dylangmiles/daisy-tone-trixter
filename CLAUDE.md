@@ -71,6 +71,47 @@ no header and no probe.
 | libDaisy | ✅ `/Users/dylan/dev/sdk/daisy/libDaisy` — ⚠ **branch `seed3-updates`, pinned to `e1f740a`** |
 | DaisySP | ✅ `/Users/dylan/dev/sdk/daisy/DaisySP`, built |
 
+## ⚠ APP_TYPE = BOOT_SRAM — the app does NOT run from internal flash
+
+The STM32H750 has only **128 KB of internal flash**, and the ported DSP chain overflows it: the
+diagnostics alone were ~102 KB, and `dsp_chain` + the FFTConvolver add ~40 KB more.
+
+`APP_TYPE = BOOT_SRAM` runs the app from **480 KB of internal SRAM** instead — currently **~24 %
+used**. Chosen over `BOOT_QSPI` because code runs from fast internal SRAM rather than external
+flash, which matters for a convolver.
+
+⚠ **ONE-TIME SETUP, required before the first flash:**
+
+```
+make program-boot      # installs the Daisy bootloader (needs the board in DFU)
+```
+
+After that `make flash` works as before. ⚠ Startup is slightly slower — the bootloader copies the
+app into SRAM first. And hold-to-DFU now uses `BootloaderMode::DAISY`, not `STM`: jumping to the
+STM ROM bootloader would bypass the Daisy bootloader the app depends on.
+
+## The ported DSP chain
+
+`dsp_chain.cpp`, `biquad.h` and the HiFi-LoFi **FFTConvolver** compiled for the H750 **with no
+changes at all** — the RP2350 implementation was written against `stdio/string/stdlib/math` only.
+
+⚠ **Order matches the Pico: IR convolution FIRST, then the chain** (EQ → Dynamics → Output level).
+
+⚠ **Default boot state is COMPLETE PASSTHROUGH** — `dsp_chain_init(48000, 1.0)` then
+`g_dsp_bypass = true`. The pedal always starts transparent, so anything measured at boot reflects
+the **front end alone** with no DSP on top. That matters while the analogue path is still being
+characterised.
+
+⚠ **The IR is NOT embedded.** It lives on the SD card and loads when a preset asks for one, so it
+costs nothing until wanted. Boot is IR-less by design, which is why embedding was dropped.
+
+Block size is **64** (1.33 ms at 48 kHz) — FFT convolution needs a real block, not the 4 the
+diagnostics used.
+
+⚠ **The Pico's Core-1 tail offload does NOT port.** The H750 is single-core; the convolver runs
+inline. It is a 480 MHz M7 with an FPU against a 150 MHz M33, so the budget should be there — but
+that is an assumption until measured with an IR actually loaded.
+
 ## Build and flash
 
 - **Build:** `make` (libDaisy's Makefile flow). Override the SDK path with

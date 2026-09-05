@@ -16,7 +16,13 @@
 #include "dev/oled_sh1106.h"
 #include "board.h"
 
+// ⚠ NO extern "C" wrapper: dsp_chain.cpp compiles as C++ here, so both sides must agree on
+// linkage. The header is C-style but the translation unit is C++.
+#include "audio/dsp_chain.h"
+#include "TwoStageFFTConvolver.h"
+
 #include <cstdio>
+#include <cmath>
 
 using namespace daisy;
 
@@ -40,6 +46,72 @@ static bool   oled_ok = false;
 // enumerated, so the host attaches mid-banner and everything before that point never arrives
 // (seen as "===========$$"). On-demand re-print is the fix; blocking on the host is not.
 static bool g_board_ok = false, g_i2c_ok = false, g_sd_ok = false;
+
+// ---------------------------------------------------------------------------------------------
+// Audio passthrough + input meter.
+//
+// AUDIO IN 1 -> AUDIO OUT 1 and 2, unmodified. No DSP, no gain: this measures the ANALOGUE PATH
+// and nothing else, so anything it shows is the front end, the jacks or the codec.
+//
+// ⚠ Test the codec BEFORE the daughter is fitted, by linking daughter pin 4 (gate-in) to pin 3
+// (out) in the socket. That bypasses the buffer and proves the Daisy's own audio in/out. Fit the
+// daughter after, and any change is unambiguously the front end.
+//
+// ⚠ 0 dBFS here is the CODEC's full scale (±1.8 V at the pin), NOT the buffer's clean limit. The
+// op-amp daughter rev D clears ~2.5 V at a 8.86 V rail, so the converter clips first -- which is
+// the intended design, clipping in the fixable place rather than the buffer.
+// ---- DSP chain, ported from the RP2350 build ----------------------------------------------
+//
+// dsp_chain.cpp, biquad.h and the HiFi-LoFi FFTConvolver compiled for the H750 with NO changes --
+// the Pico implementation was written against stdio/string/stdlib/math only.
+//
+// ⚠ ORDER MATTERS, and it matches the Pico: IR convolution FIRST, then the chain
+// (EQ -> Dynamics -> Output level). See dsp_chain.h and pico/main.cpp:1622.
+//
+// ⚠ DEFAULT BOOT STATE IS COMPLETE PASSTHROUGH -- global bypass on, no IR. The pedal always starts
+// transparent, so anything measured at boot reflects the FRONT END ALONE with no DSP on top of it.
+// That matters while the analogue path is still being characterised.
+//
+// ⚠ The IR is NOT embedded. It lives on the SD card and is loaded when a preset asks for one, so
+// nothing here costs flash until it is actually wanted.
+static fftconvolver::TwoStageFFTConvolver g_convolver;
+static volatile bool                      g_ir_active = false;   // false until an IR is loaded
+
+static constexpr size_t kBlock = 64;      // FFT convolution wants a real block; 64 = 1.33 ms @ 48k
+static float            g_work[kBlock];
+
+static volatile float    g_peak  = 0.f;   // peak |sample| since the display last read it
+static volatile uint32_t g_clips = 0;
+
+static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
+{
+    float pk = 0.f;
+
+    // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
+    for(size_t i = 0; i < size; i++)
+    {
+        float a = fabsf(in[0][i]);
+        if(a > pk)
+            pk = a;
+        if(a >= 0.99f)
+            g_clips++;
+        g_work[i] = in[0][i];
+    }
+    if(pk > g_peak)
+        g_peak = pk;
+
+    // IR first, then the chain -- same order as the Pico build.
+    if(g_ir_active && dsp_chain_ir_enabled())
+        g_convolver.process(g_work, g_work, size);
+
+    dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
+
+    for(size_t i = 0; i < size; i++)
+    {
+        out[0][i] = g_work[i];              // mono out to both channels
+        out[1][i] = g_work[i];
+    }
+}
 
 // Inputs that read LOW when active. Encoder C and SW2 go to the DGND rail, and the footswitches
 // ground their signal line, so every one of these needs an internal pull-up.
@@ -255,12 +327,24 @@ static void OledReport(bool board_ok,
              inputs[4].gpio.Read() ? '.' : '#');
     OledLine(5, buf);
 
-    // ⚠ The board cannot measure its own rail without a divider to a spare ADC pin, so this is a
-    // REMINDER, not a measurement. On USB the rail sits near 4.9 V and the op-amp daughter is out
-    // of common-mode spec -- audio results taken there are invalid. See the note on TtOled.
-    OledLine(6, "audio: 9V JACK only");
+    // Input level. Read-and-reset gives a true peak for the interval, not a decayed average --
+    // a body tap on a piezo is a transient, and an averaged meter would simply miss it.
+    float pk = g_peak;
+    g_peak   = 0.f;
+    if(pk > 0.0002f)
+    {
+        int db = (int)(20.f * log10f(pk));
+        snprintf(buf, sizeof(buf), "in %3ddBFS clip%lu", db, (unsigned long)g_clips);
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "in   --    clip%lu", (unsigned long)g_clips);
+    }
+    OledLine(6, buf);
 
-    snprintf(buf, sizeof(buf), "up %lus", (unsigned long)up_s);
+    snprintf(buf, sizeof(buf), "dsp %s  ir %s",
+             g_dsp_bypass ? "BYP" : "ON ",
+             g_ir_active ? "on " : "off");
     OledLine(7, buf);
 
     oled.Update();
@@ -410,6 +494,21 @@ int main(void)
     failures += sd_ok ? 0 : 1;
 
     hw.PrintLine("");
+    hw.PrintLine("[5] audio passthrough");
+    hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
+    hw.SetAudioBlockSize(kBlock);
+
+    // ⚠ Unity output level and global bypass ON: complete passthrough at boot, by design.
+    dsp_chain_init(48000.f, 1.0f);
+    g_dsp_bypass = true;
+
+    hw.StartAudio(AudioCb);
+    hw.PrintLine("  48 kHz, block %u, IN 1 -> OUT 1+2", (unsigned)kBlock);
+    hw.PrintLine("  DSP chain loaded, GLOBAL BYPASS ON -- pure passthrough");
+    hw.PrintLine("  IR: none (loads from SD when a preset asks)");
+    hw.PrintLine("  ⚠ 0 dBFS is the CODEC ceiling (1.8 V pk), not the buffer's limit");
+
+    hw.PrintLine("");
     hw.PrintLine("---------------------------------------------");
     if(failures == 0)
         hw.PrintLine(" ALL AUTOMATED CHECKS PASSED");
@@ -464,6 +563,9 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
+            hw.PrintLine("        audio: clips=%lu  (9 V JACK for valid audio -- on USB the rail",
+                         (unsigned long)g_clips);
+            hw.PrintLine("        sits ~4.9 V and the op-amp daughter is out of CM spec)");
         }
 
         // ---- HOLD THE ENCODER SWITCH FOR 2 s TO ENTER DFU ----
@@ -494,7 +596,9 @@ int main(void)
                 }
                 hw.PrintLine("Entering DFU bootloader -- run: make program-dfu");
                 System::Delay(400);
-                System::ResetToBootloader(System::BootloaderMode::STM);
+                // ⚠ DAISY, not STM. With APP_TYPE = BOOT_SRAM the app is loaded by the Daisy
+                // bootloader; jumping to the STM ROM bootloader would bypass it.
+                System::ResetToBootloader(System::BootloaderMode::DAISY);
             }
             else if(oled_ok && held > 400)
             {

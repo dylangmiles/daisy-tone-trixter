@@ -10,7 +10,25 @@
 
 TARGET = tone_trixter_daisy
 
-CPP_SOURCES = main.cpp
+# ⚠ BOOT_SRAM, not the default BOOT_NONE. The STM32H750 has only 128 KB of INTERNAL flash and the
+# port overflows it: dsp_chain + the FFTConvolver alone are ~40 KB on top of ~100 KB of diagnostics.
+# BOOT_SRAM gives 512 KB and runs from fast internal SRAM rather than external QSPI, which matters
+# for a convolver.
+#
+# ⚠ ONE-TIME SETUP: the Daisy bootloader must be installed first --  make program-boot
+# After that, `make program-dfu` (or `make flash`) works as before, and startup is slightly slower
+# because the bootloader copies the app into SRAM.
+APP_TYPE = BOOT_SRAM
+
+CPP_SOURCES = \
+	main.cpp \
+	audio/dsp_chain.cpp \
+	lib/FFTConvolver/FFTConvolver.cpp \
+	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
+	lib/FFTConvolver/AudioFFT.cpp \
+	lib/FFTConvolver/Utilities.cpp
+
+C_INCLUDES += -I. -Ilib/FFTConvolver
 
 # SDKs live outside the repo, alongside the Pico SDK, so they are never committed here.
 # Override on the command line if yours is elsewhere:  make LIBDAISY_DIR=/path/to/libDaisy
