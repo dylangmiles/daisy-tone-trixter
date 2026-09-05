@@ -121,6 +121,7 @@ static bool ScanI2c(I2CHandle& i2c)
 // "DI" is data IN = MOSI. Wiring them by name is how they end up swapped.
 static GPIO    sd_cs, sd_sck, sd_mosi, sd_miso, sd_cd;
 static uint8_t g_sd_r1 = 0xFF;   // last CMD0 response, shown in the periodic summary
+static bool    g_sd_cd = false;  // card-detect level, ditto
 
 // Slow clock on purpose: cards must be initialised at 100-400 kHz, not at full speed.
 static void SdClk(bool v)
@@ -151,7 +152,8 @@ static bool TestSd()
     sd_cd.Init(tt::P(tt::kSdCd), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
     System::Delay(10);                          // settle the pull-ups before the first read
 
-    hw.PrintLine("  card detect (D%d): %s", tt::kSdCd, sd_cd.Read() ? "HIGH" : "LOW");
+    g_sd_cd = sd_cd.Read();
+    hw.PrintLine("  card detect (D%d): %s", tt::kSdCd, g_sd_cd ? "HIGH" : "LOW");
 
     // Power-up: >=74 clocks with CS HIGH and MOSI high, before the card will talk at all.
     sd_cs.Write(true);
@@ -337,14 +339,14 @@ int main(void)
             // (seen as "===========$$" 2026-09-05). Anything a person needs to read must therefore
             // appear HERE, in a line that repeats. Adding a check above without adding it here
             // makes it invisible in practice.
-            hw.PrintLine("[%lus] board=%s · i2c 0x%02X=%s · sd CMD0=0x%02X %s · inputs %s",
+            hw.PrintLine("[%lus] board=%s · i2c 0x%02X=%s · sd CMD0=0x%02X %s · %s",
                          (unsigned long)(t / 1000),
                          board_ok ? "Seed3 ok" : "WRONG",
                          tt::kOledI2cAddr,
                          i2c_ok ? "FOUND" : "absent",
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
-                         "edges below");
+                         g_sd_cd ? "cd=HIGH" : "cd=LOW");
         }
 
         if(t - last_blink >= 1000)
