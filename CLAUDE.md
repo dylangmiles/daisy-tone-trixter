@@ -6,8 +6,10 @@ shared between them.
 
 ## Status
 
-**Bring-up diagnostics build.** `main.cpp` + `board.h` compile and link for the Seed3
-(81 KB of 128 KB flash). Not yet flashed to hardware — the board is mid-assembly.
+**Board bring-up COMPLETE for all digital peripherals (2026-09-05).** Verified on hardware, on both
+USB and 9 V-jack power: board reports Seed3 · OLED answers at `0x3C` · microSD CMD0 returns `0x01` ·
+encoder A/B show correct quadrature (lead/lag swaps with direction) and SW works · no shorts on any
+GPIO row. Remaining: footswitches, front-end daughter, and the analogue path.
 
 ## Related repos
 
@@ -111,6 +113,27 @@ reports pass/fail on its own, so a failure points at a specific joint:
    instead, the DC strap went to +3V3D rather than ground.
 3. **Digital inputs** — encoder A/B/SW and both footswitches, all active-LOW with internal
    pull-ups, reported idle-state first and then as live edges.
+4. **microSD** — bit-banged SPI **CMD0**. ⚠ Bit-banged deliberately: the breakout's fixed pin order
+   matches no hardware SPI instance (§3b). Exercises CS/SCK/MOSI/MISO in one shot, and the failure
+   modes are distinguishable — `0x01` bus good · `0xFF` no card or CS/SCK/MOSI not arriving ·
+   ⚠ `0x00` **MISO stuck low**, which on the Pico build was a solder bridge misread for hours as
+   "card not responding" ([[project_sd_card_pinout]]). Meter D6 to GND before suspecting the card.
+
+### ⚠ The repeating summary line IS the report
+
+`StartLog(false)` means the board prints its boot report **before USB CDC enumerates on the host**,
+so that output is routinely lost or garbled (`===========$$`). Everything a person needs to read must
+appear in the **5-second summary line**, which repeats. ⚠ **Adding a check without adding it to that
+line makes it invisible in practice** — exactly what happened when the SD test was first added.
+
+### ⚠ The OLED's RESET must be driven
+
+`RES` (D13) is **active low**. Left as an unconfigured input it floats and the SH1106 comes out of
+reset — or does not — differently on each power-up. That was masked until 2026-09-05 by
+`StartLog(true)` blocking for seconds; switching to `StartLog(false)` exposed it as an intermittent
+that **jiggling could not reproduce, because it was never mechanical**. The firmware now asserts
+reset, holds 10 ms, releases, waits 50 ms, and leaves the pin **driven high**. ⚠ A longer delay would
+also have "fixed" it and would have been the wrong fix — the delay was the disguise, not the cure.
 
 ⚠ The encoder is quadrature: one detent moves **both** A and B. Seeing only one is the signature of
 a single bad joint, which is why edges are reported raw rather than decoded at this stage.

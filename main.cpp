@@ -101,6 +101,92 @@ static bool ScanI2c(I2CHandle& i2c)
     return saw_target;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Test 4 — microSD bus, by bit-banged SPI CMD0.
+//
+// ⚠ BIT-BANGED DELIBERATELY. The breakout presents a FIXED pin order that matches no hardware SPI
+// instance on the Seed3 (§3b), so there is no peripheral to use. These are plain GPIOs.
+//
+// This sends CMD0 (GO_IDLE_STATE) and reads the R1 response. That exercises CS, SCK, MOSI and MISO
+// in one shot, and the FAILURE MODES ARE DISTINGUISHABLE, which is the whole point:
+//
+//   0x01  card is in idle state  -> the bus works end to end
+//   0xFF  all ones, no response  -> nothing driving MISO: no card, or CS/SCK/MOSI not reaching it
+//   0x00  all zeros              -> ⚠ MISO STUCK LOW. On the Pico build this exact reading was a
+//                                  solder bridge from MISO to ground, misread for hours as "card
+//                                  not responding" ([[project_sd_card_pinout]]). Meter D6 to GND
+//                                  before blaming the card or the module.
+//
+// ⚠ Breakout silkscreen is CARD-referenced: its "DO" is the card's data OUT = MISO at the host, and
+// "DI" is data IN = MOSI. Wiring them by name is how they end up swapped.
+static GPIO    sd_cs, sd_sck, sd_mosi, sd_miso, sd_cd;
+static uint8_t g_sd_r1 = 0xFF;   // last CMD0 response, shown in the periodic summary
+
+// Slow clock on purpose: cards must be initialised at 100-400 kHz, not at full speed.
+static void SdClk(bool v)
+{
+    sd_sck.Write(v);
+    System::DelayUs(2);
+}
+
+static uint8_t SdByte(uint8_t out)
+{
+    uint8_t in = 0;
+    for(int i = 7; i >= 0; i--)
+    {
+        sd_mosi.Write((out >> i) & 1);
+        SdClk(true);                            // mode 0: sample on the rising edge
+        in = (uint8_t)((in << 1) | (sd_miso.Read() ? 1 : 0));
+        SdClk(false);
+    }
+    return in;
+}
+
+static bool TestSd()
+{
+    sd_cs.Init(tt::P(tt::kSdCs), GPIO::Mode::OUTPUT);
+    sd_sck.Init(tt::P(tt::kSdSck), GPIO::Mode::OUTPUT);
+    sd_mosi.Init(tt::P(tt::kSdMosi), GPIO::Mode::OUTPUT);
+    sd_miso.Init(tt::P(tt::kSdMiso), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    sd_cd.Init(tt::P(tt::kSdCd), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    System::Delay(10);                          // settle the pull-ups before the first read
+
+    hw.PrintLine("  card detect (D%d): %s", tt::kSdCd, sd_cd.Read() ? "HIGH" : "LOW");
+
+    // Power-up: >=74 clocks with CS HIGH and MOSI high, before the card will talk at all.
+    sd_cs.Write(true);
+    sd_sck.Write(false);
+    for(int i = 0; i < 10; i++)
+        SdByte(0xFF);
+
+    // CMD0 (GO_IDLE_STATE), with its fixed CRC. CRC matters here: it is still checked in SPI mode
+    // until CMD59 turns checking off.
+    sd_cs.Write(false);
+    const uint8_t cmd0[] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x95};
+    for(size_t i = 0; i < sizeof(cmd0); i++)
+        SdByte(cmd0[i]);
+
+    uint8_t r = 0xFF;
+    for(int i = 0; i < 16 && r == 0xFF; i++)
+        r = SdByte(0xFF);
+
+    sd_cs.Write(true);
+    SdByte(0xFF);                               // release: the card needs a clock to let go of MISO
+
+    g_sd_r1 = r;
+    hw.PrintLine("  CMD0 response: 0x%02X", r);
+    if(r == 0x01)
+        return true;
+    if(r == 0x00)
+        hw.PrintLine("  ⚠ ALL ZEROS = MISO stuck low. Meter D%d to GND before suspecting the card.",
+                     tt::kSdMiso);
+    else if(r == 0xFF)
+        hw.PrintLine("  no response -- card absent, or CS/SCK/MOSI not reaching the module.");
+    else
+        hw.PrintLine("  unexpected -- card answered but not with idle state.");
+    return false;
+}
+
 int main(void)
 {
     hw.Init();
@@ -147,6 +233,25 @@ int main(void)
     cfg.pin_config.scl = tt::P(tt::kOledScl);
     cfg.pin_config.sda = tt::P(tt::kOledSda);
 
+    // ⚠ DRIVE THE OLED'S RESET PIN BEFORE TOUCHING THE BUS.
+    //
+    // RES (D13) is ACTIVE LOW. Left as an unconfigured input it floats, and the SH1106 comes out of
+    // reset -- or does not -- differently on each power-up. That is an intermittent that jiggling
+    // cannot reproduce, because it is not mechanical.
+    //
+    // ⚠ It was masked until 2026-09-05 by StartLog(true), which blocked for SECONDS waiting for a
+    // terminal and gave the pin ample time to drift high. Switching to StartLog(false) cut that to
+    // ~480 ms and the intermittent appeared. The delay was never the fix -- it was the disguise.
+    //
+    // Assert reset, hold, release, then let the controller come up before addressing it. The pin is
+    // left DRIVEN HIGH afterwards, never floating.
+    static GPIO oled_res;
+    oled_res.Init(tt::P(tt::kOledRes), GPIO::Mode::OUTPUT);
+    oled_res.Write(false);
+    System::Delay(10);
+    oled_res.Write(true);
+    System::Delay(50);
+
     bool i2c_ok = false;
     if(i2c.Init(cfg) != I2CHandle::Result::OK)
         hw.PrintLine("  I2C init FAILED");
@@ -178,6 +283,12 @@ int main(void)
     }
     hw.PrintLine("  (HIGH is also what an UNCONNECTED pin reads. Until the encoder and");
     hw.PrintLine("   footswitches are wired this proves the pull-ups, not the wiring.)");
+
+    hw.PrintLine("");
+    hw.PrintLine("[4] microSD -- bit-banged SPI, CMD0");
+    bool sd_ok = TestSd();
+    hw.PrintLine("  %s", sd_ok ? "PASS" : "FAIL (expected until the card + module are in)");
+    failures += sd_ok ? 0 : 1;
 
     hw.PrintLine("");
     hw.PrintLine("---------------------------------------------");
@@ -219,11 +330,21 @@ int main(void)
         if(t - last_report >= 5000)
         {
             last_report = t;
-            hw.PrintLine("[%lus] board=Seed3 ok · i2c 0x%02X %s · inputs %s",
+            // ⚠ THIS LINE IS THE REAL REPORT, not a convenience.
+            //
+            // StartLog(false) means the board prints its boot report immediately -- BEFORE the USB
+            // CDC device has enumerated on the host -- so that output is routinely lost or garbled
+            // (seen as "===========$$" 2026-09-05). Anything a person needs to read must therefore
+            // appear HERE, in a line that repeats. Adding a check above without adding it here
+            // makes it invisible in practice.
+            hw.PrintLine("[%lus] board=%s · i2c 0x%02X=%s · sd CMD0=0x%02X %s · inputs %s",
                          (unsigned long)(t / 1000),
+                         board_ok ? "Seed3 ok" : "WRONG",
                          tt::kOledI2cAddr,
                          i2c_ok ? "FOUND" : "absent",
-                         "see edges below");
+                         g_sd_r1,
+                         sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
+                         "edges below");
         }
 
         if(t - last_blink >= 1000)
