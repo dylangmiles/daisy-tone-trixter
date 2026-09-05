@@ -19,6 +19,13 @@
 // ⚠ NO extern "C" wrapper: dsp_chain.cpp compiles as C++ here, so both sides must agree on
 // linkage. The header is C-style but the translation unit is C++.
 #include "audio/dsp_chain.h"
+#include "audio/tt_store.h"
+#include "audio/wav_load.h"
+extern "C" {
+#include "ff.h"
+#include "ff_gen_drv.h"
+extern const Diskio_drvTypeDef tt_sd_driver;
+}
 #include "TwoStageFFTConvolver.h"
 
 #include <cstdio>
@@ -75,6 +82,28 @@ static bool g_board_ok = false, g_i2c_ok = false, g_sd_ok = false;
 // ⚠ The IR is NOT embedded. It lives on the SD card and is loaded when a preset asks for one, so
 // nothing here costs flash until it is actually wanted.
 static fftconvolver::TwoStageFFTConvolver g_convolver;
+
+// ---- SD card: presets and IRs ---------------------------------------------------------------
+//
+// ⚠ Everything here is OPTIONAL. No card, no presets, no IR -- the pedal still boots and passes
+// audio. A missing SD card must never be the difference between a working pedal and a dead one.
+static FATFS g_fs;
+static char  g_sd_path[4]     = {0};
+static bool  g_sd_mounted     = false;
+static int   g_preset_count   = 0;
+
+// ⚠ 4096 taps of scratch, matching the Pico's SD_IR_MAX_TAPS. The convolver COPIES the IR in, so
+// this buffer is only needed during load -- but it stays static because 16 KB on the stack would
+// overflow it.
+static constexpr int kIrMaxTaps = 4096;
+static float         g_ir_buf[kIrMaxTaps];
+static int           g_ir_len  = 0;
+static char          g_ir_name[24] = "none";
+
+// Convolver partitioning, same as the Pico. Head block matches the audio block size so the
+// low-latency path costs exactly one block.
+static constexpr size_t kIrHeadBlock = 64;
+static constexpr size_t kIrTailBlock = 512;
 static volatile bool                      g_ir_active = false;   // false until an IR is loaded
 
 static constexpr size_t kBlock    = 64;   // FFT convolution wants a real block; 64 = 1.33 ms @ 48k
@@ -357,12 +386,44 @@ static void OledReport(bool board_ok,
     }
     OledLine(6, buf);
 
-    snprintf(buf, sizeof(buf), "dsp %s  ir %s",
-             g_dsp_bypass ? "BYP" : "ON ",
-             g_ir_active ? "on " : "off");
+    snprintf(buf, sizeof(buf), "dsp %s ir %s", g_dsp_bypass ? "BYP" : "ON!",
+             g_ir_active ? (g_ir_len >= 1000 ? "2k" : "yes") : "--");
     OledLine(7, buf);
 
     oled.Update();
+}
+
+static bool LoadIr(const char* path)
+{
+    uint32_t rate = 0, avail = 0;
+    int      n    = wav_load_mono_f32(path, g_ir_buf, kIrMaxTaps, &rate, &avail);
+    if(n <= 0)
+    {
+        hw.PrintLine("  IR load FAILED: %s (%s)", path, wav_err_str(n));
+        return false;
+    }
+
+    // ⚠ SAMPLE RATE MUST MATCH END TO END. On the Pico build a mismatched codec rate silently ran
+    // the convolver at 2x budget and played a 48 kHz IR an octave high -- and it sounded plausible
+    // enough not to be noticed for a while. Refuse rather than play something subtly wrong.
+    if(rate != 48000)
+    {
+        hw.PrintLine("  IR REJECTED: %s is %lu Hz, need 48000", path, (unsigned long)rate);
+        return false;
+    }
+    if(avail > (uint32_t)kIrMaxTaps)
+        hw.PrintLine("  ⚠ IR truncated: %lu taps available, using %d", (unsigned long)avail, n);
+
+    if(!g_convolver.init(kIrHeadBlock, kIrTailBlock, g_ir_buf, (size_t)n))
+    {
+        hw.PrintLine("  convolver init FAILED (out of memory?)");
+        return false;
+    }
+
+    g_ir_len = n;
+    snprintf(g_ir_name, sizeof(g_ir_name), "%s", path);
+    hw.PrintLine("  IR loaded: %s (%d taps, %lu Hz)", path, n, (unsigned long)rate);
+    return true;
 }
 
 static void PrintFullReport()
@@ -529,6 +590,40 @@ int main(void)
     hw.PrintLine("  ⚠ 0 dBFS is the CODEC ceiling (1.8 V pk), not the buffer's limit");
 
     hw.PrintLine("");
+    hw.PrintLine("[6] SD card: presets and IR");
+    if(FATFS_LinkDriver(&tt_sd_driver, g_sd_path) != 0)
+        hw.PrintLine("  FATFS_LinkDriver failed");
+    else if(f_mount(&g_fs, g_sd_path, 1) != FR_OK)
+        hw.PrintLine("  no filesystem (card absent or not FAT?) -- passthrough only");
+    else
+    {
+        g_sd_mounted = true;
+        hw.PrintLine("  mounted at \"%s\"", g_sd_path);
+
+        if(tt_store_load())
+        {
+            const Preset* pr = tt_store_presets(&g_preset_count);
+            hw.PrintLine("  %d preset(s) from the card", g_preset_count);
+
+            // Load the boot preset's IR if it names one -- but leave the chain BYPASSED. Boot is
+            // passthrough by design; the bypass footswitch turns it on.
+            const char* boot = tt_store_boot_preset();
+            int         idx  = (boot && *boot) ? dsp_chain_find_preset(boot) : -1;
+            if(idx >= 0 && pr)
+            {
+                const char* ir = dsp_chain_preset_ir(idx);
+                if(ir && *ir)
+                    g_ir_active = LoadIr(ir);
+            }
+        }
+        else
+        {
+            hw.PrintLine("  no presets file -- built-in defaults");
+        }
+    }
+    hw.PrintLine("  ⚠ chain stays BYPASSED at boot. Bypass footswitch toggles it.");
+
+    hw.PrintLine("");
     hw.PrintLine("---------------------------------------------");
     if(failures == 0)
         hw.PrintLine(" ALL AUTOMATED CHECKS PASSED");
@@ -556,6 +651,17 @@ int main(void)
             {
                 hw.PrintLine("  %-14s %s", inputs[i].name, now ? "released" : "PRESSED");
                 inputs[i].last = now;
+
+                // ⚠ The bypass footswitch toggles the chain on its PRESS edge. Interim control
+                // until there is a menu -- and it is the A/B this whole project turns on: the same
+                // playing, with and without the DSP, switched instantly.
+                if(i == 3 && !now)
+                {
+                    g_dsp_bypass = !g_dsp_bypass;
+                    hw.PrintLine("  >> DSP %s%s",
+                                 g_dsp_bypass ? "BYPASSED" : "ENGAGED",
+                                 (!g_dsp_bypass && g_ir_active) ? " (with IR)" : "");
+                }
             }
         }
 

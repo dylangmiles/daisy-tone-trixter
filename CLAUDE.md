@@ -112,6 +112,59 @@ diagnostics used.
 inline. It is a 480 MHz M7 with an FPU against a 150 MHz M33, so the budget should be there — but
 that is an assumption until measured with an IR actually loaded.
 
+## SD card: presets and IRs
+
+Ported from the RP2350 build: `sd_spi.c` (bit-banged SPI), `sd_diskio.c`, `tt_store.cpp` (preset
+parsing) and `wav_load.c`. ⚠ **Everything here is OPTIONAL** — no card, no presets, no IR, and the
+pedal still boots and passes audio. A missing SD card must never be the difference between a working
+pedal and a dead one.
+
+### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
+
+**SDMMC is impossible on this board.** The Daisy's SDMMC `CMD` line is **D5**, which the layout wires
+to the microSD module's **GND** (row 15, cut and jumpered). The breakout's fixed pin order also
+matches no SPI instance. Hence bit-bang, exactly as §3b specified.
+
+That rules out libDaisy's `FatFSInterface`, which only links its own SDMMC driver or USB host. We
+use the bundled FatFs directly and register a driver through `FATFS_LinkDriver`.
+
+⚠ **Do NOT define `disk_read`/`disk_write`/`disk_status`/`disk_ioctl` directly** the way the Pico
+build does. libDaisy's `diskio.c` already defines those and dispatches to registered drivers —
+defining them here is a duplicate-symbol collision. `sd_diskio.c` exposes a `Diskio_drvTypeDef`
+instead.
+
+### ⚠ The GPIO shim — why sd_spi.c is not rewritten
+
+`sd_spi.c` is 229 lines of SD protocol: command framing, the CMD0/CMD8/ACMD41 init dance, CSD
+parsing, timeouts. That logic is platform-independent and hard-won; only a handful of GPIO calls
+underneath it are Pico-specific. `sd_daisy_shim.h` maps those onto libDaisy so **the driver source
+stays identical between both builds** and a protocol fix on either platform applies to both.
+Rewriting it would fork the file and guarantee they drift.
+
+Pins are Daisy **D** numbers: `CS=D1 · MOSI=D2 · SCK=D4 · MISO=D6 · CD=D7`. ⚠ The breakout
+silkscreen is **card-referenced** — its `DO` is MISO at the host, its `DI` is MOSI.
+
+### ⚠ libDaisy gap: FatFs code pages
+
+libDaisy compiles FatFs but **not** its code-page tables, while its `ffconf.h` sets `_USE_LFN 1` and
+`_CODE_PAGE 850`. So `ff.c` references `ff_convert` and `ff_wtoupper` and nothing defines them —
+the link fails. The Makefile adds `Middlewares/Third_Party/FatFs/src/option/ccsbcs.c` to supply both.
+
+### ⚠ IR sample rate is checked, not assumed
+
+`LoadIr()` **rejects** any IR that is not 48 kHz. On the Pico build a mismatched rate silently ran
+the convolver at 2× budget and played a 48 kHz IR an octave high — and it sounded plausible enough
+not to be noticed for a while. Refusing beats playing something subtly wrong.
+
+Convolver partitioning matches the Pico: head block **64** (= the audio block size, so the
+low-latency path costs exactly one block), tail block **512**, up to **4096** taps.
+
+## The bypass footswitch is the A/B control
+
+⚠ Interim, until there is a menu. Boot is passthrough; **pressing the bypass footswitch toggles the
+chain** (and the IR with it). That is the comparison this whole project turns on — the same playing,
+with and without, switched instantly.
+
 ## Build and flash
 
 - **Build:** `make` (libDaisy's Makefile flow). Override the SDK path with

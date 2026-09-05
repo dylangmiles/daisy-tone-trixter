@@ -20,15 +20,28 @@ TARGET = tone_trixter_daisy
 # because the bootloader copies the app into SRAM.
 APP_TYPE = BOOT_SRAM
 
+C_SOURCES = \
+	audio/sd_spi.c \
+	audio/sd_diskio.c \
+	audio/wav_load.c \
+	$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c
+
+# ⚠ libDaisy compiles FatFs but NOT its code-page tables, while its ffconf.h sets _USE_LFN 1 --
+# so ff.c references ff_convert/ff_wtoupper and nothing defines them. ccsbcs.c supplies both for
+# the single-byte code pages. Without it the link fails the moment long filenames are enabled.
+
 CPP_SOURCES = \
 	main.cpp \
 	audio/dsp_chain.cpp \
+	audio/sd_daisy_shim.cpp \
+	audio/tt_store.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
 	lib/FFTConvolver/AudioFFT.cpp \
 	lib/FFTConvolver/Utilities.cpp
 
-C_INCLUDES += -I. -Ilib/FFTConvolver
+C_INCLUDES += -I. -Ilib/FFTConvolver \
+	-I$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src
 
 # SDKs live outside the repo, alongside the Pico SDK, so they are never committed here.
 # Override on the command line if yours is elsewhere:  make LIBDAISY_DIR=/path/to/libDaisy
