@@ -101,30 +101,36 @@ reports pass/fail on its own, so a failure points at a specific joint:
 ⚠ The encoder is quadrature: one detent moves **both** A and B. Seeing only one is the signature of
 a single bad joint, which is why edges are reported raw rather than decoded at this stage.
 
-### ⚠ Never busy-wait in an idle loop — it cooks the chip
+### ⚠ The idle loop runs hot, and the obvious fix breaks the USB console
 
-**`System::Delay()` is `HAL_Delay()`, which BUSY-WAITS.** It burns exactly as much power as a tight
-loop and reduces nothing. Use **`__WFI()`** to sleep the core until the next interrupt; libDaisy
-defines `SysTick_Handler()` at 1 kHz (`sys/system.cpp`), so there is always a wake source at most
-1 ms away. ⚠ Without a periodic interrupt `__WFI()` would hang.
+**`System::Delay()` is `HAL_Delay()`, which BUSY-WAITS** — it spins at full clock and reduces
+nothing. Measured on the 2026-09-05 bring-up, Seed3 standalone, polling five GPIOs and nothing else:
 
-**Measured on the 2026-09-05 bring-up**, Seed3 standalone, doing nothing but polling five GPIOs:
+| Idle loop | STM32H750 | USB console |
+|---|---|---|
+| `System::Delay(1)` | **painful to touch** | ✅ stays connected |
+| `__WFI()` | **slightly warm** | ❌ `screen` disconnects at loop entry, every time |
+| bootloader (DFU) | cool | n/a |
 
-| State | STM32H750 temperature |
-|---|---|
-| `System::Delay(1)` in the loop | **painful to touch** on sustained contact |
-| `__WFI()` in the loop | **slightly warm** |
-| Bootloader (DFU) | cool |
+The bootloader reading proves the heat is the **application, not the board**. Factory-soldered
+headers had already made a solder bridge unlikely, so it was never a short.
 
-The bootloader comparison is what proved it was the application rather than the board — the same
-single-variable discipline the bench sessions use.
+**Current state: `System::Delay(1)`, heat accepted.** During bring-up a diagnostic that disconnects
+is worse than one that runs warm.
 
-⚠ `__WFI()` idles the **core only**. PLLs, peripherals and the 64 MB SDRAM that `DaisySeed::Init()`
-brings up unconditionally keep running, which is why "slightly warm" rather than cool. Note also
-that `Init()` defaults to **400 MHz**, not boost's 480 — there is no easy clock win to be had.
+⚠ **UNRESOLVED — why `__WFI()` kills the CDC.** libDaisy's USB suspend callback sets `SLEEPDEEP` and
+`SLEEPONEXIT` (`src/usbd/usbd_conf.c:314`), which would turn `__WFI()` into STOP mode and gate the
+USB clocks. That was the obvious culprit, but **clearing both bits immediately before `__WFI()` did
+not fix it** — so the real cause is still unidentified. Do not re-try `__WFI()` assuming SLEEPDEEP
+is the answer; it has already been ruled out.
 
-⚠ Worth remembering when the DSP chain lands: the core will then be genuinely busy, so the thermal
-headroom this bought is headroom that gets spent.
+⚠ **REVISIT once the OLED works.** The serial console is only the primary interface while there is
+no display. Report diagnostics to the screen instead and `__WFI()` becomes viable again — which
+matters, because the DSP chain will spend the thermal headroom this would have bought.
+
+⚠ `Init()` already defaults to **400 MHz**, not boost's 480, so there is no clock win available.
+`__WFI()` also idles the **core only** — PLLs, peripherals and the 64 MB SDRAM that
+`DaisySeed::Init()` brings up unconditionally keep running regardless.
 
 **Do not copy the RP2350 debug setup.** The Pico build's `openocd.cfg` carries a `gdb-attach` hook
 that resumes core1, working around core1 freezing in `__wfe()` when a probe attaches. The H750 is

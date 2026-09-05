@@ -200,20 +200,25 @@ int main(void)
             hw.SetLed(led);
         }
 
-        // ⚠ Sleep the core until the next interrupt instead of spinning.
+        // ⚠ BUSY-WAIT, DELIBERATELY -- and it makes the STM32H750 run hot. See below.
         //
-        // System::Delay() is HAL_Delay(), which BUSY-WAITS -- it burns the same power as a tight
-        // loop and reduces nothing. Polling five GPIOs does not need a 480 MHz Cortex-M7 running
-        // flat out, and on the 2026-09-05 bring-up the STM32 ran hot enough to be painful to touch
-        // with the board doing nothing else.
+        // System::Delay() is HAL_Delay(), which spins at full clock. Polling five GPIOs does not
+        // need a 400 MHz Cortex-M7 flat out, and on 2026-09-05 this made the chip painful to touch
+        // (bootloader, by comparison, is cool -- so it is the application, not the board).
         //
-        // __WFI() is safe here because libDaisy defines SysTick_Handler() (sys/system.cpp) calling
-        // HAL_IncTick() at 1 kHz, so there is always a wake source at most 1 ms away. Without a
-        // periodic interrupt this would hang.
+        // ⚠ __WFI() FIXES THE HEAT BUT BREAKS THE USB CONSOLE. Tried 2026-09-05: the chip dropped
+        // to slightly warm, but `screen` disconnected the instant this loop was reached, every
+        // time. libDaisy's USB suspend callback sets SLEEPDEEP and SLEEPONEXIT
+        // (src/usbd/usbd_conf.c:314), which would turn __WFI() into STOP mode and gate the USB
+        // clocks -- but clearing both bits immediately before __WFI() did NOT fix it, so that is
+        // not the whole story and the real cause is still unidentified.
         //
-        // ⚠ This only idles the CORE. PLLs, peripherals and the 64 MB SDRAM that DaisySeed::Init()
-        // brings up unconditionally all keep running -- so if the chip is still very hot after
-        // this, the remaining heat is not the busy loop and needs a different explanation.
-        __WFI();
+        // Accepting the heat for now: during bring-up a diagnostic that disconnects is worse than
+        // one that runs warm.
+        //
+        // ⚠ REVISIT once the OLED is working. The serial console is only the primary interface
+        // while there is no display; report to the screen instead and __WFI() becomes viable, which
+        // matters because the DSP chain will spend the thermal headroom this would have bought.
+        System::Delay(1);
     }
 }
