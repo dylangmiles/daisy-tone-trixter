@@ -140,15 +140,27 @@ int main(void)
 
     hw.PrintLine("");
     hw.PrintLine("[3] digital inputs -- all active LOW, internal pull-ups");
+
+    for(size_t i = 0; i < kNumInputs; i++)
+        inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+
+    // ⚠ Init ALL pins, then settle, THEN read. Reading straight after Init() returns the pin's
+    // pre-pull-up state and every input reports a false LOW -- observed on the first hardware run
+    // 2026-09-05, where all five read LOW here and then immediately reported "released" in the
+    // monitor loop below. The pins were not even wired yet, so a short was impossible: the
+    // diagnostic was lying about the board, which is precisely what it exists to prevent.
+    System::Delay(10);
+
     for(size_t i = 0; i < kNumInputs; i++)
     {
-        inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
         inputs[i].last = inputs[i].gpio.Read();
         hw.PrintLine("  D%-2d %-14s idle=%s",
                      inputs[i].pin,
                      inputs[i].name,
-                     inputs[i].last ? "HIGH (ok)" : "LOW  <- stuck? check for a short to ground");
+                     inputs[i].last ? "HIGH (ok)" : "LOW  <- shorted to ground, or held down");
     }
+    hw.PrintLine("  (HIGH is also what an UNCONNECTED pin reads. Until the encoder and");
+    hw.PrintLine("   footswitches are wired this proves the pull-ups, not the wiring.)");
 
     hw.PrintLine("");
     hw.PrintLine("---------------------------------------------");
