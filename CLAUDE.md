@@ -133,6 +133,31 @@ reports pass/fail on its own, so a failure points at a specific joint:
    ⚠ `0x00` **MISO stuck low**, which on the Pico build was a solder bridge misread for hours as
    "card not responding" ([[project_sd_card_pinout]]). Meter D6 to GND before suspecting the card.
 
+### Reporting: OLED, periodic line, on-demand detail
+
+The board reports three ways, because no single one is reliable:
+
+| Route | When it matters |
+|---|---|
+| **OLED** — 8 lines, refreshed 2 Hz | ⚠ the only readout with **no cable attached** — what you use once the enclosure is closed |
+| **Periodic serial line**, every 5 s | live state while a console is attached |
+| **On-demand report** — *short press the encoder switch* | the full detail, with live input states |
+
+### Encoder switch = the control surface during bring-up
+
+| Action | Result |
+|---|---|
+| short press | re-print the full report to serial |
+| **hold 2 s** | countdown on the OLED, then **jump to DFU** |
+
+⚠ **Hold-to-DFU may be the only way to flash this board.** The Daisy is **under-mounted**, so its
+`BOOT` and `RESET` buttons face the perfboard. `System::ResetToBootloader()` removes the need for
+them. Then `make flash` builds and programs in one step.
+
+⚠ **It is a convenience layered on the physical buttons, not a replacement.** Firmware that hangs
+before the monitor loop never reaches the hold check. The **6 flashes then 1 Hz** LED signal is how
+you know the loop was reached and hold-to-DFU is available.
+
 ### ⚠ The repeating summary line IS the report
 
 `StartLog(false)` means the board prints its boot report **before USB CDC enumerates on the host**,

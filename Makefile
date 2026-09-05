@@ -19,3 +19,9 @@ DAISYSP_DIR  ?= /Users/dylan/dev/sdk/daisy/DaisySP
 
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
+
+# Convenience: build then flash in one step. The board must already be in DFU --
+# hold the ENCODER SWITCH for 2 s (see main.cpp), or hold BOOT and tap RESET if
+# those buttons are still reachable.
+.PHONY: flash
+flash: all program-dfu

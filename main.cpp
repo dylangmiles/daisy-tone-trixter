@@ -13,11 +13,33 @@
 // Watch:  screen /dev/tty.usbmodem* 115200   — or any serial terminal at 115200
 
 #include "daisy_seed.h"
+#include "dev/oled_sh1106.h"
 #include "board.h"
+
+#include <cstdio>
 
 using namespace daisy;
 
 static DaisySeed hw;
+
+// ---------------------------------------------------------------------------------------------
+// OLED readout.
+//
+// ⚠ THIS EXISTS SO THE BOARD CAN BE DIAGNOSED WITHOUT USB. Audio work must run from the 9 V jack:
+// on USB the Daisy back-feeds VIN to ~4.9 V, which puts the op-amp daughter's Vref (1.57 V) ABOVE
+// its common-mode ceiling (1.41 V) -- the exact out-of-spec condition that measured 8.9 % THD on
+// the 5 V build. Every audio result taken on USB power would be wrong, and wrong in a way that
+// looks like a front-end fault. The serial console only exists on USB, so it cannot be the way the
+// board reports during audio testing.
+using TtOled = OledDisplay<SH1106I2c128x64Driver>;
+static TtOled oled;
+static bool   oled_ok = false;
+
+// Boot-check results, kept so a short press of the encoder switch can re-print them. ⚠ The boot
+// report itself is routinely LOST: StartLog(false) starts printing before the USB CDC device has
+// enumerated, so the host attaches mid-banner and everything before that point never arrives
+// (seen as "===========$$"). On-demand re-print is the fix; blocking on the host is not.
+static bool g_board_ok = false, g_i2c_ok = false, g_sd_ok = false;
 
 // Inputs that read LOW when active. Encoder C and SW2 go to the DGND rail, and the footswitches
 // ground their signal line, so every one of these needs an internal pull-up.
@@ -189,6 +211,82 @@ static bool TestSd()
     return false;
 }
 
+// 128x64 with Font_6x8 gives 8 rows of 21 characters. Everything a person needs while the board is
+// running on 9 V with no console must fit here.
+static void OledLine(int row, const char* text)
+{
+    oled.SetCursor(0, (uint16_t)(row * 8));
+    oled.WriteString(text, Font_6x8, true);
+}
+
+static void OledReport(bool board_ok,
+                       bool i2c_ok,
+                       bool sd_ok,
+                       uint8_t sd_r1,
+                       bool sd_cd_level,
+                       uint32_t up_s)
+{
+    if(!oled_ok)
+        return;
+
+    char buf[24];
+    oled.Fill(false);
+
+    OledLine(0, "TONE TRIXTER SEED3");
+    OledLine(1, board_ok ? "board Seed3      OK" : "board WRONG    FAIL");
+
+    snprintf(buf, sizeof(buf), "i2c   0x%02X       %s", tt::kOledI2cAddr, i2c_ok ? "OK" : "--");
+    OledLine(2, buf);
+
+    snprintf(buf, sizeof(buf), "sd  CMD0=%02X %s", sd_r1,
+             sd_ok ? "     OK" : (sd_r1 == 0x00 ? " MISOLOW" : "  nocard"));
+    OledLine(3, buf);
+
+    snprintf(buf, sizeof(buf), "cd  %s", sd_cd_level ? "HIGH" : "LOW");
+    OledLine(4, buf);
+
+    // Live input state. '#' = pressed (LOW), '.' = idle. Reading the pins directly rather than the
+    // cached edge state, so the display always shows NOW.
+    snprintf(buf, sizeof(buf), "A%c B%c SW%c  by%c tu%c",
+             inputs[0].gpio.Read() ? '.' : '#',
+             inputs[1].gpio.Read() ? '.' : '#',
+             inputs[2].gpio.Read() ? '.' : '#',
+             inputs[3].gpio.Read() ? '.' : '#',
+             inputs[4].gpio.Read() ? '.' : '#');
+    OledLine(5, buf);
+
+    // ⚠ The board cannot measure its own rail without a divider to a spare ADC pin, so this is a
+    // REMINDER, not a measurement. On USB the rail sits near 4.9 V and the op-amp daughter is out
+    // of common-mode spec -- audio results taken there are invalid. See the note on TtOled.
+    OledLine(6, "audio: 9V JACK only");
+
+    snprintf(buf, sizeof(buf), "up %lus", (unsigned long)up_s);
+    OledLine(7, buf);
+
+    oled.Update();
+}
+
+static void PrintFullReport()
+{
+    hw.PrintLine("");
+    hw.PrintLine("--- Tone Trixter Seed3 bring-up (on demand) ---");
+    hw.PrintLine("  [1] board      : %s", g_board_ok ? "Daisy Seed3   PASS" : "WRONG         FAIL");
+    hw.PrintLine("  [2] i2c 0x%02X   : %s", tt::kOledI2cAddr,
+                 g_i2c_ok ? "FOUND         PASS" : "absent        FAIL");
+    hw.PrintLine("  [3] inputs     : A%c B%c SW%c  bypass%c tuner%c   (# = pressed)",
+                 inputs[0].gpio.Read() ? '.' : '#', inputs[1].gpio.Read() ? '.' : '#',
+                 inputs[2].gpio.Read() ? '.' : '#', inputs[3].gpio.Read() ? '.' : '#',
+                 inputs[4].gpio.Read() ? '.' : '#');
+    hw.PrintLine("  [4] microSD    : CMD0=0x%02X %s · card-detect %s", g_sd_r1,
+                 g_sd_ok ? "PASS" : (g_sd_r1 == 0x00 ? "MISO STUCK LOW" : "no card"),
+                 g_sd_cd ? "HIGH" : "LOW");
+    hw.PrintLine("  display        : %s", oled_ok ? "initialised" : "not running");
+    hw.PrintLine("  ⚠ audio tests need the 9 V JACK. On USB the rail sits ~4.9 V and the");
+    hw.PrintLine("    op-amp daughter is outside its common-mode range.");
+    hw.PrintLine("  hold encoder switch 2 s -> DFU, then: make flash");
+    hw.PrintLine("-----------------------------------------------");
+}
+
 int main(void)
 {
     hw.Init();
@@ -223,6 +321,7 @@ int main(void)
     hw.PrintLine("[1] board identity");
     bool board_ok = CheckBoard();
     hw.PrintLine("  %s", board_ok ? "PASS" : "FAIL -- expected Daisy Seed3");
+    g_board_ok = board_ok;
     failures += board_ok ? 0 : 1;
 
     hw.PrintLine("");
@@ -260,7 +359,24 @@ int main(void)
     else
         i2c_ok = ScanI2c(i2c);
     hw.PrintLine("  %s", i2c_ok ? "PASS" : "FAIL");
+    g_i2c_ok = i2c_ok;
     failures += i2c_ok ? 0 : 1;
+
+    if(i2c_ok)
+    {
+        TtOled::Config ocfg;
+        ocfg.driver_config.transport_config.i2c_address        = tt::kOledI2cAddr;
+        ocfg.driver_config.transport_config.i2c_config.periph  = I2CHandle::Config::Peripheral::I2C_1;
+        ocfg.driver_config.transport_config.i2c_config.speed   = I2CHandle::Config::Speed::I2C_400KHZ;
+        ocfg.driver_config.transport_config.i2c_config.mode    = I2CHandle::Config::Mode::I2C_MASTER;
+        ocfg.driver_config.transport_config.i2c_config.pin_config.scl = tt::P(tt::kOledScl);
+        ocfg.driver_config.transport_config.i2c_config.pin_config.sda = tt::P(tt::kOledSda);
+        oled.Init(ocfg);
+        oled.Fill(false);
+        oled.Update();
+        oled_ok = true;
+        hw.PrintLine("  display initialised");
+    }
 
     hw.PrintLine("");
     hw.PrintLine("[3] digital inputs -- all active LOW, internal pull-ups");
@@ -290,6 +406,7 @@ int main(void)
     hw.PrintLine("[4] microSD -- bit-banged SPI, CMD0");
     bool sd_ok = TestSd();
     hw.PrintLine("  %s", sd_ok ? "PASS" : "FAIL (expected until the card + module are in)");
+    g_sd_ok = sd_ok;
     failures += sd_ok ? 0 : 1;
 
     hw.PrintLine("");
@@ -347,6 +464,68 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
+        }
+
+        // ---- HOLD THE ENCODER SWITCH FOR 2 s TO ENTER DFU ----
+        //
+        // ⚠ This is not just convenience. The Daisy is UNDER-MOUNTED on the main board, so its BOOT
+        // and RESET buttons face the perfboard and may be unreachable -- in which case this is the
+        // only way to flash without unseating the module.
+        //
+        // A 2 s hold with a visible countdown, on a control nothing else uses at this stage, so it
+        // cannot fire by accident. Jumps to the STM32 ROM bootloader; `make program-dfu` then works
+        // with no button-press dance at all.
+        static uint32_t sw_down_at = 0;
+        bool            sw_held    = !inputs[2].gpio.Read();   // encoder SW, active low
+        if(sw_held)
+        {
+            if(sw_down_at == 0)
+                sw_down_at = t;
+            uint32_t held = t - sw_down_at;
+            if(held >= 2000)
+            {
+                if(oled_ok)
+                {
+                    oled.Fill(false);
+                    OledLine(2, "  ENTERING DFU");
+                    OledLine(4, "  flash now:");
+                    OledLine(5, "  make program-dfu");
+                    oled.Update();
+                }
+                hw.PrintLine("Entering DFU bootloader -- run: make program-dfu");
+                System::Delay(400);
+                System::ResetToBootloader(System::BootloaderMode::STM);
+            }
+            else if(oled_ok && held > 400)
+            {
+                char b[24];
+                snprintf(b, sizeof(b), "  DFU in %lu.%lus",
+                         (unsigned long)((2000 - held) / 1000),
+                         (unsigned long)(((2000 - held) % 1000) / 100));
+                oled.Fill(false);
+                OledLine(3, b);
+                OledLine(5, "  release to cancel");
+                oled.Update();
+                System::Delay(60);
+                continue;                       // hold the countdown on screen
+            }
+        }
+        else
+        {
+            // Short press (< 2 s) re-prints the full report. The boot report is usually lost to CDC
+            // enumeration, so this is how a person actually reads the detail.
+            if(sw_down_at != 0 && (t - sw_down_at) < 2000)
+                PrintFullReport();
+            sw_down_at = 0;
+        }
+
+        // Refresh the screen twice a second -- fast enough to feel live when pressing a switch,
+        // slow enough that the I2C traffic is not sitting on top of a high-Z audio input.
+        static uint32_t last_oled = 0;
+        if(t - last_oled >= 500)
+        {
+            last_oled = t;
+            OledReport(board_ok, i2c_ok, sd_ok, g_sd_r1, g_sd_cd, t / 1000);
         }
 
         if(t - last_blink >= 1000)
