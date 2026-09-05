@@ -101,6 +101,31 @@ reports pass/fail on its own, so a failure points at a specific joint:
 ⚠ The encoder is quadrature: one detent moves **both** A and B. Seeing only one is the signature of
 a single bad joint, which is why edges are reported raw rather than decoded at this stage.
 
+### ⚠ Never busy-wait in an idle loop — it cooks the chip
+
+**`System::Delay()` is `HAL_Delay()`, which BUSY-WAITS.** It burns exactly as much power as a tight
+loop and reduces nothing. Use **`__WFI()`** to sleep the core until the next interrupt; libDaisy
+defines `SysTick_Handler()` at 1 kHz (`sys/system.cpp`), so there is always a wake source at most
+1 ms away. ⚠ Without a periodic interrupt `__WFI()` would hang.
+
+**Measured on the 2026-09-05 bring-up**, Seed3 standalone, doing nothing but polling five GPIOs:
+
+| State | STM32H750 temperature |
+|---|---|
+| `System::Delay(1)` in the loop | **painful to touch** on sustained contact |
+| `__WFI()` in the loop | **slightly warm** |
+| Bootloader (DFU) | cool |
+
+The bootloader comparison is what proved it was the application rather than the board — the same
+single-variable discipline the bench sessions use.
+
+⚠ `__WFI()` idles the **core only**. PLLs, peripherals and the 64 MB SDRAM that `DaisySeed::Init()`
+brings up unconditionally keep running, which is why "slightly warm" rather than cool. Note also
+that `Init()` defaults to **400 MHz**, not boost's 480 — there is no easy clock win to be had.
+
+⚠ Worth remembering when the DSP chain lands: the core will then be genuinely busy, so the thermal
+headroom this bought is headroom that gets spent.
+
 **Do not copy the RP2350 debug setup.** The Pico build's `openocd.cfg` carries a `gdb-attach` hook
 that resumes core1, working around core1 freezing in `__wfe()` when a probe attaches. The H750 is
 single-core; that whole problem and its workaround do not apply here.

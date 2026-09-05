@@ -199,6 +199,21 @@ int main(void)
             led        = !led;
             hw.SetLed(led);
         }
-        System::Delay(1);
+
+        // ⚠ Sleep the core until the next interrupt instead of spinning.
+        //
+        // System::Delay() is HAL_Delay(), which BUSY-WAITS -- it burns the same power as a tight
+        // loop and reduces nothing. Polling five GPIOs does not need a 480 MHz Cortex-M7 running
+        // flat out, and on the 2026-09-05 bring-up the STM32 ran hot enough to be painful to touch
+        // with the board doing nothing else.
+        //
+        // __WFI() is safe here because libDaisy defines SysTick_Handler() (sys/system.cpp) calling
+        // HAL_IncTick() at 1 kHz, so there is always a wake source at most 1 ms away. Without a
+        // periodic interrupt this would hang.
+        //
+        // ⚠ This only idles the CORE. PLLs, peripherals and the 64 MB SDRAM that DaisySeed::Init()
+        // brings up unconditionally all keep running -- so if the chip is still very hot after
+        // this, the remaining heat is not the busy loop and needs a different explanation.
+        __WFI();
     }
 }
