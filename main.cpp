@@ -1307,13 +1307,13 @@ int main(void)
         // the menu sluggish and starved backing_service(). The menu now repaints the instant the
         // encoder moves -- which feels FASTER than the old 100 ms timer while doing far less work.
         // The home screen still ticks slowly because its meters genuinely change on their own.
-        // ⚠ Event-driven BUT rate-limited. A full flush is ~25 ms of I2C even batched, so redrawing
-        // on every detent means a fast turn queues flushes back to back and the loop appears to
-        // hang mid-turn. A 50 ms floor coalesces a spin into a few frames while still repainting
-        // within a detent's worth of time -- responsive without saturating the bus.
+        // ⚠ Event-driven and lightly rate-limited. A FULL flush is ~24 ms of I2C (measured), which
+        // is why this was 50 ms. Now that oled_flush() sends only the pages whose content changed,
+        // a menu move costs ~6 ms and the floor can come down to 12 ms -- the screen keeps up with
+        // the knob instead of trailing it.
         if(g_in_menu)
         {
-            if(g_oled_dirty && (t - last_oled) >= 50)
+            if(g_oled_dirty && (t - last_oled) >= 12)   // ⚠ was 50 -- affordable now the flush is partial
             {
                 g_oled_dirty = false;
                 last_oled    = t;

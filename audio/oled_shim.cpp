@@ -36,6 +36,15 @@ static bool      g_up   = false;
 // so a flush is a straight memcpy rather than a transpose.
 static uint8_t g_fb[kW * kPages];
 
+// ⚠ Shadow of what the PANEL actually holds, so a flush sends only the pages whose content really
+// changed. menu_render() clears and redraws the whole framebuffer every time, so "was it written"
+// is useless as a dirty test -- everything is. Comparing against what was last SENT is the only
+// thing that distinguishes a moved menu row from a redraw of identical pixels.
+//
+// Menu navigation typically changes one or two rows: 2 pages instead of 8, so ~6 ms instead of 24.
+static uint8_t g_shadow[kW * kPages];
+static bool    g_shadow_valid = false;
+
 // ⚠ SH1106 is NOT an SSD1306: its RAM is 132 columns wide and the visible 128 are centred, so every
 // page write starts at column 2. Getting this wrong shifts the image by two pixels and wraps the
 // right-hand edge around to the left.
@@ -89,17 +98,23 @@ void oled_flush(void)
     if(!g_up)
         return;
 
-    // ⚠ One transaction per PAGE. This is the whole point of the file -- see the header comment.
+    // ⚠ One transaction per PAGE, and only for pages that actually changed.
     static uint8_t line[1 + kW];
     line[0] = 0x40;                       // data control byte, then 128 bytes of pixels
     for(int p = 0; p < kPages; p++)
     {
+        const uint8_t* src = &g_fb[p * kW];
+        if(g_shadow_valid && memcmp(src, &g_shadow[p * kW], kW) == 0)
+            continue;                     // identical to what the panel already shows
+
         Cmd(0xB0 | p);                                    // page address
         Cmd(0x00 | (kColOffset & 0x0F));                  // column low nibble
         Cmd(0x10 | (kColOffset >> 4));                    // column high nibble
-        memcpy(&line[1], &g_fb[p * kW], kW);
+        memcpy(&line[1], src, kW);
         g_i2c.TransmitBlocking(g_addr, line, sizeof(line), 100);
+        memcpy(&g_shadow[p * kW], src, kW);
     }
+    g_shadow_valid = true;
 }
 
 static void PixelSet(int x, int y, bool on)
