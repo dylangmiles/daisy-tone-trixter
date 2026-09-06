@@ -122,6 +122,13 @@ static Encoder g_enc;
 static volatile bool g_tuner_on = false;
 static bool          g_gr_on    = true;    // GR band on the home screen
 static bool          g_in_menu  = false;
+
+// ⚠ The menu times out back to the home screen. A pedal left sitting in a settings screen shows
+// nothing a player needs mid-song -- no level, no preset, no clip indicator -- and the one moment
+// you would notice that is the moment you cannot do anything about it. Any encoder activity
+// restarts the clock, so it only fires when the menu has genuinely been abandoned.
+static constexpr uint32_t kMenuIdleMs = 5000;
+static uint32_t           g_menu_at   = 0;
 static bool          g_oled_dirty = true;
 
 // ⚠ TIMING INSTRUMENTATION. Several rounds of guessing at "the menu is stuck" produced fixes that
@@ -947,16 +954,30 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "help") == 0)
     {
         hw.PrintLine("commands:");
+        // ⚠ EVERY board-level command belongs here. A diagnostic nobody can find is a diagnostic
+        // that does not exist -- and this list is the only place they are discoverable, since the
+        // boot report is routinely lost to CDC enumeration.
+        hw.PrintLine("  help              this list");
         hw.PrintLine("  status            board + audio + SD report");
+        hw.PrintLine("  times             worst-case loop timings + cpu, then RESET");
+        hw.PrintLine("  dfu               reboot to the bootloader");
+        hw.PrintLine(" -- presets / audio --");
         hw.PrintLine("  presets           list presets");
         hw.PrintLine("  preset <n|name>   select preset (loads its IR)");
         hw.PrintLine("  bypass on|off     chain bypass");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
+        hw.PrintLine(" -- backing tracks --");
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
         hw.PrintLine("  bklevel <0..2>    backing level");
-        hw.PrintLine("  dfu               reboot to the bootloader");
+        hw.PrintLine("  bk stat           ring %, underruns, service vs budget");
+        hw.PrintLine("  bk bench          card read speed (audio WILL glitch)");
+        hw.PrintLine(" -- encoder diagnostics --");
+        hw.PrintLine("  enc               counts, raw A/B, rest state, then reset");
+        hw.PrintLine("  enc on|off        print each detent as it is banked");
+        hw.PrintLine("  encwatch on|off   print A/B on every change (finds a dry joint)");
+        hw.PrintLine("  encdet 2|4        quarter steps per detent (4 = full cycle)");
         hw.PrintLine("  ---- and every dsp_chain command ----");
         dsp_chain_command("?");
         return;
@@ -1034,7 +1055,13 @@ static void HandleCommand(const char* line)
                      (unsigned long)g_t_flush, (unsigned long)g_t_render,
                      (unsigned long)g_t_service, (unsigned long)g_t_loop,
                      (unsigned long)g_t_period, (unsigned long)g_t_wraps);
+        hw.PrintLine("cpu: %d%% avg  %d%% peak",
+                     (int)(g_cpu_avg + 0.5f), (int)(g_cpu_pk + 0.5f));
         g_t_flush = g_t_render = g_t_service = g_t_loop = g_t_period = g_t_wraps = 0;
+        // ⚠ Reset the CPU PEAK too, so it can be armed before a hard strum. A peak held since boot
+        // answers "what was the worst ever", which is not the question when you are testing a
+        // change -- and it never comes back down to tell you the change helped.
+        g_cpu_pk = 0.f;
         hw.PrintLine("(reset)");
         return;
     }
@@ -1603,6 +1630,7 @@ int main(void)
             // because opposite detents cancelled inside one batch before anything was applied.
             if(g_in_menu)
             {
+                g_menu_at = System::GetNow();      // activity: restart the idle timeout
                 int dir   = inc > 0 ? 1 : -1;
                 int steps = inc > 0 ? inc : -inc;
                 if(steps > 16)
@@ -1667,6 +1695,7 @@ int main(void)
             // -- the report was a convenience on top of it, not the only route to the information.
             if(sw_down_at != 0 && (t - sw_down_at) < 2000)
             {
+                g_menu_at = t;
                 if(!g_in_menu)
                 {
                     menu_open();
@@ -1696,6 +1725,15 @@ int main(void)
         // is why this was 50 ms. Now that oled_flush() sends only the pages whose content changed,
         // a menu move costs ~6 ms and the floor can come down to 12 ms -- the screen keeps up with
         // the knob instead of trailing it.
+        // ⚠ Idle timeout. Checked here rather than inside the render branch so it fires even when
+        // nothing has been marked dirty -- an abandoned menu is precisely the case where nothing is
+        // changing, so hanging the check off a redraw would mean it never ran.
+        if(g_in_menu && (uint32_t)(t - g_menu_at) >= kMenuIdleMs)
+        {
+            g_in_menu    = false;
+            g_oled_dirty = true;
+        }
+
         if(g_in_menu)
         {
             if(g_oled_dirty && (t - last_oled) >= 12)   // ⚠ was 50 -- affordable now the flush is partial
