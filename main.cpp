@@ -245,6 +245,29 @@ static uint32_t g_preset_moved_at = 0;
 // duration, not an edge, and Pressed() is now debounced at the callback's steady rate too.
 static volatile int32_t g_enc_delta = 0;
 
+// ⚠ THE ENCODER IS SAMPLED BY A 10 kHz TIMER, NOT BY THE AUDIO CALLBACK.
+//
+// The callback's 750 Hz is a 1.33 ms sample period, and a brisk flick of the wrist takes a PEC11R
+// through a whole 11 -> 01 -> 00 -> 10 -> 11 cycle in less than that. When every intermediate state
+// falls between two samples the detent is invisible: no counts, no evidence, nothing to decode.
+// Measured 2026-09-06 -- with the decode finally correct (one count per detent, right direction,
+// no over-counting) whole clicks still produced no line at all.
+//
+// TIM4 at 10 kHz gives 13 samples across a 1.33 ms window instead of one. It is unused by libDaisy
+// (only PWMHandle touches TIM3/4/5) and costs a handful of GPIO reads per tick.
+static TimerHandle g_enc_tim;
+
+static void EncTick(void*)
+{
+    int32_t d = EncoderPoll();
+    if(d != 0)
+    {
+        g_enc_delta += d;
+        g_enc_total += d;
+        g_enc_evts++;
+    }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Terminal command interface.
 //
@@ -350,14 +373,8 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_peak = pk;
 
     // Encoder, at the callback's steady rate -- see g_enc_delta.
-    g_enc.Debounce();          // ⚠ for the SWITCH only -- see EncoderPoll()
-    int32_t d = EncoderPoll();
-    if(d != 0)
-    {
-        g_enc_delta += d;
-        g_enc_total += d;
-        g_enc_evts++;
-    }
+    // ⚠ The SWITCH only. A/B are sampled by TIM4 at 10 kHz -- see EncTick().
+    g_enc.Debounce();
 
     // Copy for the tuner -- no analysis here. See g_tun_buf.
     if(g_tuner_on)
@@ -1046,6 +1063,29 @@ int main(void)
     g_q_rest = (uint8_t)((g_enc_a.Read() ? 2 : 0) | (g_enc_b.Read() ? 1 : 0));
     g_q_prev = g_q_rest;
     hw.PrintLine("  encoder rest state A/B = %d%d", (g_q_rest >> 1) & 1, g_q_rest & 1);
+
+    // ⚠ 10 kHz sampler. Prescaler is 0 out of Init(), so GetFreq() reports the raw 2x-PClk1 tick
+    // rate; dividing that down to 1 MHz and reloading every 100 ticks lands on 10 kHz whatever the
+    // core clock is, rather than hard-coding a number that a boost-clock change would silently
+    // falsify.
+    TimerHandle::Config tcfg;
+    tcfg.periph     = TimerHandle::Config::Peripheral::TIM_4;
+    tcfg.dir        = TimerHandle::Config::CounterDir::UP;
+    tcfg.period     = 0xffff;
+    tcfg.enable_irq = true;
+    if(g_enc_tim.Init(tcfg) == TimerHandle::Result::OK)
+    {
+        const uint32_t base = g_enc_tim.GetFreq();          // ticks/s with PSC = 0
+        g_enc_tim.SetPrescaler((base / 1000000u) - 1u);     // -> 1 MHz
+        g_enc_tim.SetPeriod(99);                            // -> 10 kHz
+        g_enc_tim.SetCallback(EncTick, nullptr);
+        g_enc_tim.Start();
+        hw.PrintLine("  encoder sampler: TIM4 @ 10 kHz (base %lu Hz)", (unsigned long)base);
+    }
+    else
+    {
+        hw.PrintLine("  ⚠ encoder sampler FAILED to init -- detents will be missed");
+    }
     tuner_init(48000.f);
 
     // ⚠ Init ALL pins, then settle, THEN read. Reading straight after Init() returns the pin's
