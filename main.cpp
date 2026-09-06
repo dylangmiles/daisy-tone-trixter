@@ -124,6 +124,15 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 static bool          g_in_menu  = false;
 static bool          g_oled_dirty = true;
 
+// ⚠ TIMING INSTRUMENTATION. Several rounds of guessing at "the menu is stuck" produced fixes that
+// each helped a little and none of which settled it. These record the WORST case seen for each
+// stage of the foreground loop, so the next report says which one actually costs the time instead
+// of us both reasoning about it. Reset with the `times` command.
+static volatile uint32_t g_t_flush   = 0;   // us, worst oled_flush()
+static volatile uint32_t g_t_render  = 0;   // us, worst menu_render()
+static volatile uint32_t g_t_service = 0;   // us, worst backing_service()
+static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration
+
 // ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
 //
 // SelectPreset() reads a WAV off the SD card and re-initialises the convolver -- hundreds of
@@ -709,6 +718,15 @@ static void HandleCommand(const char* line)
         return;
     }
     if(strcmp(line, "status") == 0)  { PrintFullReport(); return; }
+    if(strcmp(line, "times") == 0)
+    {
+        hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu",
+                     (unsigned long)g_t_flush, (unsigned long)g_t_render,
+                     (unsigned long)g_t_service, (unsigned long)g_t_loop);
+        g_t_flush = g_t_render = g_t_service = g_t_loop = 0;
+        hw.PrintLine("(reset)");
+        return;
+    }
     if(strcmp(line, "dfu") == 0)
     {
         hw.PrintLine("rebooting to bootloader...");
@@ -1085,6 +1103,9 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
+            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu",
+                         (unsigned long)g_t_flush, (unsigned long)g_t_render,
+                         (unsigned long)g_t_service, (unsigned long)g_t_loop);
             hw.PrintLine("        audio: sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
                          (int)hw.AudioSampleRate(),
                          (unsigned long)g_cb_size,
@@ -1112,6 +1133,8 @@ int main(void)
             g_cmd_ready = false;
         }
 
+        const uint32_t loop_t0 = System::GetUs();
+
         // Commit a deferred preset change once the encoder has settled.
         if(g_preset_pending >= 0 && (t - g_preset_moved_at) >= kPresetSettleMs)
         {
@@ -1122,7 +1145,13 @@ int main(void)
             g_oled_dirty = true;
         }
 
-        backing_service();
+        {
+            uint32_t t0 = System::GetUs();
+            backing_service();
+            uint32_t d = System::GetUs() - t0;
+            if(d > g_t_service)
+                g_t_service = d;
+        }
 
         // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
         if(g_tuner_on)
@@ -1247,8 +1276,13 @@ int main(void)
             {
                 g_oled_dirty = false;
                 last_oled    = t;
+                uint32_t t0 = System::GetUs();
                 menu_render();
+                uint32_t t1 = System::GetUs();
                 oled_flush();
+                uint32_t t2 = System::GetUs();
+                if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
+                if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
             }
         }
         else if(g_oled_dirty || t - last_oled >= 500)
@@ -1284,6 +1318,11 @@ int main(void)
         // ⚠ REVISIT once the OLED is working. The serial console is only the primary interface
         // while there is no display; report to the screen instead and __WFI() becomes viable, which
         // matters because the DSP chain will spend the thermal headroom this would have bought.
+        {
+            uint32_t d = System::GetUs() - loop_t0;
+            if(d > g_t_loop)
+                g_t_loop = d;
+        }
         System::Delay(1);
     }
 }
