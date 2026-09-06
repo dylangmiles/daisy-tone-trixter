@@ -6,7 +6,25 @@ shared between them.
 
 ## Status
 
-**ALL DIGITAL PERIPHERALS VERIFIED ON HARDWARE (2026-09-05)**, on both USB and 9 V-jack power:
+**THE PEDAL IS PLAYING (2026-09-06).** Guitar in, DSP chain + SD-loaded IR, backing tracks, tuner,
+OLED menu — all running on hardware from the 9 V jack. It has stopped being a bring-up and is now an
+instrument being refined.
+
+### Measured headroom
+
+| Figure | Reading | Means |
+|---|---|---|
+| Audio CPU, bypass | **1 %** | metering + encoder debounce + copy — the floor |
+| Audio CPU, chain + 2048-tap IR | **16 % avg, 45 % peak** | ⚠ **the H750 carries the IR inline** — the Pico's Core-1 tail offload is not needed here, which had been an assumption |
+| Backing ring | **98–99 %, 0 underruns** | `SERVICE_BUDGET_US` (2000) vs `CHUNK_BYTES` (256) verified — the Pico's silent-2 % failure does **not** occur |
+| Encoder decode | **4 transitions per count** | one full quadrature cycle per detent, exactly right |
+| Foreground `w=` | **0** | timings are wrap-clean; a non-zero `w` is now a real stall |
+
+⚠ **Two different budgets, and only one is under pressure.** Audio has ~84 % spare. The FOREGROUND
+is the tight one — a full OLED flush is ~28 ms, and `svc=` peaks near 5.5 ms. That is why menu work
+felt tight while audio never glitched, and it is where the next optimisation belongs if any does.
+
+### Verified on hardware (2026-09-05 bring-up, still true)
 
 | Subsystem | Evidence |
 |---|---|
@@ -22,8 +40,32 @@ shared between them.
 `SW1` still works on D14. If that cut had failed, the `DC` strap would ground D14 and `SW` would read
 stuck LOW. Both halves of the D14 conflict confirmed by independent readings.
 
-**Remaining: the front-end daughter, and then the analogue path** — where it stops being a wiring
-exercise and becomes an audio one.
+### ⚠ Three faults hid behind one symptom, and the lesson is the point
+
+"Menu is sluggish" survived four rounds of display and timing fixes because it was **three separate
+faults stacked**: libDaisy's quadrature decoder cannot decode a PEC11R; the encoder was sampled at
+750 Hz from the audio callback, too slow to see a fast detent; and a leg broken during the build had
+a dry joint. Each fix changed the behaviour barely at all.
+
+⚠ **That pattern — every fix helps a little, nothing settles it — is itself the signal to stop
+fixing and start measuring.** What ended it was a *mechanical* test: pulling the shaft changed the
+electrical behaviour, and no software fault can do that. Run that test early on any intermittent.
+
+A second class showed up the same day: **numbers that were lying.** `%f` printed nothing because
+newlib-nano omits float conversion (`-u _printf_float` now in the Makefile), and `System::GetUs()`
+rolls over at ~21.47e6 rather than `2^32`, which was starving the backing track once every 21.5 s.
+⚠ On this platform, **a blank or absurd number is a build-flag or clock symptom before it is a logic
+bug**.
+
+### Open
+
+- **Rev D op-amp daughter** — still running rev C, 5.7 dB beyond its datasheet common-mode guarantee
+  at 8.86 V.
+- **Front-end SNR session** — the question the whole project turns on, and the Seed3's −120 dB codec
+  floor makes the buffer the determining factor. See the roadmap memory.
+- **Enclosure** — microSD panel mounting; the enclosure-ground header is fit-when-you-get-there.
+- Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
+  They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
 ## Related repos
 
