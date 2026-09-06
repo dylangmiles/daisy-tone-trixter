@@ -1181,14 +1181,25 @@ int main(void)
         g_enc_delta = 0;
         if(inc != 0)
         {
+            // ⚠ APPLY EVERY ACCUMULATED DETENT, not just one. The callback banks each detent into
+            // g_enc_delta at 750 Hz, but the foreground drains it far less often -- a flush alone is
+            // 24 ms. Collapsing a batch of 3 into a single step threw two thirds of the movement
+            // away, which felt like the menu ignoring the knob; forward-then-reverse was worst
+            // because opposite detents cancelled inside one batch before anything was applied.
             if(g_in_menu)
-                menu_event(inc > 0 ? 1 : -1, false);
+            {
+                int dir   = inc > 0 ? 1 : -1;
+                int steps = inc > 0 ? inc : -inc;
+                if(steps > 16)
+                    steps = 16;              // a spin should not queue unbounded work
+                for(int k = 0; k < steps; k++)
+                    menu_event(dir, false);
+            }
             else if(g_preset_count > 0)
             {
-                int nx = (g_preset_pending >= 0 ? g_preset_pending : g_preset_idx)
-                         + (inc > 0 ? 1 : -1);
-                if(nx < 0)               nx = g_preset_count - 1;
-                if(nx >= g_preset_count) nx = 0;
+                int nx = (g_preset_pending >= 0 ? g_preset_pending : g_preset_idx) + (int)inc;
+                while(nx < 0)                nx += g_preset_count;
+                while(nx >= g_preset_count)  nx -= g_preset_count;
                 g_preset_pending  = nx;
                 g_preset_moved_at = t;
             }
