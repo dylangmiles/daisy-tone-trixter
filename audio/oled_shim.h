@@ -14,8 +14,14 @@
 #define TT_OLED_SHIM_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
+// Bring the panel up. Takes a CONFIGURED I2CHandle -- the bus is already initialised and scanned by
+// the time the display is wanted, so the driver borrows it rather than re-initialising it.
+namespace daisy { class I2CHandle; }
+void tt_oled_init(daisy::I2CHandle i2c, uint8_t addr);
+
 extern "C" {
 #endif
 

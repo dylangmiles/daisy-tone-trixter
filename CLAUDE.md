@@ -188,6 +188,43 @@ the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from 
 which silently produced "3 presets, no IR" for a while. If the named boot preset is missing, fall
 back to the **first** rather than to none.
 
+## ⚠ We do NOT use libDaisy's OledDisplay
+
+`libDaisy`'s `SSD130xI2CTransport::SendData` sends **one blocking I²C transaction per byte**
+(`src/dev/oled_ssd130x.h`): **1024 transactions** for a 128×64 frame, each with address, control byte
+and ACKs — roughly **77 ms per full flush** at 400 kHz.
+
+Measured consequence (2026-09-06): with the menu redrawing at 100 ms the foreground loop was **~77 %
+blocked**, which starved `g_enc.Debounce()` (encoder missed clicks), starved `backing_service()`
+(backing track broke up), and made the menu itself sluggish. ⚠ The home screen redrew at 500 ms and
+was fine — that asymmetry is what pointed at the display rather than at any of the four subsystems
+that appeared broken.
+
+`audio/oled_shim.cpp` is our own SH1106 driver writing **a whole page per transaction**: 16
+transactions instead of 1024. ⚠ It also handles the **SH1106's 2-column offset** — its RAM is 132
+columns wide with the visible 128 centred, so a driver written for an SSD1306 shifts the image and
+wraps the right edge.
+
+⚠ **Redraw ON CHANGE, not on a timer.** Even batched, a full frame is real bus traffic. The menu now
+repaints the instant the encoder moves — which feels *faster* than the old 100 ms timer while doing
+far less work. Only the home screen still ticks, because its meters change on their own.
+
+## Terminal commands
+
+⚠ Restored from the RP2350 build. `dsp_chain_command()` was already ported and implements the whole
+stage/param language — it only ever needed a line of text delivered to it. Board-level commands sit
+in front of it in `HandleCommand()`.
+
+`help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
+`bk` · `bk <n>|off` · `bklevel <0..2>` · `dfu` — plus every `dsp_chain` command.
+
+⚠ Commands beat the encoder for anything diagnostic: **the output goes to the terminal anyway**, so
+having the request there keeps question and answer together, and a keyboard beats a rotary encoder
+for typing a parameter value.
+
+The USB RX callback runs in **interrupt context** and does the minimum — copy bytes into a line
+buffer, set a flag. Parsing happens in the foreground.
+
 ## The menu
 
 `menu.cpp` and `menu.h` ported **unchanged**. It only used three of the Pico OLED driver's

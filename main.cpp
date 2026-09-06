@@ -13,7 +13,6 @@
 // Watch:  screen /dev/tty.usbmodem* 115200   — or any serial terminal at 115200
 
 #include "daisy_seed.h"
-#include "dev/oled_sh1106.h"
 #include "board.h"
 
 // ⚠ NO extern "C" wrapper: dsp_chain.cpp compiles as C++ here, so both sides must agree on
@@ -36,6 +35,7 @@ extern const Diskio_drvTypeDef tt_sd_driver;
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 
 using namespace daisy;
 
@@ -50,10 +50,7 @@ static DaisySeed hw;
 // the 5 V build. Every audio result taken on USB power would be wrong, and wrong in a way that
 // looks like a front-end fault. The serial console only exists on USB, so it cannot be the way the
 // board reports during audio testing.
-using TtOled = OledDisplay<SH1106I2c128x64Driver>;
-void tt_oled_shim_bind(TtOled* d);   // audio/oled_shim.cpp
-static TtOled oled;
-static bool   oled_ok = false;
+static bool oled_ok = false;
 
 // Boot-check results, kept so a short press of the encoder switch can re-print them. ⚠ The boot
 // report itself is routinely LOST: StartLog(false) starts printing before the USB CDC device has
@@ -123,6 +120,51 @@ static Encoder g_enc;
 // EQ'd version of it. Gated behind g_tuner_on so its autocorrelation costs nothing when unused --
 // on the Pico the equivalent was a `tuner on/off` command for the same reason.
 static volatile bool g_tuner_on = false;
+static bool          g_gr_on    = true;    // GR band on the home screen
+static bool          g_in_menu  = false;
+static bool          g_oled_dirty = true;
+
+// ---------------------------------------------------------------------------------------------
+// Terminal command interface.
+//
+// ⚠ Restores the UART commands from the RP2350 build. dsp_chain_command() was already ported and
+// handles every stage/param command -- it only ever needed a line of text delivered to it. Commands
+// beat the encoder for anything diagnostic: the output goes to the terminal anyway, so having the
+// request there too keeps question and answer in one place, and a keyboard beats a rotary encoder
+// for typing a parameter value.
+//
+// The USB RX callback runs in interrupt context, so it does the minimum -- copy bytes into a line
+// buffer and set a flag. Everything else happens in the foreground.
+static char           g_cmd[96];
+static volatile int   g_cmd_len   = 0;
+static volatile bool  g_cmd_ready = false;
+
+static void UsbRx(uint8_t* buf, uint32_t* len)
+{
+    for(uint32_t i = 0; i < *len; i++)
+    {
+        char c = (char)buf[i];
+        if(c == '\r' || c == '\n')
+        {
+            if(g_cmd_len > 0)
+            {
+                g_cmd[g_cmd_len] = 0;
+                g_cmd_ready      = true;
+            }
+        }
+        else if(g_cmd_len < (int)sizeof(g_cmd) - 1 && !g_cmd_ready)
+        {
+            g_cmd[g_cmd_len++] = c;
+        }
+    }
+}
+
+// ⚠ TUNER RUNS IN THE FOREGROUND, NOT THE CALLBACK. Its autocorrelation is far too heavy for a
+// 64-sample audio block -- running it inline caused heavy clipping and dropouts (2026-09-06). The
+// callback only COPIES samples here, which is cheap; the foreground drains and analyses them.
+static float            g_tun_buf[512];
+static volatile int     g_tun_fill  = 0;
+static volatile bool    g_tun_ready = false;
 static TunerResult   g_tune     = {};
 
 // Convolver partitioning, same as the Pico. Head block matches the audio block size so the
@@ -169,8 +211,17 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     if(pk > g_peak)
         g_peak = pk;
 
-    if(g_tuner_on && tuner_feed(g_work, (int)size))
-        g_tune = tuner_result();
+    // Copy for the tuner -- no analysis here. See g_tun_buf.
+    if(g_tuner_on && !g_tun_ready)
+    {
+        int n = (int)size;
+        int f = g_tun_fill;
+        for(int i = 0; i < n && f < (int)(sizeof(g_tun_buf) / sizeof(float)); i++)
+            g_tun_buf[f++] = g_work[i];
+        g_tun_fill = f;
+        if(f >= (int)(sizeof(g_tun_buf) / sizeof(float)))
+            g_tun_ready = true;
+    }
 
     // IR first, then the chain -- same order as the Pico build.
     if(g_ir_active && dsp_chain_ir_enabled())
@@ -363,40 +414,47 @@ static bool TestSd()
 // running on 9 V with no console must fit here.
 static void OledLine(int row, const char* text)
 {
-    oled.SetCursor(0, (uint16_t)(row * 8));
-    oled.WriteString(text, Font_6x8, true);
+    oled_text(0, row * 8, text);
 }
 
-static void OledReport(bool board_ok,
-                       bool i2c_ok,
-                       bool sd_ok,
-                       uint8_t sd_r1,
-                       bool sd_cd_level,
-                       uint32_t up_s)
+// Home screen. ⚠ SETTINGS, not diagnostics -- the bring-up checks have served their purpose and
+// live in the terminal now. What a player needs at a glance is which preset and IR are live, whether
+// the chain is engaged, the input level, and gain reduction.
+static void OledHome(void)
 {
     if(!oled_ok)
         return;
 
     char buf[24];
-    oled.Fill(false);
+    oled_clear();
 
-    OledLine(0, "TONE TRIXTER SEED3");
-    OledLine(1, board_ok ? "board Seed3      OK" : "board WRONG    FAIL");
+    oled_text(0, 0, "Tone Trixter");
 
-    snprintf(buf, sizeof(buf), "i2c   0x%02X       %s", tt::kOledI2cAddr, i2c_ok ? "OK" : "--");
-    OledLine(2, buf);
+    snprintf(buf, sizeof(buf), "P %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
+    oled_text(0, 16, buf);
 
-    snprintf(buf, sizeof(buf), "sd  CMD0=%02X %s", sd_r1,
-             sd_ok ? "     OK" : (sd_r1 == 0x00 ? " MISOLOW" : "  nocard"));
-    OledLine(3, buf);
+    snprintf(buf, sizeof(buf), "IR %s", g_ir_active ? g_ir_name : "none");
+    oled_text(0, 24, buf);
 
-    snprintf(buf, sizeof(buf), "cd  %s", sd_cd_level ? "HIGH" : "LOW");
-    OledLine(4, buf);
+    oled_text(0, 32, g_dsp_bypass ? "BYPASSED" : "ENGAGED");
 
-    // Live input state. '#' = pressed (LOW), '.' = idle. Reading the pins directly rather than the
-    // cached edge state, so the display always shows NOW.
-    // Tuner display when armed, otherwise the input meter. ⚠ Tuning matters more than levels at
-    // the moment you are doing it, so it takes the line rather than being squeezed alongside.
+    // Input level, read-and-reset for a true peak: a body tap on a piezo is a transient and an
+    // averaged meter would simply miss it.
+    float pk = g_peak;
+    g_peak   = 0.f;
+    if(pk > 0.0002f)
+        snprintf(buf, sizeof(buf), "in %3d dBFS", (int)(20.f * log10f(pk)));
+    else
+        snprintf(buf, sizeof(buf), "in   --");
+    oled_text(0, 40, buf);
+
+    if(!g_dsp_bypass && g_gr_on)
+    {
+        float gr = dsp_chain_comp_gr_db();
+        snprintf(buf, sizeof(buf), "gr %4.1f dB", (double)(gr < -0.05f ? gr : 0.f));
+        oled_text(0, 48, buf);
+    }
+
     if(g_tuner_on)
     {
         if(g_tune.valid)
@@ -404,52 +462,10 @@ static void OledReport(bool board_ok,
                      g_tune.name, g_tune.octave, (double)g_tune.cents);
         else
             snprintf(buf, sizeof(buf), "TUNE  -- play --");
+        oled_text(0, 56, buf);
     }
-    else
-    {
-        snprintf(buf, sizeof(buf), "by%c tu%c  enc%c",
-                 inputs[0].gpio.Read() ? '.' : '#',
-                 inputs[1].gpio.Read() ? '.' : '#',
-                 g_enc.Pressed() ? '#' : '.');
-    }
-    OledLine(5, buf);
 
-    // Input level. Read-and-reset gives a true peak for the interval, not a decayed average --
-    // a body tap on a piezo is a transient, and an averaged meter would simply miss it.
-    float pk = g_peak;
-    g_peak   = 0.f;
-    if(pk > 0.0002f)
-    {
-        int db = (int)(20.f * log10f(pk));
-        snprintf(buf, sizeof(buf), "in %3ddBFS clip%lu", db, (unsigned long)g_clips);
-    }
-    else
-    {
-        snprintf(buf, sizeof(buf), "in   --    clip%lu", (unsigned long)g_clips);
-    }
-    // ⚠ Gain reduction shares this line rather than getting its own repaint. On the Pico the GR
-    // meter defaulted OFF because its extra I2C repaints coupled EMI into the high-Z input
-    // ([[project_home_gr_meter_crosstalk]]) -- folding it into the existing 2 Hz refresh adds no
-    // bus traffic at all, so it costs nothing to leave on.
-    if(!g_dsp_bypass)
-    {
-        float gr = dsp_chain_comp_gr_db();
-        if(gr < -0.2f)
-        {
-            char g[10];
-            snprintf(g, sizeof(g), " gr%-3.0f", (double)gr);
-            strncat(buf, g, sizeof(buf) - strlen(buf) - 1);
-        }
-    }
-    OledLine(6, buf);
-
-    snprintf(buf, sizeof(buf), "%s%s ir%s",
-             g_dsp_bypass ? "byp " : "ON  ",
-             g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-",
-             g_ir_active ? "*" : "-");
-    OledLine(7, buf);
-
-    oled.Update();
+    oled_flush();
 }
 
 static bool LoadIr(const char* path)
@@ -527,8 +543,7 @@ static void SelectPreset(int idx)
 
 // ---------------------------------------------------------------------------------------------
 // app_hooks.h — the bridge menu.cpp calls into. State lives here; the menu only drives it.
-static bool g_gr_on   = true;
-static bool g_in_menu = false;
+
 
 extern "C" {
 
@@ -541,7 +556,15 @@ void        app_preset_load(int i)      { SelectPreset(i); }
 // IR list the menu could pick from; this build loads whatever IR the chosen preset names. Reported
 // as a single-entry list so the menu has something coherent to show rather than an empty picker.
 int         app_ir_count(void)          { return 1; }
-const char* app_ir_name(int i)          { (void)i; return g_ir_active ? g_ir_name : "none"; }
+const char* app_ir_name(int i)
+{
+    // ⚠ Reports the IR of the CURRENT preset, live. Returning a cached name meant the menu's IR row
+    // never changed when the preset did (2026-09-06) -- it looked like preset loading was broken
+    // when in fact only the display was stale.
+    (void)i;
+    const char* ir = dsp_chain_preset_ir(g_preset_idx);
+    return (ir && *ir) ? ir : "none";
+}
 int         app_ir_current(void)        { return 0; }
 void        app_ir_select(int i)        { (void)i; }
 
@@ -557,6 +580,100 @@ int         app_pga_db(void)            { return 0; }
 void        app_pga_set_nib(int n)      { (void)n; }
 
 } // extern "C"
+
+static void PrintFullReport();
+
+static void HandleCommand(const char* line)
+{
+    if(!line || !*line)
+        return;
+
+    if(strcmp(line, "help") == 0)
+    {
+        hw.PrintLine("commands:");
+        hw.PrintLine("  status            board + audio + SD report");
+        hw.PrintLine("  presets           list presets");
+        hw.PrintLine("  preset <n|name>   select preset (loads its IR)");
+        hw.PrintLine("  bypass on|off     chain bypass");
+        hw.PrintLine("  tuner on|off      tuner");
+        hw.PrintLine("  gr on|off         GR band on the home screen");
+        hw.PrintLine("  bk                list backing tracks");
+        hw.PrintLine("  bk <n>|off        play / stop a backing track");
+        hw.PrintLine("  bklevel <0..2>    backing level");
+        hw.PrintLine("  dfu               reboot to the bootloader");
+        hw.PrintLine("  ---- and every dsp_chain command ----");
+        dsp_chain_command("?");
+        return;
+    }
+    if(strcmp(line, "status") == 0)  { PrintFullReport(); return; }
+    if(strcmp(line, "dfu") == 0)
+    {
+        hw.PrintLine("rebooting to bootloader...");
+        System::Delay(200);
+        System::ResetToBootloader(System::BootloaderMode::DAISY);
+        return;
+    }
+    if(strcmp(line, "presets") == 0)
+    {
+        for(int i = 0; i < g_preset_count; i++)
+            hw.PrintLine("  %c%d %-12s ir=%s", i == g_preset_idx ? '*' : ' ', i,
+                         dsp_chain_preset_name(i), dsp_chain_preset_ir(i));
+        return;
+    }
+    if(strncmp(line, "preset ", 7) == 0)
+    {
+        const char* a = line + 7;
+        int         i = (a[0] >= '0' && a[0] <= '9') ? atoi(a) : dsp_chain_find_preset(a);
+        if(i < 0 || i >= g_preset_count)
+            hw.PrintLine("? no preset '%s'", a);
+        else
+        {
+            SelectPreset(i);
+            g_oled_dirty = true;
+        }
+        return;
+    }
+    if(strncmp(line, "tuner ", 6) == 0)
+    {
+        g_tuner_on   = (strcmp(line + 6, "on") == 0);
+        g_oled_dirty = true;
+        hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
+        return;
+    }
+    if(strncmp(line, "gr ", 3) == 0)
+    {
+        g_gr_on      = (strcmp(line + 3, "on") == 0);
+        g_oled_dirty = true;
+        hw.PrintLine("gr=%s", g_gr_on ? "on" : "off");
+        return;
+    }
+    if(strcmp(line, "bk") == 0)
+    {
+        hw.PrintLine("  %d track(s), playing=%d", backing_count(), backing_current());
+        for(int i = 0; i < backing_count(); i++)
+            hw.PrintLine("  %c%d %s", i == backing_current() ? '*' : ' ', i, backing_name(i));
+        return;
+    }
+    if(strncmp(line, "bk ", 3) == 0)
+    {
+        if(strcmp(line + 3, "off") == 0) { backing_stop(); hw.PrintLine("bk off"); }
+        else                             { backing_play(atoi(line + 3)); }
+        return;
+    }
+    if(strncmp(line, "bklevel ", 8) == 0)
+    {
+        backing_set_level((float)atof(line + 8));
+        hw.PrintLine("bklevel=%.2f", (double)backing_level());
+        return;
+    }
+
+    // ⚠ Everything else goes to dsp_chain_command, which already implements the full stage/param
+    // language from the Pico build -- "bypass on", "eq.low 3", "comp off" and so on. It returns
+    // false for anything it does not recognise.
+    if(!dsp_chain_command(line))
+        hw.PrintLine("? '%s' -- try 'help'", line);
+    g_oled_dirty = true;
+}
 
 static void PrintFullReport()
 {
@@ -596,6 +713,7 @@ int main(void)
     // The boot report is instead REPEATED periodically in the monitor loop, so a terminal attached
     // at any time still sees the results. Better than blocking: the board always runs.
     hw.StartLog(false);
+    hw.usb_handle.SetReceiveCallback(UsbRx, UsbHandle::FS_INTERNAL);
 
     // Heartbeat immediately, before anything that could block or fail, so the LED proves the board
     // booted even with no console attached at all.
@@ -661,21 +779,15 @@ int main(void)
 
     if(i2c_ok)
     {
-        TtOled::Config ocfg;
-        ocfg.driver_config.transport_config.i2c_address        = tt::kOledI2cAddr;
-        ocfg.driver_config.transport_config.i2c_config.periph  = I2CHandle::Config::Peripheral::I2C_1;
-        ocfg.driver_config.transport_config.i2c_config.speed   = I2CHandle::Config::Speed::I2C_400KHZ;
-        ocfg.driver_config.transport_config.i2c_config.mode    = I2CHandle::Config::Mode::I2C_MASTER;
-        ocfg.driver_config.transport_config.i2c_config.pin_config.scl = tt::P(tt::kOledScl);
-        ocfg.driver_config.transport_config.i2c_config.pin_config.sda = tt::P(tt::kOledSda);
-        oled.Init(ocfg);
-        oled.Fill(false);
-        oled.Update();
+        // ⚠ Our own SH1106 driver, not libDaisy's -- see audio/oled_shim.cpp for why (libDaisy
+        // sends one I2C transaction PER BYTE, ~77 ms a frame, which starved the whole foreground
+        // loop). It borrows the already-configured bus rather than re-initialising it.
+        tt_oled_init(i2c, tt::kOledI2cAddr);
         oled_ok = true;
-        tt_oled_shim_bind(&oled);
         menu_init();
-        hw.PrintLine("  display initialised");
+        hw.PrintLine("  display initialised (batched page writes)");
     }
+
 
     hw.PrintLine("");
     hw.PrintLine("[3] digital inputs -- all active LOW, internal pull-ups");
@@ -832,13 +944,15 @@ int main(void)
                 if(i == 0 && !now)          // bypass footswitch
                 {
                     g_dsp_bypass = !g_dsp_bypass;
+                    g_oled_dirty = true;
                     hw.PrintLine("  >> DSP %s%s",
                                  g_dsp_bypass ? "BYPASSED" : "ENGAGED",
                                  (!g_dsp_bypass && g_ir_active) ? " (with IR)" : "");
                 }
                 if(i == 1 && !now)          // tuner footswitch -- its actual job now
                 {
-                    g_tuner_on = !g_tuner_on;
+                    g_tuner_on   = !g_tuner_on;
+                    g_oled_dirty = true;
                     hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
                 }
             }
@@ -888,7 +1002,23 @@ int main(void)
         // with no button-press dance at all.
         // ⚠ Refill the backing ring from the foreground, never the audio callback: it reads the SD
         // card, which blocks. SERVICE_BUDGET_US caps how long it may spend per pass.
+        if(g_cmd_ready)
+        {
+            HandleCommand(g_cmd);
+            g_cmd_len   = 0;
+            g_cmd_ready = false;
+        }
+
         backing_service();
+
+        // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
+        if(g_tun_ready)
+        {
+            if(tuner_feed(g_tun_buf, (int)(sizeof(g_tun_buf) / sizeof(float))))
+                g_tune = tuner_result();
+            g_tun_fill  = 0;
+            g_tun_ready = false;
+        }
 
         g_enc.Debounce();
 
@@ -896,9 +1026,10 @@ int main(void)
         // footswitch to do its actual job -- cycling presets on a footswitch was always a stopgap.
         int32_t inc = g_enc.Increment();
         if(inc != 0 && !g_in_menu && g_preset_count > 0)
-            SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1));
+            { SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1)); g_oled_dirty = true; }
         else if(inc != 0 && g_in_menu)
             menu_event((int)inc, false);
+            g_oled_dirty = true;
 
         static uint32_t sw_down_at = 0;
         bool            sw_held    = g_enc.Pressed();
@@ -911,11 +1042,11 @@ int main(void)
             {
                 if(oled_ok)
                 {
-                    oled.Fill(false);
+                    oled_clear();
                     OledLine(2, "  ENTERING DFU");
                     OledLine(4, "  flash now:");
                     OledLine(5, "  make program-dfu");
-                    oled.Update();
+                    oled_flush();
                 }
                 hw.PrintLine("Entering DFU bootloader -- run: make program-dfu");
                 System::Delay(400);
@@ -929,10 +1060,10 @@ int main(void)
                 snprintf(b, sizeof(b), "  DFU in %lu.%lus",
                          (unsigned long)((2000 - held) / 1000),
                          (unsigned long)(((2000 - held) % 1000) / 100));
-                oled.Fill(false);
+                oled_clear();
                 OledLine(3, b);
                 OledLine(5, "  release to cancel");
-                oled.Update();
+                oled_flush();
                 System::Delay(60);
                 continue;                       // hold the countdown on screen
             }
@@ -946,18 +1077,16 @@ int main(void)
             // -- the report was a convenience on top of it, not the only route to the information.
             if(sw_down_at != 0 && (t - sw_down_at) < 2000)
             {
-                // ⚠ Print the report on every menu transition. It has to stay reachable somehow --
-                // it was the output that diagnosed the SD/preset and audio faults -- and a menu
-                // open/close is a deliberate act, so it never spams the log.
-                PrintFullReport();
                 if(!g_in_menu)
                 {
                     menu_open();
+                    g_oled_dirty = true;
                     g_in_menu = true;
                 }
                 else
                 {
                     menu_event(0, true);
+                    g_oled_dirty = true;
                     if(menu_take_home())
                         g_in_menu = false;
                 }
@@ -968,21 +1097,26 @@ int main(void)
         // Refresh the screen twice a second -- fast enough to feel live when pressing a switch,
         // slow enough that the I2C traffic is not sitting on top of a high-Z audio input.
         static uint32_t last_oled = 0;
-        // ⚠ The menu redraws FASTER than the home screen (100 ms vs 500 ms). Navigation has to feel
-        // immediate under the fingers; the home screen is glanceable data that does not.
+        // ⚠ REDRAW ON CHANGE, not on a timer. Even with batched page writes a full frame is real
+        // I2C traffic, and redrawing 10x a second regardless of whether anything moved is what made
+        // the menu sluggish and starved backing_service(). The menu now repaints the instant the
+        // encoder moves -- which feels FASTER than the old 100 ms timer while doing far less work.
+        // The home screen still ticks slowly because its meters genuinely change on their own.
         if(g_in_menu)
         {
-            if(t - last_oled >= 100)
+            if(g_oled_dirty)
             {
-                last_oled = t;
+                g_oled_dirty = false;
+                last_oled    = t;
                 menu_render();
                 oled_flush();
             }
         }
-        else if(t - last_oled >= 500)
+        else if(g_oled_dirty || t - last_oled >= 500)
         {
-            last_oled = t;
-            OledReport(board_ok, i2c_ok, sd_ok, g_sd_r1, g_sd_cd, t / 1000);
+            g_oled_dirty = false;
+            last_oled    = t;
+            OledHome();
         }
 
         if(t - last_blink >= 1000)
