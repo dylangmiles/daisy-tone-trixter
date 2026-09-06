@@ -22,6 +22,9 @@
 #include "audio/tt_store.h"
 #include "audio/wav_load.h"
 #include "audio/tuner.h"
+#include "audio/menu.h"
+#include "audio/app_hooks.h"
+#include "audio/oled_shim.h"
 extern "C" {
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -47,6 +50,7 @@ static DaisySeed hw;
 // looks like a front-end fault. The serial console only exists on USB, so it cannot be the way the
 // board reports during audio testing.
 using TtOled = OledDisplay<SH1106I2c128x64Driver>;
+void tt_oled_shim_bind(TtOled* d);   // audio/oled_shim.cpp
 static TtOled oled;
 static bool   oled_ok = false;
 
@@ -515,6 +519,39 @@ static void SelectPreset(int idx)
              g_preset_count, dsp_chain_preset_name(idx));
 }
 
+// ---------------------------------------------------------------------------------------------
+// app_hooks.h — the bridge menu.cpp calls into. State lives here; the menu only drives it.
+static bool g_gr_on   = true;
+static bool g_in_menu = false;
+
+extern "C" {
+
+int         app_preset_count(void)      { return g_preset_count; }
+const char* app_preset_name(int i)      { return dsp_chain_preset_name(i); }
+int         app_preset_current(void)    { return g_preset_idx; }
+void        app_preset_load(int i)      { SelectPreset(i); }
+
+// ⚠ IR selection is per-PRESET here, not a free-standing table. The Pico scanned the card into an
+// IR list the menu could pick from; this build loads whatever IR the chosen preset names. Reported
+// as a single-entry list so the menu has something coherent to show rather than an empty picker.
+int         app_ir_count(void)          { return 1; }
+const char* app_ir_name(int i)          { (void)i; return g_ir_active ? g_ir_name : "none"; }
+int         app_ir_current(void)        { return 0; }
+void        app_ir_select(int i)        { (void)i; }
+
+bool        app_gr_enabled(void)        { return g_gr_on; }
+void        app_gr_set(bool on)         { g_gr_on = on; }
+
+// ⚠ NO PGA ON THIS BOARD. These exist only because menu.cpp calls them. The Pico drove the
+// ES8388's input PGA (0..+24 dB in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no
+// software gain control at all, and the front-end level is set by the analogue daughter instead.
+// Reporting 0 dB keeps the menu honest rather than showing a control that does nothing.
+int         app_pga_nib(void)           { return 0; }
+int         app_pga_db(void)            { return 0; }
+void        app_pga_set_nib(int n)      { (void)n; }
+
+} // extern "C"
+
 static void PrintFullReport()
 {
     hw.PrintLine("");
@@ -629,6 +666,8 @@ int main(void)
         oled.Fill(false);
         oled.Update();
         oled_ok = true;
+        tt_oled_shim_bind(&oled);
+        menu_init();
         hw.PrintLine("  display initialised");
     }
 
@@ -843,8 +882,10 @@ int main(void)
         // ⚠ Rotation selects presets. This is what the encoder is FOR, and it frees the tuner
         // footswitch to do its actual job -- cycling presets on a footswitch was always a stopgap.
         int32_t inc = g_enc.Increment();
-        if(inc != 0 && g_preset_count > 0)
+        if(inc != 0 && !g_in_menu && g_preset_count > 0)
             SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1));
+        else if(inc != 0 && g_in_menu)
+            menu_event((int)inc, false);
 
         static uint32_t sw_down_at = 0;
         bool            sw_held    = g_enc.Pressed();
@@ -885,17 +926,47 @@ int main(void)
         }
         else
         {
-            // Short press (< 2 s) re-prints the full report. The boot report is usually lost to CDC
-            // enumeration, so this is how a person actually reads the detail.
+            // Short press (< 2 s): open the menu from home, or select within it.
+            //
+            // ⚠ This replaces the on-demand report, which now has nowhere to be triggered from. The
+            // repeating 5 s summary line carries every check, which is why it was made comprehensive
+            // -- the report was a convenience on top of it, not the only route to the information.
             if(sw_down_at != 0 && (t - sw_down_at) < 2000)
+            {
+                // ⚠ Print the report on every menu transition. It has to stay reachable somehow --
+                // it was the output that diagnosed the SD/preset and audio faults -- and a menu
+                // open/close is a deliberate act, so it never spams the log.
                 PrintFullReport();
+                if(!g_in_menu)
+                {
+                    menu_open();
+                    g_in_menu = true;
+                }
+                else
+                {
+                    menu_event(0, true);
+                    if(menu_take_home())
+                        g_in_menu = false;
+                }
+            }
             sw_down_at = 0;
         }
 
         // Refresh the screen twice a second -- fast enough to feel live when pressing a switch,
         // slow enough that the I2C traffic is not sitting on top of a high-Z audio input.
         static uint32_t last_oled = 0;
-        if(t - last_oled >= 500)
+        // ⚠ The menu redraws FASTER than the home screen (100 ms vs 500 ms). Navigation has to feel
+        // immediate under the fingers; the home screen is glanceable data that does not.
+        if(g_in_menu)
+        {
+            if(t - last_oled >= 100)
+            {
+                last_oled = t;
+                menu_render();
+                oled_flush();
+            }
+        }
+        else if(t - last_oled >= 500)
         {
             last_oled = t;
             OledReport(board_ok, i2c_ok, sd_ok, g_sd_r1, g_sd_cd, t / 1000);

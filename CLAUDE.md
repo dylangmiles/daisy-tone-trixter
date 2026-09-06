@@ -163,8 +163,8 @@ low-latency path costs exactly one block), tail block **512**, up to **4096** ta
 
 | Control | Does |
 |---|---|
-| **Encoder — turn** | select preset (loads its IR) |
-| **Encoder — short press** | print the full report to serial |
+| **Encoder — turn** | home: select preset (loads its IR) · menu: navigate |
+| **Encoder — short press** | home: open the menu · menu: select. Also prints the full report |
 | **Encoder — hold 2 s** | enter DFU |
 | **Bypass footswitch** | toggle the whole chain — the A/B this project turns on |
 | **Tuner footswitch** | toggle the tuner |
@@ -187,6 +187,35 @@ the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from 
 `dsp_chain_find_preset()` searches the built-in table and returns −1 for every name on the card —
 which silently produced "3 presets, no IR" for a while. If the named boot preset is missing, fall
 back to the **first** rather than to none.
+
+## The menu
+
+`menu.cpp` and `menu.h` ported **unchanged**. It only used three of the Pico OLED driver's
+functions — `oled_clear`, `oled_text`, `oled_text_inv` — so `oled_shim.cpp` provides those on top of
+libDaisy's `OledDisplay` and the menu compiles as-is. A layout fix on either platform then applies
+to both, rather than the two versions drifting.
+
+⚠ **`oled_text_inv` is a filled bar plus text drawn "off"** — libDaisy has no inverted-text call, and
+the selected row depends on it to be readable at a glance. Without it every row looks identical and
+the menu is unusable.
+
+⚠ **The Pico's async/DMA flush machinery is deliberately NOT reproduced.** It existed because the
+RP2350 convolved in a Core 0 foreground loop that a blocking 180 ms I²C flush would stall
+([[project_oled_async_dma_flush]]). Here audio runs in a DMA-driven callback the main loop cannot
+stall, so a plain blocking flush is harmless.
+
+⚠ **The menu redraws at 100 ms, the home screen at 500 ms.** Navigation has to feel immediate under
+the fingers; glanceable data does not.
+
+### ⚠ Two hooks that are honest stubs
+
+- **`app_pga_*` — there is NO PGA on this board.** The Pico drove the ES8388's input PGA (0..+24 dB
+  in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no software gain control, and the
+  front-end level is set by the analogue daughter instead. Reporting 0 dB keeps the menu honest
+  rather than showing a control that does nothing.
+- **`backing_*` — not yet ported.** `backing_stub.cpp` satisfies the menu's link dependency and
+  reports no tracks, so the picker shows only its "off" entry. It uses the **real** `backing.h`, so
+  the finished port is a drop-in replacement with no call-site changes.
 
 ## Tuner and GR meter
 

@@ -36,6 +36,9 @@ CPP_SOURCES = \
 	audio/sd_daisy_shim.cpp \
 	audio/tt_store.cpp \
 	audio/tuner.cpp \
+	audio/menu.cpp \
+	audio/oled_shim.cpp \
+	audio/backing_stub.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
 	lib/FFTConvolver/AudioFFT.cpp \
