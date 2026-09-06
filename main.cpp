@@ -138,6 +138,14 @@ static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration (work o
 static volatile uint32_t g_t_period  = 0;   // ⚠ MILLISECONDS, not us -- see below
 static volatile uint32_t g_t_wraps   = 0;   // discarded samples, evidence of the wrap
 
+// ⚠ ENCODER INSTRUMENTATION. Timing is measurably fine (max period 26 ms) yet navigation is hard,
+// so the next suspect is the INPUT rather than the loop: if one physical detent yields several
+// counts, the menu jumps unpredictably no matter how fast the display is. `enc on` prints every
+// increment as it is banked, so one click of the knob can be compared against what the code sees.
+static volatile bool     g_enc_dbg   = false;
+static volatile int32_t  g_enc_total = 0;
+static volatile uint32_t g_enc_evts  = 0;
+
 // ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
 //
 // SelectPreset() reads a WAV off the SD card and re-initialises the convolver -- hundreds of
@@ -271,7 +279,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     g_enc.Debounce();
     int32_t d = g_enc.Increment();
     if(d != 0)
+    {
         g_enc_delta += d;
+        g_enc_total += d;
+        g_enc_evts++;
+    }
 
     // Copy for the tuner -- no analysis here. See g_tun_buf.
     if(g_tuner_on)
@@ -730,6 +742,24 @@ static void HandleCommand(const char* line)
         return;
     }
     if(strcmp(line, "status") == 0)  { PrintFullReport(); return; }
+    if(strncmp(line, "enc ", 4) == 0)
+    {
+        g_enc_dbg = (strcmp(line + 4, "on") == 0);
+        hw.PrintLine("enc debug=%s  (turn ONE detent and count the lines)",
+                     g_enc_dbg ? "on" : "off");
+        g_enc_total = 0;
+        g_enc_evts  = 0;
+        return;
+    }
+    if(strcmp(line, "enc") == 0)
+    {
+        hw.PrintLine("encoder: %ld counts in %lu events since last reset",
+                     (long)g_enc_total, (unsigned long)g_enc_evts);
+        hw.PrintLine("  ⚠ one detent should be ONE count. More means the decode is over-counting.");
+        g_enc_total = 0;
+        g_enc_evts  = 0;
+        return;
+    }
     if(strcmp(line, "times") == 0)
     {
         hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu PERIOD=%lums wraps=%lu",
@@ -1216,6 +1246,9 @@ int main(void)
         // display flush on EVERY loop pass, which was worse than the timer it replaced.
         int32_t inc = g_enc_delta;
         g_enc_delta = 0;
+        if(inc != 0 && g_enc_dbg)
+            hw.PrintLine("  enc %+ld  (total %ld)", (long)inc, (long)g_enc_total);
+
         if(inc != 0)
         {
             // ⚠ APPLY EVERY ACCUMULATED DETENT, not just one. The callback banks each detent into
