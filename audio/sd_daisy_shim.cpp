@@ -76,6 +76,11 @@ uint32_t tt_shim_now_ms(void)
     return System::GetNow();
 }
 
+uint32_t tt_shim_now_us(void)
+{
+    return System::GetUs();
+}
+
 void tt_shim_sleep_ms(uint32_t ms)
 {
     System::Delay(ms);

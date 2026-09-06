@@ -31,6 +31,7 @@ void tt_shim_gpio_pull_up(uint32_t pin);
 void tt_shim_gpio_pull_down(uint32_t pin);
 void     tt_shim_busy_wait_us(uint32_t us);
 uint32_t tt_shim_now_ms(void);
+uint32_t tt_shim_now_us(void);
 void tt_shim_sleep_ms(uint32_t ms);
 
 #ifdef __cplusplus
@@ -54,5 +55,6 @@ typedef uint32_t absolute_time_t;
 #define make_timeout_time_ms(ms)  (tt_shim_now_ms() + (uint32_t)(ms))
 #define time_reached(t)           ((int32_t)(tt_shim_now_ms() - (t)) >= 0)
 #define sleep_ms(m)         tt_shim_sleep_ms(m)
+#define time_us_32()        tt_shim_now_us()
 
 #endif // TT_SD_DAISY_SHIM_H

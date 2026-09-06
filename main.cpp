@@ -25,6 +25,7 @@
 #include "audio/menu.h"
 #include "audio/app_hooks.h"
 #include "audio/oled_shim.h"
+#include "audio/backing.h"
 extern "C" {
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -176,6 +177,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_convolver.process(g_work, g_work, size);
 
     dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
+
+    // ⚠ Backing track mixes in AFTER the chain, exactly as on the Pico: it is already-produced
+    // audio and must not be run through the IR, EQ or compressor. Putting the bed through the
+    // guitar's processing would be both wrong and a waste of the budget.
+    backing_mix(g_work, (int)size);
 
     for(size_t i = 0; i < size; i++)
     {
@@ -785,6 +791,9 @@ int main(void)
             hw.PrintLine("  no presets file -- built-in defaults");
             snprintf(g_sd_status, sizeof(g_sd_status), "mounted, NO /tonetrix/presets.txt");
         }
+
+        backing_scan();
+        hw.PrintLine("  %d backing track(s)", backing_count());
     }
     hw.PrintLine("  ⚠ chain stays BYPASSED at boot. Bypass footswitch toggles it.");
 
@@ -877,6 +886,10 @@ int main(void)
         // A 2 s hold with a visible countdown, on a control nothing else uses at this stage, so it
         // cannot fire by accident. Jumps to the STM32 ROM bootloader; `make program-dfu` then works
         // with no button-press dance at all.
+        // ⚠ Refill the backing ring from the foreground, never the audio callback: it reads the SD
+        // card, which blocks. SERVICE_BUDGET_US caps how long it may spend per pass.
+        backing_service();
+
         g_enc.Debounce();
 
         // ⚠ Rotation selects presets. This is what the encoder is FOR, and it frees the tuner

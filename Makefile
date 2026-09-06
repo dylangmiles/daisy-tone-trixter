@@ -38,7 +38,7 @@ CPP_SOURCES = \
 	audio/tuner.cpp \
 	audio/menu.cpp \
 	audio/oled_shim.cpp \
-	audio/backing_stub.cpp \
+	audio/backing.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
 	lib/FFTConvolver/AudioFFT.cpp \

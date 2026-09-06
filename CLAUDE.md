@@ -213,9 +213,31 @@ the fingers; glanceable data does not.
   in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no software gain control, and the
   front-end level is set by the analogue daughter instead. Reporting 0 dB keeps the menu honest
   rather than showing a control that does nothing.
-- **`backing_*` — not yet ported.** `backing_stub.cpp` satisfies the menu's link dependency and
-  reports no tracks, so the picker shows only its "off" entry. It uses the **real** `backing.h`, so
-  the finished port is a drop-in replacement with no call-site changes.
+- ~~`backing_*`~~ ✅ **ported** — see below.
+
+## Backing tracks
+
+`backing.cpp` ported with only **two** platform calls shimmed: `I2S_SAMPLE_RATE` (a constant) and
+`time_us_32()`. The streaming engine itself is portable.
+
+⚠ **`backing_mix()` runs AFTER the chain**, exactly as on the Pico — *"drums AFTER the chain: no
+IR/EQ/comp on the bed"*. The track is already-produced audio; running it through the guitar's
+processing would be both wrong and a waste of the budget.
+
+⚠ **`backing_service()` runs in the FOREGROUND, never the audio callback.** It reads the SD card,
+which blocks; `SERVICE_BUDGET_US` caps how long it may spend per pass.
+
+### ⚠ The 64 KB ring lives in SDRAM
+
+`s_ring[32768]` int16 fitted in the RP2350's main RAM but **overflowed DTCMRAM by 976 bytes here and
+refused to link**. It is now `DSY_SDRAM_BSS`. The Daisy has 64 MB of SDRAM nothing else touches, and
+a streamed audio ring is exactly what it suits — sequential access, refilled in the foreground,
+never on a latency-critical path.
+
+⚠ Watch `SERVICE_BUDGET_US` (2000) against `CHUNK_BYTES` (256). The Pico recorded that **the budget
+must exceed one chunk read or the ring silently sits at 2 %** — granularity, not throughput, was the
+constraint there. The bit-bang SD read speed differs on this board, so that relationship is worth
+re-checking rather than assuming it carried over.
 
 ## Tuner and GR meter
 
