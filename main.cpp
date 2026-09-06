@@ -124,6 +124,18 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 static bool          g_in_menu  = false;
 static bool          g_oled_dirty = true;
 
+// ⚠ The encoder is polled from the AUDIO CALLBACK, at a rock-steady 750 Hz.
+//
+// Polling it from the foreground loop meant an irregular ~300 Hz -- backing_service() alone may
+// spend 2 ms, and an OLED flush far more -- and libDaisy's Encoder needs consistent sampling to
+// decode quadrature. That irregularity is what made turns feel laggy and drop detents (2026-09-06).
+// Debounce() is only a few GPIO reads and shifts, which is nothing against a 64-sample block.
+//
+// Increments accumulate here so none are lost between foreground passes; the loop drains it.
+// The SWITCH is still read as a level in the foreground -- the press/hold distinction needs
+// duration, not an edge, and Pressed() is now debounced at the callback's steady rate too.
+static volatile int32_t g_enc_delta = 0;
+
 // ---------------------------------------------------------------------------------------------
 // Terminal command interface.
 //
@@ -210,6 +222,12 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     }
     if(pk > g_peak)
         g_peak = pk;
+
+    // Encoder, at the callback's steady rate -- see g_enc_delta.
+    g_enc.Debounce();
+    int32_t d = g_enc.Increment();
+    if(d != 0)
+        g_enc_delta += d;
 
     // Copy for the tuner -- no analysis here. See g_tun_buf.
     if(g_tuner_on && !g_tun_ready)
@@ -1020,16 +1038,21 @@ int main(void)
             g_tun_ready = false;
         }
 
-        g_enc.Debounce();
 
         // ⚠ Rotation selects presets. This is what the encoder is FOR, and it frees the tuner
         // footswitch to do its actual job -- cycling presets on a footswitch was always a stopgap.
-        int32_t inc = g_enc.Increment();
-        if(inc != 0 && !g_in_menu && g_preset_count > 0)
-            { SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1)); g_oled_dirty = true; }
-        else if(inc != 0 && g_in_menu)
-            menu_event((int)inc, false);
+        // ⚠ BRACES MATTER HERE. A dangling `g_oled_dirty = true;` outside the else-if made the
+        // display flush on EVERY loop pass, which was worse than the timer it replaced.
+        int32_t inc = g_enc_delta;
+        g_enc_delta = 0;
+        if(inc != 0)
+        {
+            if(g_in_menu)
+                menu_event(inc > 0 ? 1 : -1, false);
+            else if(g_preset_count > 0)
+                SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1));
             g_oled_dirty = true;
+        }
 
         static uint32_t sw_down_at = 0;
         bool            sw_held    = g_enc.Pressed();
