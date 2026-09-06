@@ -146,6 +146,42 @@ static void DrawChar(int x, int y, char c, bool on)
     }
 }
 
+void oled_pixel(int x, int y, bool on)
+{
+    PixelSet(x, y, on);
+}
+
+// ⚠ Doubled 6x8 -> 12x16, for the tuner's note. A tuner is read at arm's length with a guitar in
+// the way, so the note has to be legible without leaning in -- which the 6x8 font is not.
+static void DrawChar2x(int x, int y, char c)
+{
+    if(c < 32 || c > 126)
+        c = ' ';
+    const FontDef& f = Font_6x8;
+    for(int row = 0; row < f.FontHeight; row++)
+    {
+        const uint16_t bits = f.data[(c - 32) * f.FontHeight + row];
+        for(int col = 0; col < f.FontWidth; col++)
+        {
+            const bool lit = ((bits << col) & 0x8000) != 0;
+            // one source pixel becomes a 2x2 block, background included -- same convention as
+            // DrawChar, so a redraw overwrites what was there instead of merging with it.
+            PixelSet(x + col * 2,     y + row * 2,     lit);
+            PixelSet(x + col * 2 + 1, y + row * 2,     lit);
+            PixelSet(x + col * 2,     y + row * 2 + 1, lit);
+            PixelSet(x + col * 2 + 1, y + row * 2 + 1, lit);
+        }
+    }
+}
+
+void oled_text2x(int x, int y, const char* s)
+{
+    if(!s)
+        return;
+    for(int i = 0; s[i]; i++)
+        DrawChar2x(x + i * 12, y, s[i]);
+}
+
 void oled_rect(int x, int y, int w, int h, bool on)
 {
     for(int j = 0; j < h; j++)

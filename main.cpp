@@ -689,16 +689,55 @@ static void OledHome(void)
     snprintf(buf, sizeof(buf), "%4.1f", (double)(gr < -0.05f ? gr : 0.f));
     oled_text(84, 48, buf);
 
-    if(g_tuner_on)
+    oled_flush();
+}
+
+// Tuner, FULL SCREEN. ⚠ Tuning is a mode, not a status line: when it is armed it is the only thing
+// wanted on the display, and the output is muted anyway so the flush costs nothing audible.
+//
+// ⚠ NO "listening" text and NO needle until a note is actually found. A word that appears and
+// disappears draws the eye to the wrong place, and a needle parked at centre with no signal reads
+// as "in tune" -- which is worse than reading as nothing. The empty scale is the honest idle state:
+// it shows the instrument is armed and where the answer will appear, and claims nothing else.
+static void OledTuner(void)
+{
+    if(!oled_ok)
+        return;
+
+    char buf[26];
+    oled_clear();
+    oled_text(0, 0, "TUNER");
+
+    // The scale is always drawn -- it is the thing that makes the needle readable when it arrives.
+    for(int x = 4; x <= 123; x++)
+        oled_pixel(x, 48, true);                      // baseline
+    for(int y = 44; y <= 52; y++)
+        oled_pixel(64, y, true);                      // centre = in tune
+
+    if(!g_tune.valid)
     {
-        if(g_tune.valid)
-            snprintf(buf, sizeof(buf), "TUNE %s%d %+4.0fc",
-                     g_tune.name, g_tune.octave, (double)g_tune.cents);
-        else
-            snprintf(buf, sizeof(buf), "TUNE listening...");
-        oled_text(0, 56, buf);
+        oled_flush();
+        return;
     }
 
+    snprintf(buf, sizeof(buf), "%s%d", g_tune.name, g_tune.octave);
+    oled_text2x(48, 16, buf);                         // big note, e.g. "E2"
+
+    snprintf(buf, sizeof(buf), "%.1f Hz", (double)g_tune.freq_hz);
+    oled_text(40, 32, buf);
+
+    int cx = 64 + (int)lroundf(g_tune.cents * 1.2f);  // +/-50 c maps to +/-60 px about centre
+    if(cx < 4)   cx = 4;
+    if(cx > 123) cx = 123;
+    for(int y = 42; y <= 54; y++)
+    {
+        oled_pixel(cx,     y, true);
+        oled_pixel(cx - 1, y, true);                  // 2 px wide, or it vanishes against the scale
+    }
+
+    oled_text(0, 56, (g_tune.cents > 5.f)    ? "SHARP"
+                     : (g_tune.cents < -5.f) ? "FLAT"
+                                             : "IN TUNE");
     oled_flush();
 }
 
@@ -942,6 +981,7 @@ static void HandleCommand(const char* line)
     if(strncmp(line, "tuner ", 6) == 0)
     {
         g_tuner_on   = (strcmp(line + 6, "on") == 0);
+        g_tune.valid = false;   // ⚠ or arming shows the note from LAST time until the first estimate
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
         return;
@@ -1290,6 +1330,7 @@ int main(void)
                 if(i == 1 && !now)          // tuner footswitch -- its actual job now
                 {
                     g_tuner_on   = !g_tuner_on;
+                    g_tune.valid = false;   // ⚠ stale note from the previous session, see above
                     g_oled_dirty = true;
                     hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
                 }
@@ -1570,6 +1611,18 @@ int main(void)
                     if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
                     if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
                 }
+            }
+        }
+        else if(g_tuner_on)
+        {
+            // ⚠ Faster than the home screen's 500 ms: a needle that lags makes you chase it past
+            // the note. The tuner produces a new estimate roughly every 85 ms, and the output is
+            // muted in this mode, so the flush is free.
+            if(t - last_oled >= 100)
+            {
+                g_oled_dirty = false;
+                last_oled    = t;
+                OledTuner();
             }
         }
         else if(g_oled_dirty || t - last_oled >= 500)
