@@ -329,6 +329,17 @@ static void EncTick(void*)
 //
 // The USB RX callback runs in interrupt context, so it does the minimum -- copy bytes into a line
 // buffer and set a flag. Everything else happens in the foreground.
+// ⚠ MONOTONIC MICROSECONDS for the foreground instrumentation. System::GetUs() is GetTick()
+// DIVIDED DOWN, so its value rolls over at ~21.47e6 rather than at 2^32 and deltas across the
+// rollover are wrong -- which is what the `w=` counter has been counting all along. The shim
+// already accumulates raw tick deltas into a 64-bit counter for exactly this reason; borrow it
+// rather than keeping two clocks with different bugs.
+//
+// ⚠ Declared here rather than including sd_daisy_shim.h, which #defines gpio_init/gpio_get and
+// friends to Pico spellings -- harmless in sd_spi.c, a minefield in this file.
+// ⚠ FOREGROUND ONLY (non-reentrant statics). Every call below is in the main loop.
+extern "C" uint32_t tt_shim_now_us(void);
+
 static char           g_cmd[96];
 static volatile int   g_cmd_len   = 0;
 static volatile bool  g_cmd_ready = false;
@@ -345,6 +356,14 @@ static void UsbRx(uint8_t* buf, uint32_t* len)
                 g_cmd[g_cmd_len] = 0;
                 g_cmd_ready      = true;
             }
+        }
+        else if(c == '\b' || c == 0x7f)
+        {
+            // ⚠ Terminals send a backspace character; they do not edit the line for us. Without
+            // this a corrected typo arrives WITH the erased text still in it -- seen 2026-09-06 as
+            // "? '\bk stat'", which reads as a parser fault rather than as a stray keystroke.
+            if(g_cmd_len > 0 && !g_cmd_ready)
+                g_cmd_len--;
         }
         else if(g_cmd_len < (int)sizeof(g_cmd) - 1 && !g_cmd_ready)
         {
@@ -1534,7 +1553,7 @@ int main(void)
             g_cmd_ready = false;
         }
 
-        const uint32_t loop_t0 = System::GetUs();
+        const uint32_t loop_t0 = tt_shim_now_us();
         {
             // ⚠ PERIOD IS MEASURED IN MILLISECONDS via GetNow(), deliberately.
             //
@@ -1568,9 +1587,9 @@ int main(void)
         }
 
         {
-            uint32_t t0 = System::GetUs();
+            uint32_t t0 = tt_shim_now_us();
             backing_service();
-            uint32_t d = System::GetUs() - t0;
+            uint32_t d = tt_shim_now_us() - t0;
             if(d > 1000000u)        // ⚠ straddled a GetUs wrap -- discard, do not report a fiction
                 g_t_wraps++;
             else if(d > g_t_service)
@@ -1740,11 +1759,11 @@ int main(void)
             {
                 g_oled_dirty = false;
                 last_oled    = t;
-                uint32_t t0 = System::GetUs();
+                uint32_t t0 = tt_shim_now_us();
                 menu_render();
-                uint32_t t1 = System::GetUs();
+                uint32_t t1 = tt_shim_now_us();
                 oled_flush();
-                uint32_t t2 = System::GetUs();
+                uint32_t t2 = tt_shim_now_us();
                 if(t1 - t0 > 1000000u || t2 - t1 > 1000000u)
                     g_t_wraps++;    // ⚠ GetUs wrap -- see the note on g_t_period
                 else
@@ -1800,7 +1819,7 @@ int main(void)
         // while there is no display; report to the screen instead and __WFI() becomes viable, which
         // matters because the DSP chain will spend the thermal headroom this would have bought.
         {
-            uint32_t d = System::GetUs() - loop_t0;
+            uint32_t d = tt_shim_now_us() - loop_t0;
             if(d > 1000000u)
                 g_t_wraps++;
             else if(d > g_t_loop)

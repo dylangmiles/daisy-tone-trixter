@@ -250,8 +250,10 @@ unsigned delta arithmetic is wrong across a wrap. Observed 2026-09-06 as a perio
 **Rules:**
 - ⚠ Use **`System::GetNow()`** (HAL_GetTick, clean milliseconds, wraps at 49.7 days) for anything
   longer than a few seconds, or for any duration that might straddle a wrap.
-- `GetUs()` is fine for genuinely short intervals, but **discard implausible results** rather than
-  reporting them — the instrumentation counts these as `wraps=`.
+- ✅ **The foreground instrumentation now uses `tt_shim_now_us()`, not `GetUs()`** (2026-09-06), so
+  `w=` should read **0**. A non-zero `w=` after this means a genuinely long stall, not a rollover.
+- `GetUs()` is still fine for genuinely short intervals, but **discard implausible results** rather
+  than reporting them.
 - ✅ **`tt_shim_now_us()` no longer uses `GetUs()`** (fixed 2026-09-06). It accumulates raw
   `GetTick()` deltas into a 64-bit counter, so the microseconds it returns roll over cleanly at
   `2^32` and delta arithmetic is correct. ⚠ It is **foreground-only** — the static state is not
