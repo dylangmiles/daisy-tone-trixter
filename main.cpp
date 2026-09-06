@@ -212,6 +212,12 @@ static constexpr size_t kWorkMax = 256;  // libDaisy's ceiling (kAudioMaxBufferS
                                          // would overflow silently and corrupt whatever follows.
 static float            g_work[kWorkMax];
 
+// ⚠ SEPARATE convolver output. TwoStageFFTConvolver::process(input, output, len) reads its input
+// while writing its output -- passing the same buffer for both aliases them and the signal comes
+// out silent. The Pico always used two buffers (s_dsp_in -> s_dsp_out); calling it in-place here
+// was my error, and it only showed once an IR actually loaded and the convolver first ran.
+static float            g_conv[kWorkMax];
+
 // What the callback ACTUALLY receives, surfaced in the repeating summary line. ⚠ The boot report is
 // routinely lost to USB CDC enumeration, so a number that only prints at boot is a number nobody
 // reads -- which is how the block size stayed unverified while we guessed at it.
@@ -267,7 +273,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
 
     // IR first, then the chain -- same order as the Pico build.
     if(g_ir_active && dsp_chain_ir_enabled())
-        g_convolver.process(g_work, g_work, size);
+    {
+        g_convolver.process(g_work, g_conv, size);      // ⚠ NOT in-place -- see g_conv
+        for(size_t i = 0; i < size; i++)
+            g_work[i] = g_conv[i];
+    }
 
     dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
 
