@@ -164,6 +164,12 @@ static volatile uint8_t  g_enc_seen  = 0;   // bit N set = state N observed
 // question is answered on the bench in seconds instead of by another rebuild.
 static volatile int8_t g_q_per_detent = 4;
 
+// ⚠ LIVE PIN WATCH, for hunting a dry joint. `encwatch on` prints A/B whenever the pins change, so
+// wiggling a suspect leg with the knob held still says immediately whether that pin is connected.
+// Rate-limited in the foreground: at 10 kHz a bouncing contact would otherwise flood the console
+// and the flood itself would hide the answer.
+static volatile bool g_enc_watch = false;
+
 // ⚠ OUR OWN QUADRATURE DECODE -- libDaisy's Encoder::Increment() cannot decode this encoder.
 //
 // libDaisy (src/hid/encoder.cpp) emits a step on ONE exact sample pattern:
@@ -862,6 +868,15 @@ static void HandleCommand(const char* line)
         g_enc_evts  = 0;
         return;
     }
+    if(strncmp(line, "encwatch ", 9) == 0)
+    {
+        g_enc_watch = (strcmp(line + 9, "on") == 0);
+        hw.PrintLine("enc watch=%s -- hold the knob STILL and wiggle each leg in turn",
+                     g_enc_watch ? "on" : "off");
+        if(g_enc_watch)
+            hw.PrintLine("  a leg that is connected toggles its pin; a dry one never moves");
+        return;
+    }
     if(strncmp(line, "encdet ", 7) == 0)
     {
         int n = atoi(line + 7);
@@ -1415,6 +1430,21 @@ int main(void)
         // footswitch to do its actual job -- cycling presets on a footswitch was always a stopgap.
         // ⚠ BRACES MATTER HERE. A dangling `g_oled_dirty = true;` outside the else-if made the
         // display flush on EVERY loop pass, which was worse than the timer it replaced.
+        if(g_enc_watch)
+        {
+            static uint8_t  last_raw = 0xff;
+            static uint32_t last_at  = 0;
+            const uint8_t   raw      = g_enc_raw;
+            const uint32_t  now_ms   = System::GetNow();
+            if(raw != last_raw && (uint32_t)(now_ms - last_at) >= 30)
+            {
+                last_raw = raw;
+                last_at  = now_ms;
+                hw.PrintLine("  A=%d B=%d   (D15=A, D16=B; 1 = released/open)",
+                             (raw >> 1) & 1, raw & 1);
+            }
+        }
+
         int32_t inc = g_enc_delta;
         g_enc_delta = 0;
         if(inc != 0 && g_enc_dbg)
