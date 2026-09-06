@@ -52,6 +52,8 @@ float       backing_level(void);
 
 // Diagnostics for `bk stat`.
 void        backing_stats(uint32_t *underruns, int *ring_pct, uint32_t *max_service_us);
+uint32_t    backing_service_budget_us(void);  // the cap max_service_us is measured against
+uint32_t    backing_chunk_bytes(void);       // one bounded read; the budget must exceed its cost
 void        backing_stats_reset(void);
 
 // Sequential-read throughput of the card, in kB/s, measured over `kb` kilobytes of

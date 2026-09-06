@@ -45,6 +45,12 @@ static uint8_t g_fb[kW * kPages];
 static uint8_t g_shadow[kW * kPages];
 static bool    g_shadow_valid = false;
 
+// ⚠ How many pages the last flush actually SENT. g_t_flush is a worst-case-since-reset, so the
+// 24 ms it reports is the one full repaint on entering a screen, not what a menu step costs -- and
+// reading it as the latter would mean "fixing" a partial flush that is already working. This says
+// which case a given flush was.
+static int g_last_pages = 0;
+
 // ⚠ SH1106 is NOT an SSD1306: its RAM is 132 columns wide and the visible 128 are centred, so every
 // page write starts at column 2. Getting this wrong shifts the image by two pixels and wraps the
 // right-hand edge around to the left.
@@ -100,6 +106,7 @@ void oled_flush(void)
 
     // ⚠ One transaction per PAGE, and only for pages that actually changed.
     static uint8_t line[1 + kW];
+    int sent = 0;
     line[0] = 0x40;                       // data control byte, then 128 bytes of pixels
     for(int p = 0; p < kPages; p++)
     {
@@ -113,8 +120,15 @@ void oled_flush(void)
         memcpy(&line[1], src, kW);
         g_i2c.TransmitBlocking(g_addr, line, sizeof(line), 100);
         memcpy(&g_shadow[p * kW], src, kW);
+        sent++;
     }
     g_shadow_valid = true;
+    g_last_pages   = sent;
+}
+
+int oled_last_pages(void)
+{
+    return g_last_pages;
 }
 
 static void PixelSet(int x, int y, bool on)

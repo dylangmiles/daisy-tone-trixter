@@ -33,6 +33,7 @@ void oled_rect(int x, int y, int w, int h, bool on);        // filled rectangle
 void oled_bar(int x, int y, int w, int h, float frac);      // outlined bar, 0..1 filled
 void oled_pixel(int x, int y, bool on);                     // single pixel
 void oled_text2x(int x, int y, const char *s);              // 12x16 text -- the tuner's note
+int  oled_last_pages(void);                                 // pages sent by the last flush (0-8)
 
 #ifdef __cplusplus
 }

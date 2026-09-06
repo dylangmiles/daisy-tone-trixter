@@ -138,6 +138,23 @@ static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration (work o
 static volatile uint32_t g_t_period  = 0;   // ⚠ MILLISECONDS, not us -- see below
 static volatile uint32_t g_t_wraps   = 0;   // discarded samples, evidence of the wrap
 
+// ⚠ CPU LOAD, measured in the audio callback against the block period.
+//
+// "How much budget is left" is the question that decides whether the next feature fits, and it is
+// the one thing no amount of listening can answer -- a chain at 95% sounds exactly like one at 40%
+// right up until it does not, and then it is a dropout under a heavy strum rather than a gradual
+// warning. Measured, it becomes a number on the home screen.
+//
+// ⚠ System::GetTick() deltas ARE wrap-safe -- it is the raw 32-bit counter and unsigned subtraction
+// handles the wrap. That is NOT true of GetUs(), which divides the counter down and so wraps
+// dirtily every ~21.5 s (see CLAUDE.md). Use ticks here, not microseconds.
+static volatile float    g_cpu_avg = 0.f;   // % of the block period, smoothed
+static volatile float    g_cpu_pk  = 0.f;   // worst single block since reset
+static uint32_t          g_ticks_per_block = 0;
+
+// Output peak, metered after everything -- the level actually leaving the pedal.
+static volatile float g_out_peak = 0.f;
+
 // ⚠ ENCODER INSTRUMENTATION. Timing is measurably fine (max period 26 ms) yet navigation is hard,
 // so the next suspect is the INPUT rather than the loop: if one physical detent yields several
 // counts, the menu jumps unpredictably no matter how fast the display is. `enc on` prints every
@@ -375,7 +392,8 @@ static volatile bool     g_clip_recent = false;   // sticky until the splash sho
 
 static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
 {
-    float pk = 0.f;
+    const uint32_t t_cb0 = System::GetTick();
+    float          pk    = 0.f;
 
     g_cb_size = (uint32_t)size;
     g_cb_count++;
@@ -436,10 +454,33 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         for(size_t i = 0; i < size; i++)
             g_work[i] = 0.f;
 
+    float opk = 0.f;
     for(size_t i = 0; i < size; i++)
     {
-        out[0][i] = g_work[i];              // mono out to both channels
-        out[1][i] = g_work[i];
+        const float v = g_work[i];
+        out[0][i]     = v;                  // mono out to both channels
+        out[1][i]     = v;
+        const float a = fabsf(v);
+        if(a > opk)
+            opk = a;
+    }
+    if(opk > g_out_peak)
+        g_out_peak = opk;
+
+    // ⚠ Charged against the block PERIOD, not against wall time: what matters is the fraction of
+    // each 1.33 ms slot this callback consumes, because that is what runs out.
+    if(g_ticks_per_block == 0)
+        g_ticks_per_block = (uint32_t)((uint64_t)System::GetTickFreq() * size / 48000u);
+    if(g_ticks_per_block)
+    {
+        const uint32_t used = System::GetTick() - t_cb0;      // wrap-safe, see g_cpu_avg
+        const float    pct  = 100.f * (float)used / (float)g_ticks_per_block;
+        if(pct >= 0.f && pct < 400.f)       // discard nonsense rather than report a fiction
+        {
+            g_cpu_avg += 0.02f * (pct - g_cpu_avg);           // ~50-block time constant
+            if(pct > g_cpu_pk)
+                g_cpu_pk = pct;
+        }
     }
 }
 
@@ -638,7 +679,11 @@ static void OledHome(void)
     // measured 21-24 ms before, and it is the meters that change on every refresh.
 
     // --- what is SET ---------------------------------------------------------------------------
-    oled_text(0, 0, g_dsp_bypass ? "Tone Trixter  BYP" : "Tone Trixter   ON");
+    // ⚠ CPU on the title row, where it is glanceable without costing a line. It shares the row's
+    // page, so it does not add a page to the flush.
+    snprintf(buf, sizeof(buf), "Tone Trixter %s%3d%%",
+             g_dsp_bypass ? "BYP" : " ON", (int)(g_cpu_avg + 0.5f));
+    oled_text(0, 0, buf);
 
     // Show the PENDING preset while the encoder is still moving -- the name must track the knob
     // even though the load has not happened yet, or turning feels dead.
@@ -688,6 +733,18 @@ static void OledHome(void)
     oled_bar(18, 48, 62, 8, (-gr) / 20.f);             // 0..-20 dB of reduction across the bar
     snprintf(buf, sizeof(buf), "%4.1f", (double)(gr < -0.05f ? gr : 0.f));
     oled_text(84, 48, buf);
+
+    // ⚠ OUT is metered AFTER everything -- chain, IR and backing bed included. It is a different
+    // question from "in": in says whether the front end is driven right, out says whether what
+    // leaves the pedal is. With a compressor and a make-up level in between, the two can disagree
+    // by a lot, and only one of them is what the amp hears.
+    float opk = g_out_peak;
+    g_out_peak = 0.f;
+    int   odb = (opk > 0.0002f) ? (int)(20.f * log10f(opk)) : -99;
+    oled_text(0, 56, "out");
+    oled_bar(24, 56, 56, 8, opk);
+    snprintf(buf, sizeof(buf), "%4d", odb);
+    oled_text(84, 56, odb > -99 ? buf : "  --");
 
     oled_flush();
 }
@@ -939,6 +996,28 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  ⚠ one detent should be ONE count.");
         g_enc_total = 0;
         g_enc_evts  = 0;
+        return;
+    }
+    if(strcmp(line, "bk stat") == 0)
+    {
+        uint32_t un = 0, mx = 0;
+        int      pct = 0;
+        backing_stats(&un, &pct, &mx);
+        hw.PrintLine("backing: ring=%d%%  underruns=%lu  max service=%lu us"
+                     "  (budget %lu us, chunk %lu B)",
+                     pct, (unsigned long)un, (unsigned long)mx,
+                     (unsigned long)backing_service_budget_us(),
+                     (unsigned long)backing_chunk_bytes());
+        hw.PrintLine("  ⚠ ring stuck near 2%% with the budget below one chunk read is the Pico's"
+                     " known failure -- granularity, not throughput. `bk bench` measures the card.");
+        backing_stats_reset();
+        return;
+    }
+    if(strncmp(line, "bk bench", 8) == 0)
+    {
+        hw.PrintLine("benching card (audio WILL glitch)...");
+        int kbps = backing_bench(256);
+        hw.PrintLine("card: %d kB/s sequential  (48k stereo 16-bit demand = 187 kB/s)", kbps);
         return;
     }
     if(strcmp(line, "times") == 0)
@@ -1374,10 +1453,13 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
-            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu per=%lums w=%lu",
-                         (unsigned long)g_t_flush, (unsigned long)g_t_render,
+            hw.PrintLine("        us: flush=%lu(%dpg) render=%lu svc=%lu loop=%lu per=%lums w=%lu",
+                         (unsigned long)g_t_flush, oled_last_pages(),
+                         (unsigned long)g_t_render,
                          (unsigned long)g_t_service, (unsigned long)g_t_loop,
                          (unsigned long)g_t_period, (unsigned long)g_t_wraps);
+            hw.PrintLine("        cpu: %d%% avg  %d%% peak   (audio callback vs block period)",
+                         (int)(g_cpu_avg + 0.5f), (int)(g_cpu_pk + 0.5f));
             hw.PrintLine("        enc: tick=%lu trans=%lu cnt=%ld raw=%d%d rest=%d%d sub=%d det=%d seen=%c%c%c%c",
                          (unsigned long)g_enc_ticks, (unsigned long)g_enc_trans,
                          (long)g_enc_total,

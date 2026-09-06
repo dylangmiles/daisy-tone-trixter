@@ -287,6 +287,12 @@ void backing_stats(uint32_t *under, int *pct, uint32_t *max_us) {
     if (pct)    *pct    = s_playing ? (int)((s_head - s_tail) * 100u / RING_SAMPLES) : 0;
     if (max_us) *max_us = s_max_service_us;
 }
+// ⚠ Exported so `bk stat` can print the budget NEXT TO the measurement it bounds. Reporting a
+// max-service figure without the cap it is being compared against is what let the Pico's ring sit
+// silently at 2% -- the number looked fine because nothing said what "fine" was.
+uint32_t backing_service_budget_us(void) { return SERVICE_BUDGET_US; }
+uint32_t backing_chunk_bytes(void)       { return CHUNK_BYTES; }
+
 void backing_stats_reset(void) { s_underruns = 0; s_max_service_us = 0; }
 
 int backing_bench(int kb) {
