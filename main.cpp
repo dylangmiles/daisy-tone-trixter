@@ -1649,7 +1649,7 @@ int main(void)
             // because opposite detents cancelled inside one batch before anything was applied.
             if(g_in_menu)
             {
-                g_menu_at = System::GetNow();      // activity: restart the idle timeout
+                g_menu_at = t;                     // activity: restart the idle timeout
                 int dir   = inc > 0 ? 1 : -1;
                 int steps = inc > 0 ? inc : -inc;
                 if(steps > 16)
@@ -1747,7 +1747,13 @@ int main(void)
         // ⚠ Idle timeout. Checked here rather than inside the render branch so it fires even when
         // nothing has been marked dirty -- an abandoned menu is precisely the case where nothing is
         // changing, so hanging the check off a redraw would mean it never ran.
-        if(g_in_menu && (uint32_t)(t - g_menu_at) >= kMenuIdleMs)
+        // ⚠ SIGNED comparison. g_menu_at must be stamped with `t`, the time captured at the TOP of
+        // this iteration -- not with a fresh GetNow(). Stamping it fresh put it AHEAD of t (an
+        // iteration can spend 6 ms in backing_service alone), so t - g_menu_at underflowed to ~4.29
+        // billion and the menu bounced straight home the moment the knob was touched -- the exact
+        // opposite of what activity is supposed to do. The signed cast means a future slip cannot
+        // resurrect that: a negative age reads as negative, not as enormous.
+        if(g_in_menu && (int32_t)(t - g_menu_at) >= (int32_t)kMenuIdleMs)
         {
             g_in_menu    = false;
             g_oled_dirty = true;
