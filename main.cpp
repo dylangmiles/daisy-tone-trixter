@@ -668,6 +668,11 @@ static void OledHome(void)
     if(!oled_ok)
         return;
 
+    // Meter geometry, shared so the three bars cannot drift apart. x clears the widest label
+    // ("out" = 3 chars = 18 px) with a space; the written values start at 84.
+    static constexpr int kMeterX = 24;
+    static constexpr int kMeterW = 56;
+
     char buf[26];
     oled_clear();
 
@@ -715,8 +720,10 @@ static void OledHome(void)
     g_peak   = 0.f;
     int   dbfs = (pk > 0.0002f) ? (int)(20.f * log10f(pk)) : -99;
 
+    // ⚠ All three labels occupy a 3-char field and every bar starts at the SAME x, so the bars form
+    // one column the eye can compare down. Bars starting at different x read as different scales.
     oled_text(0, 40, "in");
-    oled_bar(18, 40, 62, 8, pk);                       // linear: matches how a peak FEELS
+    oled_bar(kMeterX, 40, kMeterW, 8, pk);             // linear: matches how a peak FEELS
     snprintf(buf, sizeof(buf), "%4d", dbfs);
     oled_text(84, 40, dbfs > -99 ? buf : "  --");
 
@@ -730,7 +737,7 @@ static void OledHome(void)
 
     float gr = (!g_dsp_bypass && g_gr_on) ? dsp_chain_comp_gr_db() : 0.f;
     oled_text(0, 48, "gr");
-    oled_bar(18, 48, 62, 8, (-gr) / 20.f);             // 0..-20 dB of reduction across the bar
+    oled_bar(kMeterX, 48, kMeterW, 8, (-gr) / 20.f);   // 0..-20 dB of reduction across the bar
     snprintf(buf, sizeof(buf), "%4.1f", (double)(gr < -0.05f ? gr : 0.f));
     oled_text(84, 48, buf);
 
@@ -742,7 +749,7 @@ static void OledHome(void)
     g_out_peak = 0.f;
     int   odb = (opk > 0.0002f) ? (int)(20.f * log10f(opk)) : -99;
     oled_text(0, 56, "out");
-    oled_bar(24, 56, 56, 8, opk);
+    oled_bar(kMeterX, 56, kMeterW, 8, opk);
     snprintf(buf, sizeof(buf), "%4d", odb);
     oled_text(84, 56, odb > -99 ? buf : "  --");
 
