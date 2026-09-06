@@ -1346,6 +1346,19 @@ int main(void)
         if(t - last_report >= 5000)
         {
             last_report = t;
+
+            // ⚠ START THE FIRST REPORT ON A CLEAN LINE. The boot output is written before the USB
+            // CDC device has enumerated, so the host joins mid-stream and what survives is a
+            // fragment with no line ending -- "===========$$". Without this the first real report
+            // is appended to that fragment ("===========$$        us: flush=...") and the one line
+            // that matters is the one made hardest to read.
+            static bool first_report = true;
+            if(first_report)
+            {
+                first_report = false;
+                hw.PrintLine("");
+            }
+
             // ⚠ THIS LINE IS THE REAL REPORT, not a convenience.
             //
             // StartLog(false) means the board prints its boot report immediately -- BEFORE the USB
