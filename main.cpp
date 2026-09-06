@@ -990,7 +990,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
         hw.PrintLine("  bklevel <0..2>    backing level");
-        hw.PrintLine("  bk stat           ring %, underruns, service vs budget");
+        hw.PrintLine("  bk stat           ring %%, underruns, service vs budget");
         hw.PrintLine("  bk bench          card read speed (audio WILL glitch)");
         hw.PrintLine(" -- encoder diagnostics --");
         hw.PrintLine("  enc               counts, raw A/B, rest state, then reset");
