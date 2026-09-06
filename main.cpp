@@ -501,6 +501,13 @@ static void OledHome(void)
     char buf[26];
     oled_clear();
 
+    // ⚠ EVERY ELEMENT SITS ON AN 8-PIXEL PAGE BOUNDARY (y = 0, 16, 24, 40, 48, 56).
+    //
+    // The panel writes in 8-row pages, and oled_flush() sends only pages whose content changed. Text
+    // at y=12 straddles pages 1 AND 2, so a single changing row dirties two pages and doubles the
+    // flush cost. Aligning the layout means a moving meter dirties exactly the page it lives in --
+    // measured 21-24 ms before, and it is the meters that change on every refresh.
+
     // --- what is SET ---------------------------------------------------------------------------
     oled_text(0, 0, g_dsp_bypass ? "Tone Trixter  BYP" : "Tone Trixter   ON");
 
@@ -509,7 +516,7 @@ static void OledHome(void)
     const int shown = (g_preset_pending >= 0) ? g_preset_pending : g_preset_idx;
     snprintf(buf, sizeof(buf), "P  %s%s", g_preset_count > 0 ? dsp_chain_preset_name(shown) : "-",
              g_preset_pending >= 0 ? " ..." : "");
-    oled_text(0, 12, buf);
+    oled_text(0, 16, buf);
 
     // ⚠ Show the preset's IR NAME even when it is not loaded, with a marker for which. Reporting a
     // bare "none" for a preset that names an IR made a failed LOAD look like a preset with no IR
@@ -526,7 +533,7 @@ static void OledHome(void)
         {
             snprintf(buf, sizeof(buf), "IR  none");
         }
-        oled_text(0, 21, buf);
+        oled_text(0, 24, buf);
     }
 
     // --- meters: bar + written value ---------------------------------------------------------
@@ -534,24 +541,24 @@ static void OledHome(void)
     g_peak   = 0.f;
     int   dbfs = (pk > 0.0002f) ? (int)(20.f * log10f(pk)) : -99;
 
-    oled_text(0, 34, "in");
-    oled_bar(18, 34, 62, 7, pk);                       // linear: matches how a peak FEELS
+    oled_text(0, 40, "in");
+    oled_bar(18, 40, 62, 8, pk);                       // linear: matches how a peak FEELS
     snprintf(buf, sizeof(buf), "%4d", dbfs);
-    oled_text(84, 34, dbfs > -99 ? buf : "  --");
+    oled_text(84, 40, dbfs > -99 ? buf : "  --");
 
     // ⚠ Clip is STICKY until shown, not sampled. A single clipped sample between two 500 ms
     // refreshes would otherwise never be seen -- and a transient is exactly what clips here.
     if(g_clip_recent)
     {
-        oled_text(110, 34, "C");
+        oled_text(110, 40, "C");
         g_clip_recent = false;
     }
 
     float gr = (!g_dsp_bypass && g_gr_on) ? dsp_chain_comp_gr_db() : 0.f;
-    oled_text(0, 44, "gr");
-    oled_bar(18, 44, 62, 7, (-gr) / 20.f);             // 0..-20 dB of reduction across the bar
+    oled_text(0, 48, "gr");
+    oled_bar(18, 48, 62, 8, (-gr) / 20.f);             // 0..-20 dB of reduction across the bar
     snprintf(buf, sizeof(buf), "%4.1f", (double)(gr < -0.05f ? gr : 0.f));
-    oled_text(84, 44, buf);
+    oled_text(84, 48, buf);
 
     if(g_tuner_on)
     {
