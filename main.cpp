@@ -21,6 +21,7 @@
 #include "audio/dsp_chain.h"
 #include "audio/tt_store.h"
 #include "audio/wav_load.h"
+#include "audio/tuner.h"
 extern "C" {
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -30,6 +31,7 @@ extern const Diskio_drvTypeDef tt_sd_driver;
 
 #include <cstdio>
 #include <cmath>
+#include <cstring>
 
 using namespace daisy;
 
@@ -107,6 +109,17 @@ static char          g_ir_name[24] = "none";
 static char g_sd_status[64] = "not attempted";
 static int  g_preset_idx = 0;
 
+// ⚠ libDaisy's Encoder owns A/B/SW and does the quadrature decoding. The raw-GPIO monitoring that
+// proved those joints during bring-up has served its purpose -- keeping both would fight over the
+// pins. Footswitches stay raw GPIO.
+static Encoder g_enc;
+
+// Tuner. ⚠ Fed from the RAW INPUT, before any DSP: you tune the string, not the compressed and
+// EQ'd version of it. Gated behind g_tuner_on so its autocorrelation costs nothing when unused --
+// on the Pico the equivalent was a `tuner on/off` command for the same reason.
+static volatile bool g_tuner_on = false;
+static TunerResult   g_tune     = {};
+
 // Convolver partitioning, same as the Pico. Head block matches the audio block size so the
 // low-latency path costs exactly one block.
 static constexpr size_t kIrHeadBlock = 64;
@@ -151,6 +164,9 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     if(pk > g_peak)
         g_peak = pk;
 
+    if(g_tuner_on && tuner_feed(g_work, (int)size))
+        g_tune = tuner_result();
+
     // IR first, then the chain -- same order as the Pico build.
     if(g_ir_active && dsp_chain_ir_enabled())
         g_convolver.process(g_work, g_work, size);
@@ -174,10 +190,9 @@ struct Input
     bool        last;
 };
 
+// ⚠ FOOTSWITCHES ONLY. A/B/SW moved to libDaisy's Encoder, which does the quadrature decoding --
+// the raw-GPIO monitoring proved those three joints during bring-up and has done its job.
 static Input inputs[] = {
-    {"encoder A", tt::kEncA, {}, true},
-    {"encoder B", tt::kEncB, {}, true},
-    {"encoder SW", tt::kEncSw, {}, true},
     {"footsw bypass", tt::kFswBypass, {}, true},
     {"footsw tuner", tt::kFswTuner, {}, true},
 };
@@ -370,12 +385,23 @@ static void OledReport(bool board_ok,
 
     // Live input state. '#' = pressed (LOW), '.' = idle. Reading the pins directly rather than the
     // cached edge state, so the display always shows NOW.
-    snprintf(buf, sizeof(buf), "A%c B%c SW%c  by%c tu%c",
-             inputs[0].gpio.Read() ? '.' : '#',
-             inputs[1].gpio.Read() ? '.' : '#',
-             inputs[2].gpio.Read() ? '.' : '#',
-             inputs[3].gpio.Read() ? '.' : '#',
-             inputs[4].gpio.Read() ? '.' : '#');
+    // Tuner display when armed, otherwise the input meter. ⚠ Tuning matters more than levels at
+    // the moment you are doing it, so it takes the line rather than being squeezed alongside.
+    if(g_tuner_on)
+    {
+        if(g_tune.valid)
+            snprintf(buf, sizeof(buf), "TUNE %s%d %+4.0fc",
+                     g_tune.name, g_tune.octave, (double)g_tune.cents);
+        else
+            snprintf(buf, sizeof(buf), "TUNE  -- play --");
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "by%c tu%c  enc%c",
+                 inputs[0].gpio.Read() ? '.' : '#',
+                 inputs[1].gpio.Read() ? '.' : '#',
+                 g_enc.Pressed() ? '#' : '.');
+    }
     OledLine(5, buf);
 
     // Input level. Read-and-reset gives a true peak for the interval, not a decayed average --
@@ -390,6 +416,20 @@ static void OledReport(bool board_ok,
     else
     {
         snprintf(buf, sizeof(buf), "in   --    clip%lu", (unsigned long)g_clips);
+    }
+    // ⚠ Gain reduction shares this line rather than getting its own repaint. On the Pico the GR
+    // meter defaulted OFF because its extra I2C repaints coupled EMI into the high-Z input
+    // ([[project_home_gr_meter_crosstalk]]) -- folding it into the existing 2 Hz refresh adds no
+    // bus traffic at all, so it costs nothing to leave on.
+    if(!g_dsp_bypass)
+    {
+        float gr = dsp_chain_comp_gr_db();
+        if(gr < -0.2f)
+        {
+            char g[10];
+            snprintf(g, sizeof(g), " gr%-3.0f", (double)gr);
+            strncat(buf, g, sizeof(buf) - strlen(buf) - 1);
+        }
     }
     OledLine(6, buf);
 
@@ -482,10 +522,9 @@ static void PrintFullReport()
     hw.PrintLine("  [1] board      : %s", g_board_ok ? "Daisy Seed3   PASS" : "WRONG         FAIL");
     hw.PrintLine("  [2] i2c 0x%02X   : %s", tt::kOledI2cAddr,
                  g_i2c_ok ? "FOUND         PASS" : "absent        FAIL");
-    hw.PrintLine("  [3] inputs     : A%c B%c SW%c  bypass%c tuner%c   (# = pressed)",
+    hw.PrintLine("  [3] inputs     : bypass%c tuner%c  enc SW%c   (# = pressed)",
                  inputs[0].gpio.Read() ? '.' : '#', inputs[1].gpio.Read() ? '.' : '#',
-                 inputs[2].gpio.Read() ? '.' : '#', inputs[3].gpio.Read() ? '.' : '#',
-                 inputs[4].gpio.Read() ? '.' : '#');
+                 g_enc.Pressed() ? '#' : '.');
     hw.PrintLine("  [4] microSD    : CMD0=0x%02X %s · card-detect %s", g_sd_r1,
                  g_sd_ok ? "PASS" : (g_sd_r1 == 0x00 ? "MISO STUCK LOW" : "no card"),
                  g_sd_cd ? "HIGH" : "LOW");
@@ -598,6 +637,9 @@ int main(void)
 
     for(size_t i = 0; i < kNumInputs; i++)
         inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+
+    g_enc.Init(tt::P(tt::kEncA), tt::P(tt::kEncB), tt::P(tt::kEncSw));
+    tuner_init(48000.f);
 
     // ⚠ Init ALL pins, then settle, THEN read. Reading straight after Init() returns the pin's
     // pre-pull-up state and every input reports a false LOW -- observed on the first hardware run
@@ -739,18 +781,17 @@ int main(void)
                 // ⚠ The bypass footswitch toggles the chain on its PRESS edge. Interim control
                 // until there is a menu -- and it is the A/B this whole project turns on: the same
                 // playing, with and without the DSP, switched instantly.
-                // ⚠ Tuner footswitch cycles presets -- interim, until there is a menu. It is the
-                // only way to reach a preset that names an IR, since "default" deliberately has
-                // none. Expect a short dropout: the IR is read off the SD card.
-                if(i == 4 && !now)
-                    SelectPreset(g_preset_idx + 1);
-
-                if(i == 3 && !now)
+                if(i == 0 && !now)          // bypass footswitch
                 {
                     g_dsp_bypass = !g_dsp_bypass;
                     hw.PrintLine("  >> DSP %s%s",
                                  g_dsp_bypass ? "BYPASSED" : "ENGAGED",
                                  (!g_dsp_bypass && g_ir_active) ? " (with IR)" : "");
+                }
+                if(i == 1 && !now)          // tuner footswitch -- its actual job now
+                {
+                    g_tuner_on = !g_tuner_on;
+                    hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
                 }
             }
         }
@@ -797,8 +838,16 @@ int main(void)
         // A 2 s hold with a visible countdown, on a control nothing else uses at this stage, so it
         // cannot fire by accident. Jumps to the STM32 ROM bootloader; `make program-dfu` then works
         // with no button-press dance at all.
+        g_enc.Debounce();
+
+        // ⚠ Rotation selects presets. This is what the encoder is FOR, and it frees the tuner
+        // footswitch to do its actual job -- cycling presets on a footswitch was always a stopgap.
+        int32_t inc = g_enc.Increment();
+        if(inc != 0 && g_preset_count > 0)
+            SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1));
+
         static uint32_t sw_down_at = 0;
-        bool            sw_held    = !inputs[2].gpio.Read();   // encoder SW, active low
+        bool            sw_held    = g_enc.Pressed();
         if(sw_held)
         {
             if(sw_down_at == 0)

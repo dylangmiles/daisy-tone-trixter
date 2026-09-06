@@ -35,6 +35,7 @@ CPP_SOURCES = \
 	audio/dsp_chain.cpp \
 	audio/sd_daisy_shim.cpp \
 	audio/tt_store.cpp \
+	audio/tuner.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
 	lib/FFTConvolver/AudioFFT.cpp \

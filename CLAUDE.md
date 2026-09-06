@@ -163,10 +163,15 @@ low-latency path costs exactly one block), tail block **512**, up to **4096** ta
 
 | Control | Does |
 |---|---|
-| **Bypass footswitch** | toggles the whole chain — the A/B this project turns on |
-| **Tuner footswitch** | cycles to the next preset, loading whatever IR it names |
-| **Encoder short press** | print the full report to serial |
-| **Encoder hold 2 s** | enter DFU |
+| **Encoder — turn** | select preset (loads its IR) |
+| **Encoder — short press** | print the full report to serial |
+| **Encoder — hold 2 s** | enter DFU |
+| **Bypass footswitch** | toggle the whole chain — the A/B this project turns on |
+| **Tuner footswitch** | toggle the tuner |
+
+⚠ Preset selection moved from the tuner footswitch to the **encoder**, which is what the encoder is
+for, and frees the tuner switch to do its actual job. Cycling presets on a footswitch was a stopgap
+that existed only because there was no other way to reach a preset with an IR.
 
 ⚠ **The `default` preset names no IR by design**, so at boot there is nothing to load and the OLED
 shows `ir-`. Cycling with the tuner switch is the only way to reach a preset that has one. That is
@@ -182,6 +187,18 @@ the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from 
 `dsp_chain_find_preset()` searches the built-in table and returns −1 for every name on the card —
 which silently produced "3 presets, no IR" for a while. If the named boot preset is missing, fall
 back to the **first** rather than to none.
+
+## Tuner and GR meter
+
+**Tuner** (`tuner.cpp`) ported unchanged — it depends only on `math.h`/`string.h`. ⚠ It is fed from
+the **RAW INPUT, before any DSP**: you tune the string, not the compressed and EQ'd version of it.
+Gated behind `g_tuner_on` so its autocorrelation costs nothing when unused. When armed it takes the
+OLED's input line, because tuning matters more than levels at the moment you are doing it.
+
+**GR meter** shares the existing meter line rather than getting its own repaint. ⚠ On the Pico the
+GR meter defaulted **off** because its extra I²C repaints coupled EMI into the high-Z input
+([[project_home_gr_meter_crosstalk]]). Folding it into the existing 2 Hz refresh adds no bus traffic,
+so here it costs nothing to leave on.
 
 ## The bypass footswitch is the A/B control
 
