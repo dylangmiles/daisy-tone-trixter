@@ -55,6 +55,19 @@ DAISYSP_DIR  ?= /Users/dylan/dev/sdk/daisy/DaisySP
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
 
+# ⚠ FLOAT PRINTF. libDaisy links --specs=nano.specs, and newlib-nano leaves floating-point
+# conversion OUT of the printf family unless this symbol is forced in. Without it every "%f" in the
+# build prints NOTHING -- silently, with no warning and no link error.
+#
+# Found 2026-09-06 as "no value on the BK level screen", but the same blank hit every DSP parameter
+# value in the menu (menu.cpp:210/219/221), the GR meter number, the tuner's cents readout, and the
+# `bklevel` terminal reply. ⚠ It is very likely also the real cause of the earlier "tuner engages
+# but shows no note".
+#
+# ⚠ Appended AFTER the include on purpose: libDaisy sets LDFLAGS there, and the link rule expands
+# the variable when it runs, so adding to it here reaches the linker.
+LDFLAGS += -u _printf_float
+
 # Convenience: build then flash in one step. The board must already be in DFU --
 # hold the ENCODER SWITCH for 2 s (see main.cpp), or hold BOOT and tap RESET if
 # those buttons are still reachable.
