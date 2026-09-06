@@ -145,6 +145,80 @@ static volatile uint32_t g_t_wraps   = 0;   // discarded samples, evidence of th
 static volatile bool     g_enc_dbg   = false;
 static volatile int32_t  g_enc_total = 0;
 static volatile uint32_t g_enc_evts  = 0;
+static volatile uint8_t  g_enc_raw  = 3;   // last raw (A<<1)|B, for the `enc` report
+
+// ⚠ OUR OWN QUADRATURE DECODE -- libDaisy's Encoder::Increment() cannot decode this encoder.
+//
+// libDaisy (src/hid/encoder.cpp) emits a step on ONE exact sample pattern:
+//     A's last two samples == 0b10  AND  B's last two samples == 0b00
+// -- a falling edge on A at the instant B has already read low for two consecutive samples. A
+// PEC11R rests with both contacts OPEN (1,1) at every detent and runs
+//     1,1 -> 0,1 -> 0,0 -> 1,0 -> 1,1
+// through one click, so that pattern exists in exactly ONE of the four transitions, and only if the
+// sampler happens to catch the intermediate states in that order. Turn slowly and contact bounce
+// breaks the exact match; turn quickly and the states pass between samples. A narrow band of speeds
+// in the middle works and nothing else does -- which is exactly the reported symptom, "have to turn
+// at a very specific rate" (2026-09-06). Four rounds of display and timing fixes could not have
+// helped, because the counts were never being produced.
+//
+// This is a full state-machine decode instead: every one of the four transitions is a quarter step
+// and one detent is emitted per completed cycle. Contact bounce inside a cycle nets to zero (a
+// reversal subtracts exactly what it added), so no debounce delay is needed and no speed is special.
+static const int8_t kQuadStep[16] = {
+    // index = (prev << 2) | cur, where state = (A << 1) | B
+     0, -1, +1,  0,
+    +1,  0,  0, -1,
+    -1,  0,  0, +1,
+     0, +1, -1,  0,
+};
+
+static GPIO    g_enc_a, g_enc_b;
+static uint8_t g_q_prev = 0x03;
+static uint8_t g_q_rest = 0x03;   // the state the knob sits in between detents, sampled at Init
+static int8_t  g_q_sub  = 0;      // quarter steps accumulated within the current cycle
+static int8_t  g_q_dir  = 1;      // last unambiguous direction, for skipped-state recovery
+
+static int32_t EncoderPoll()
+{
+    const uint8_t cur = (uint8_t)((g_enc_a.Read() ? 2 : 0) | (g_enc_b.Read() ? 1 : 0));
+    g_enc_raw         = cur;
+    if(cur == g_q_prev)
+        return 0;
+
+    int8_t step = kQuadStep[(g_q_prev << 2) | cur];
+    if(step == 0)
+    {
+        // ⚠ Both bits changed between samples, so a state was skipped -- unavoidable at any finite
+        // sample rate on a fast turn. Direction is genuinely ambiguous here, so carry on in the
+        // direction already established rather than discarding the movement. Discarding it is what
+        // makes a fast spin do nothing at all.
+        step = (int8_t)(2 * g_q_dir);
+    }
+    else
+    {
+        g_q_dir = (step > 0) ? 1 : -1;
+    }
+    g_q_sub  = (int8_t)(g_q_sub + step);
+    g_q_prev = cur;
+
+    // ⚠ A full cycle, in case the knob's rest position is not where we think it is.
+    if(g_q_sub >= 4)  { g_q_sub = 0; return +1; }
+    if(g_q_sub <= -4) { g_q_sub = 0; return -1; }
+
+    // ⚠ Otherwise emit only back at the detent rest position: the click is complete when the
+    // contacts are open again. Partial nudges that spring back produce nothing, and because the
+    // accumulator is cleared here one detent can never produce two counts.
+    if(cur != g_q_rest)
+        return 0;
+
+    int32_t out = 0;
+    if(g_q_sub >= 2)
+        out = +1;
+    else if(g_q_sub <= -2)
+        out = -1;
+    g_q_sub = 0;
+    return out;
+}
 
 // ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
 //
@@ -276,8 +350,8 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_peak = pk;
 
     // Encoder, at the callback's steady rate -- see g_enc_delta.
-    g_enc.Debounce();
-    int32_t d = g_enc.Increment();
+    g_enc.Debounce();          // ⚠ for the SWITCH only -- see EncoderPoll()
+    int32_t d = EncoderPoll();
     if(d != 0)
     {
         g_enc_delta += d;
@@ -755,7 +829,10 @@ static void HandleCommand(const char* line)
     {
         hw.PrintLine("encoder: %ld counts in %lu events since last reset",
                      (long)g_enc_total, (unsigned long)g_enc_evts);
-        hw.PrintLine("  ⚠ one detent should be ONE count. More means the decode is over-counting.");
+        hw.PrintLine("  raw A/B=%d%d  rest=%d%d  sub=%d",
+                     (g_enc_raw >> 1) & 1, g_enc_raw & 1,
+                     (g_q_rest >> 1) & 1, g_q_rest & 1, (int)g_q_sub);
+        hw.PrintLine("  ⚠ one detent should be ONE count.");
         g_enc_total = 0;
         g_enc_evts  = 0;
         return;
@@ -960,6 +1037,15 @@ int main(void)
         inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
     g_enc.Init(tt::P(tt::kEncA), tt::P(tt::kEncB), tt::P(tt::kEncSw));
+
+    // ⚠ A and B are read by EncoderPoll(), not by libDaisy's broken decode. g_enc keeps the click.
+    // Two GPIO objects on one pin is harmless -- both configure it identically and only read it.
+    g_enc_a.Init(tt::P(tt::kEncA), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    g_enc_b.Init(tt::P(tt::kEncB), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    System::Delay(2);   // let the pull-ups settle before sampling the rest state
+    g_q_rest = (uint8_t)((g_enc_a.Read() ? 2 : 0) | (g_enc_b.Read() ? 1 : 0));
+    g_q_prev = g_q_rest;
+    hw.PrintLine("  encoder rest state A/B = %d%d", (g_q_rest >> 1) & 1, g_q_rest & 1);
     tuner_init(48000.f);
 
     // ⚠ Init ALL pins, then settle, THEN read. Reading straight after Init() returns the pin's
