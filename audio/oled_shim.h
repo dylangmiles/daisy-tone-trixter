@@ -29,6 +29,8 @@ void oled_clear(void);                            // clear the framebuffer
 void oled_text(int x, int y, const char *s);      // 6x8 text at pixel (x, y)
 void oled_text_inv(int x, int y, const char *s);  // inverted — the selected menu row
 void oled_flush(void);                            // push to the panel
+void oled_rect(int x, int y, int w, int h, bool on);        // filled rectangle
+void oled_bar(int x, int y, int w, int h, float frac);      // outlined bar, 0..1 filled
 
 #ifdef __cplusplus
 }

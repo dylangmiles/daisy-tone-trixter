@@ -174,9 +174,16 @@ static void UsbRx(uint8_t* buf, uint32_t* len)
 // ⚠ TUNER RUNS IN THE FOREGROUND, NOT THE CALLBACK. Its autocorrelation is far too heavy for a
 // 64-sample audio block -- running it inline caused heavy clipping and dropouts (2026-09-06). The
 // callback only COPIES samples here, which is cheap; the foreground drains and analyses them.
-static float            g_tun_buf[512];
-static volatile int     g_tun_fill  = 0;
-static volatile bool    g_tun_ready = false;
+// ⚠ A RING, not a fill-and-stop buffer. The first attempt stopped collecting once full and
+// resumed only after the foreground drained it, so the tuner saw disjoint chunks with gaps --
+// and autocorrelation needs CONTIGUOUS samples to find a period. That is why it engaged but never
+// reported a note (2026-09-06), and why a backing track made it worse: more foreground work meant
+// longer gaps.
+static constexpr int    kTunRing = 4096;
+static float            g_tun_buf[kTunRing];
+static volatile int     g_tun_w  = 0;      // callback writes here
+static int              g_tun_r  = 0;      // foreground reads here
+static volatile bool    g_tun_ovf = false;
 static TunerResult   g_tune     = {};
 
 // Convolver partitioning, same as the Pico. Head block matches the audio block size so the
@@ -199,7 +206,8 @@ static volatile uint32_t g_cb_size = 0;
 static volatile uint32_t g_cb_count = 0;
 
 static volatile float    g_peak  = 0.f;   // peak |sample| since the display last read it
-static volatile uint32_t g_clips = 0;
+static volatile uint32_t g_clips     = 0;
+static volatile bool     g_clip_recent = false;   // sticky until the splash shows it
 
 static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
 {
@@ -217,7 +225,10 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         if(a > pk)
             pk = a;
         if(a >= 0.99f)
+        {
             g_clips++;
+            g_clip_recent = true;
+        }
         g_work[i] = in[0][i];
     }
     if(pk > g_peak)
@@ -230,15 +241,15 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_enc_delta += d;
 
     // Copy for the tuner -- no analysis here. See g_tun_buf.
-    if(g_tuner_on && !g_tun_ready)
+    if(g_tuner_on)
     {
-        int n = (int)size;
-        int f = g_tun_fill;
-        for(int i = 0; i < n && f < (int)(sizeof(g_tun_buf) / sizeof(float)); i++)
-            g_tun_buf[f++] = g_work[i];
-        g_tun_fill = f;
-        if(f >= (int)(sizeof(g_tun_buf) / sizeof(float)))
-            g_tun_ready = true;
+        int w = g_tun_w;
+        for(size_t i = 0; i < size; i++)
+        {
+            g_tun_buf[w] = g_work[i];
+            w            = (w + 1) & (kTunRing - 1);
+        }
+        g_tun_w = w;
     }
 
     // IR first, then the chain -- same order as the Pico build.
@@ -251,6 +262,13 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     // audio and must not be run through the IR, EQ or compressor. Putting the bed through the
     // guitar's processing would be both wrong and a waste of the budget.
     backing_mix(g_work, (int)size);
+
+    // ⚠ TUNER MUTES THE OUTPUT, backing track included. That is what a tuner pedal does, and it is
+    // what makes it usable on stage. Detection is unaffected: the tuner reads the INPUT, upstream of
+    // everything here.
+    if(g_tuner_on)
+        for(size_t i = 0; i < size; i++)
+            g_work[i] = 0.f;
 
     for(size_t i = 0; i < size; i++)
     {
@@ -443,35 +461,56 @@ static void OledHome(void)
     if(!oled_ok)
         return;
 
-    char buf[24];
+    char buf[26];
     oled_clear();
 
-    oled_text(0, 0, "Tone Trixter");
+    // --- what is SET ---------------------------------------------------------------------------
+    oled_text(0, 0, g_dsp_bypass ? "Tone Trixter  BYP" : "Tone Trixter   ON");
 
-    snprintf(buf, sizeof(buf), "P %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
-    oled_text(0, 16, buf);
+    snprintf(buf, sizeof(buf), "P  %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
+    oled_text(0, 12, buf);
 
-    snprintf(buf, sizeof(buf), "IR %s", g_ir_active ? g_ir_name : "none");
-    oled_text(0, 24, buf);
+    // ⚠ Show the preset's IR NAME even when it is not loaded, with a marker for which. Reporting a
+    // bare "none" for a preset that names an IR made a failed LOAD look like a preset with no IR
+    // (2026-09-06) -- two very different faults that need telling apart.
+    {
+        const char* ir = (g_preset_count > 0) ? dsp_chain_preset_ir(g_preset_idx) : "";
+        if(ir && *ir)
+        {
+            const char* base = strrchr(ir, '/');
+            base = base ? base + 1 : ir;
+            snprintf(buf, sizeof(buf), "IR %c%s", g_ir_active ? '*' : '!', base);
+        }
+        else
+        {
+            snprintf(buf, sizeof(buf), "IR  none");
+        }
+        oled_text(0, 21, buf);
+    }
 
-    oled_text(0, 32, g_dsp_bypass ? "BYPASSED" : "ENGAGED");
-
-    // Input level, read-and-reset for a true peak: a body tap on a piezo is a transient and an
-    // averaged meter would simply miss it.
+    // --- meters: bar + written value ---------------------------------------------------------
     float pk = g_peak;
     g_peak   = 0.f;
-    if(pk > 0.0002f)
-        snprintf(buf, sizeof(buf), "in %3d dBFS", (int)(20.f * log10f(pk)));
-    else
-        snprintf(buf, sizeof(buf), "in   --");
-    oled_text(0, 40, buf);
+    int   dbfs = (pk > 0.0002f) ? (int)(20.f * log10f(pk)) : -99;
 
-    if(!g_dsp_bypass && g_gr_on)
+    oled_text(0, 34, "in");
+    oled_bar(18, 34, 62, 7, pk);                       // linear: matches how a peak FEELS
+    snprintf(buf, sizeof(buf), "%4d", dbfs);
+    oled_text(84, 34, dbfs > -99 ? buf : "  --");
+
+    // ⚠ Clip is STICKY until shown, not sampled. A single clipped sample between two 500 ms
+    // refreshes would otherwise never be seen -- and a transient is exactly what clips here.
+    if(g_clip_recent)
     {
-        float gr = dsp_chain_comp_gr_db();
-        snprintf(buf, sizeof(buf), "gr %4.1f dB", (double)(gr < -0.05f ? gr : 0.f));
-        oled_text(0, 48, buf);
+        oled_text(110, 34, "C");
+        g_clip_recent = false;
     }
+
+    float gr = (!g_dsp_bypass && g_gr_on) ? dsp_chain_comp_gr_db() : 0.f;
+    oled_text(0, 44, "gr");
+    oled_bar(18, 44, 62, 7, (-gr) / 20.f);             // 0..-20 dB of reduction across the bar
+    snprintf(buf, sizeof(buf), "%4.1f", (double)(gr < -0.05f ? gr : 0.f));
+    oled_text(84, 44, buf);
 
     if(g_tuner_on)
     {
@@ -479,7 +518,7 @@ static void OledHome(void)
             snprintf(buf, sizeof(buf), "TUNE %s%d %+4.0fc",
                      g_tune.name, g_tune.octave, (double)g_tune.cents);
         else
-            snprintf(buf, sizeof(buf), "TUNE  -- play --");
+            snprintf(buf, sizeof(buf), "TUNE listening...");
         oled_text(0, 56, buf);
     }
 
@@ -547,6 +586,14 @@ static void SelectPreset(int idx)
     g_preset_idx = idx;
     g_ir_len     = 0;
     snprintf(g_ir_name, sizeof(g_ir_name), "none");
+
+    // ⚠ bk_level of 0 means "not specified", not "silence". The built-in preset table predates this
+    // field and zero-initialises it, so treating 0 as a real level would mute the backing track on
+    // every preset that has not opted in.
+    int         np = 0;
+    const Preset* pl = tt_store_presets(&np);
+    if(pl && idx < np && pl[idx].bk_level > 0.f)
+        backing_set_level(pl[idx].bk_level);
 
     const char* ir = dsp_chain_preset_ir(idx);
     if(ir && *ir)
@@ -1030,12 +1077,22 @@ int main(void)
         backing_service();
 
         // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
-        if(g_tun_ready)
+        if(g_tuner_on)
         {
-            if(tuner_feed(g_tun_buf, (int)(sizeof(g_tun_buf) / sizeof(float))))
-                g_tune = tuner_result();
-            g_tun_fill  = 0;
-            g_tun_ready = false;
+            // Feed everything written since last time, in order and without gaps.
+            int w = g_tun_w;
+            while(g_tun_r != w)
+            {
+                int end = (g_tun_r < w) ? w : kTunRing;
+                int n   = end - g_tun_r;
+                if(tuner_feed(&g_tun_buf[g_tun_r], n))
+                    g_tune = tuner_result();
+                g_tun_r = (g_tun_r + n) & (kTunRing - 1);
+            }
+        }
+        else
+        {
+            g_tun_r = g_tun_w;      // stay in sync while disarmed
         }
 
 

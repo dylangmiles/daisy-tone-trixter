@@ -131,6 +131,34 @@ static void DrawChar(int x, int y, char c, bool on)
     }
 }
 
+void oled_rect(int x, int y, int w, int h, bool on)
+{
+    for(int j = 0; j < h; j++)
+        for(int i = 0; i < w; i++)
+            PixelSet(x + i, y + j, on);
+}
+
+// Outlined bar with a filled proportion. ⚠ An outline matters: a bare filled block gives no sense
+// of scale, so a quiet signal and a broken meter look identical.
+void oled_bar(int x, int y, int w, int h, float frac)
+{
+    if(frac < 0.f) frac = 0.f;
+    if(frac > 1.f) frac = 1.f;
+    for(int i = 0; i < w; i++)
+    {
+        PixelSet(x + i, y, true);
+        PixelSet(x + i, y + h - 1, true);
+    }
+    for(int j = 0; j < h; j++)
+    {
+        PixelSet(x, y + j, true);
+        PixelSet(x + w - 1, y + j, true);
+    }
+    int fill = (int)((w - 2) * frac + 0.5f);
+    if(fill > 0)
+        oled_rect(x + 1, y + 1, fill, h - 2, true);
+}
+
 void oled_text(int x, int y, const char* s)
 {
     if(!s)

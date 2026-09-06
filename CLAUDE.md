@@ -112,6 +112,29 @@ diagnostics used.
 inline. It is a 480 MHz M7 with an FPU against a 150 MHz M33, so the budget should be there — but
 that is an assumption until measured with an IR actually loaded.
 
+## ⚠ The SD card template is NOT duplicated here
+
+The card layout lives once, in **`tone-trixter/pico/sdcard_template/`** (6.8 MB — `config.txt`,
+`presets.txt`, IR WAVs, backing tracks).
+
+⚠ **Both pedals read the SAME physical card.** Copying the template into this repo would mean two
+copies that drift, and drift shows up as a preset that works on one pedal and not the other — which
+reads as a firmware difference and is miserable to chase. One artifact, one home.
+
+Its location under `pico/` is historical rather than meaningful. If it ever needs handing to a user
+independently it should become its own repo; until then a pointer beats a copy.
+
+### ⚠ `bk.level` is a Daisy-only preset key
+
+`presets.txt` may carry `bk.level = <0..2>` per preset (backing-track level). **The Pico's parser
+ignores unknown keys**, so the card stays readable by both pedals — but `dsp_chain.h` and
+`tt_store.cpp` have now **diverged from the RP2350 copies**. Port the same change back if the two are
+meant to stay identical.
+
+⚠ `bk_level` of **0 means "not specified"**, not "silence". The built-in preset table predates the
+field and zero-initialises it, so treating 0 as a real level would mute the backing track on every
+preset that has not opted in.
+
 ## SD card: presets and IRs
 
 Ported from the RP2350 build: `sd_spi.c` (bit-banged SPI), `sd_diskio.c`, `tt_store.cpp` (preset

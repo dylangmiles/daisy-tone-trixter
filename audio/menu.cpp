@@ -8,19 +8,19 @@
 
 #include <stdio.h>
 
-enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING };
+enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING, M_BKLEVEL };
 
 static int s_mode  = M_STAGES;
 // ⚠ DAISY PORT: the PGA row is REMOVED. The Pico drove the ES8388's input PGA in 3 dB steps; the
 // Seed3's TAC5242 is hardware-strapped with no software gain control at all, so the row was a
 // control that did nothing. Front-end level is set by the analogue daughter instead.
-static int s_sel   = 0;   // main-level row (0=back, 1=Preset, 2=IR, 3=BK, 4=GR meter, 5+=stage)
+static int s_sel   = 0;   // main-level row (0=back, 1=Preset, 2=IR, 3=BK, 4=BK level, 5=GR meter, 6+=stage)
 static int s_stage = 0;   // entered stage (PARAMS / EDIT levels)
 static int s_item  = 0;   // selected item in PARAMS: 0 = "< back", 1 = enable, 2+ = param[item-2]
 static int s_pick  = 0;   // selected entry in the PRESET / IR picker
 static bool s_go_home = false;  // set when "< back" clicked at MAIN; consumed by menu_take_home()
 
-#define N_SPECIAL 5       // main-level rows before the stages: back, Preset, IR, BK, GR meter
+#define N_SPECIAL 6       // main-level rows before the stages: back, Preset, IR, BK, BK level, GR meter
 #define VIS_ROWS  7       // visible list rows below the title (8 text rows total, row 0 = title)
 
 void menu_init(void) { s_mode = M_STAGES; s_sel = 0; s_stage = 0; s_item = 0; s_pick = 0; s_go_home = false; }
@@ -53,7 +53,8 @@ bool menu_event(int turn, bool click) {
             else if (s_sel == 1) { s_mode = M_PRESET; s_pick = app_preset_current(); }
             else if (s_sel == 2) { s_mode = M_IR;     s_pick = app_ir_current(); }
             else if (s_sel == 3) { s_mode = M_BACKING; s_pick = bk_active(); }
-            else if (s_sel == 4) { app_gr_set(!app_gr_enabled()); }   // toggle home GR meter in place
+            else if (s_sel == 4) { s_mode = M_BKLEVEL; }              // ⚠ Daisy addition: backing level
+            else if (s_sel == 5) { app_gr_set(!app_gr_enabled()); }   // toggle home GR meter in place
             else                 { s_mode = M_PARAMS; s_stage = s_sel - N_SPECIAL; s_item = 0; }
         }
         return turn || click;
@@ -73,6 +74,14 @@ bool menu_event(int turn, bool click) {
         return turn || click;
     }
 
+    if (s_mode == M_BKLEVEL) {                         // ⚠ Daisy addition: live backing level
+        if (turn) {
+            float v = backing_level() + 0.05f * turn;   // 0.05 per detent, clamped in the setter
+            backing_set_level(v);
+        }
+        if (click) s_mode = M_STAGES;
+        return turn || click;
+    }
     if (s_mode == M_BACKING) {                         // pick / stop an SD backing track
         int n = bk_count();
         if (turn) { s_pick += turn; clamp(&s_pick, n); }
@@ -160,7 +169,8 @@ void menu_render(void) {
             else if (it == 1) snprintf(line, sizeof line, "P: %s",  app_preset_name(app_preset_current()));
             else if (it == 2) snprintf(line, sizeof line, "IR:%s",  app_ir_name(app_ir_current()));
             else if (it == 3) snprintf(line, sizeof line, "BK:%s",   bk_name(bk_active()));
-            else if (it == 4) snprintf(line, sizeof line, "GR meter  %s", app_gr_enabled() ? "on" : "off");
+            else if (it == 4) snprintf(line, sizeof line, "BK level  %.2f", (double)backing_level());
+            else if (it == 5) snprintf(line, sizeof line, "GR meter  %s", app_gr_enabled() ? "on" : "off");
             else {
                 Stage *st = dsp_chain_stage(it - N_SPECIAL);
                 // value column at char 10, aligned with the "GR meter  <on/off>" row above
@@ -172,6 +182,11 @@ void menu_render(void) {
         picker("-- PRESET --", app_preset_count(), s_pick, app_preset_name, app_preset_current());
     } else if (s_mode == M_IR) {
         picker("-- IR --", app_ir_count(), s_pick, app_ir_name, app_ir_current());
+    } else if (s_mode == M_BKLEVEL) {
+        oled_text(0, 0, "-- BK LEVEL --");
+        snprintf(line, sizeof line, "%.2f", (double)backing_level());
+        oled_text(0, 26, line);
+        oled_text(0, 50, "turn to set, click ok");
     } else if (s_mode == M_BACKING) {
         picker("-- BACKING --", bk_count(), s_pick, bk_name, bk_active());
     } else if (false) {

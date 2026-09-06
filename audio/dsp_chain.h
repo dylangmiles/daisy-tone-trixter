@@ -83,6 +83,13 @@ typedef struct {
     float out_level;
     int   pga;                            // ES8388 input PGA gain in dB (0..24, 3 dB steps); <0 = leave PGA
                                           // unchanged on load. Passive K&K wants ~12; active Garrison ~6.
+                                          // ⚠ IGNORED on the Daisy: the TAC5242 has no software gain.
+    float bk_level;                       // ⚠ DAISY ADDITION (2026-09-06): backing-track level, 0..2.
+                                          // <0 = leave the current level alone. Parsed from "bk.level"
+                                          // in presets.txt. The Pico's parser ignores the key, so the
+                                          // SD card stays readable by both pedals -- but this struct and
+                                          // tt_store.cpp have now DIVERGED from the RP2350 copies. Port
+                                          // the same change back if the two are to stay identical.
 } Preset;
 
 int         dsp_chain_preset_count(void);
