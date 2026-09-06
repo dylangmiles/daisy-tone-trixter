@@ -525,8 +525,19 @@ static void OledHome(void)
     oled_flush();
 }
 
-static bool LoadIr(const char* path)
+static bool LoadIr(const char* name)
 {
+    // ⚠ RESOLVE THE NAME TO A PATH. presets.txt names an IR as a bare filename
+    // ("tanglewood.wav"), and the card keeps them in /tonetrix/ir/. Passing the bare name to the
+    // file opener looked in the ROOT and failed every time (2026-09-06) -- the preset was fine, the
+    // file was fine, only the path was missing. An absolute name is used as-is so a preset can
+    // still point anywhere on the card.
+    char path[64];
+    if(name && name[0] == '/')
+        snprintf(path, sizeof(path), "%s", name);
+    else
+        snprintf(path, sizeof(path), "/tonetrix/ir/%s", name ? name : "");
+
     uint32_t rate = 0, avail = 0;
     int      n    = wav_load_mono_f32(path, g_ir_buf, kIrMaxTaps, &rate, &avail);
     if(n <= 0)
@@ -1182,9 +1193,13 @@ int main(void)
         // the menu sluggish and starved backing_service(). The menu now repaints the instant the
         // encoder moves -- which feels FASTER than the old 100 ms timer while doing far less work.
         // The home screen still ticks slowly because its meters genuinely change on their own.
+        // ⚠ Event-driven BUT rate-limited. A full flush is ~25 ms of I2C even batched, so redrawing
+        // on every detent means a fast turn queues flushes back to back and the loop appears to
+        // hang mid-turn. A 50 ms floor coalesces a spin into a few frames while still repainting
+        // within a detent's worth of time -- responsive without saturating the bus.
         if(g_in_menu)
         {
-            if(g_oled_dirty)
+            if(g_oled_dirty && (t - last_oled) >= 50)
             {
                 g_oled_dirty = false;
                 last_oled    = t;
