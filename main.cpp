@@ -131,7 +131,11 @@ static bool          g_oled_dirty = true;
 static volatile uint32_t g_t_flush   = 0;   // us, worst oled_flush()
 static volatile uint32_t g_t_render  = 0;   // us, worst menu_render()
 static volatile uint32_t g_t_service = 0;   // us, worst backing_service()
-static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration
+static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration (work only)
+// ⚠ PERIOD between iteration starts -- catches anything the work timer cannot, including
+// System::Delay() and any stall between passes. If a hang shows here but not in g_t_loop, the time
+// is going somewhere outside the instrumented work.
+static volatile uint32_t g_t_period  = 0;
 
 // ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
 //
@@ -720,10 +724,11 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "status") == 0)  { PrintFullReport(); return; }
     if(strcmp(line, "times") == 0)
     {
-        hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu",
+        hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu PERIOD=%lu",
                      (unsigned long)g_t_flush, (unsigned long)g_t_render,
-                     (unsigned long)g_t_service, (unsigned long)g_t_loop);
-        g_t_flush = g_t_render = g_t_service = g_t_loop = 0;
+                     (unsigned long)g_t_service, (unsigned long)g_t_loop,
+                     (unsigned long)g_t_period);
+        g_t_flush = g_t_render = g_t_service = g_t_loop = g_t_period = 0;
         hw.PrintLine("(reset)");
         return;
     }
@@ -1103,9 +1108,10 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
-            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu",
+            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu per=%lu",
                          (unsigned long)g_t_flush, (unsigned long)g_t_render,
-                         (unsigned long)g_t_service, (unsigned long)g_t_loop);
+                         (unsigned long)g_t_service, (unsigned long)g_t_loop,
+                         (unsigned long)g_t_period);
             hw.PrintLine("        audio: sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
                          (int)hw.AudioSampleRate(),
                          (unsigned long)g_cb_size,
@@ -1134,6 +1140,16 @@ int main(void)
         }
 
         const uint32_t loop_t0 = System::GetUs();
+        {
+            static uint32_t prev = 0;
+            if(prev)
+            {
+                uint32_t d = loop_t0 - prev;
+                if(d > g_t_period)
+                    g_t_period = d;
+            }
+            prev = loop_t0;
+        }
 
         // Commit a deferred preset change once the encoder has settled.
         if(g_preset_pending >= 0 && (t - g_preset_moved_at) >= kPresetSettleMs)
