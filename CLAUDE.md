@@ -252,9 +252,14 @@ unsigned delta arithmetic is wrong across a wrap. Observed 2026-09-06 as a perio
   longer than a few seconds, or for any duration that might straddle a wrap.
 - `GetUs()` is fine for genuinely short intervals, but **discard implausible results** rather than
   reporting them — the instrumentation counts these as `wraps=`.
-- ⚠ **`backing.cpp` uses `time_us_32()` for its `SERVICE_BUDGET_US` check**, which the shim maps to
-  `GetUs()`. A wrap there makes the budget appear exceeded and the service return early — harmless
-  in itself, but worth knowing before trusting a backing-track timing measurement.
+- ✅ **`tt_shim_now_us()` no longer uses `GetUs()`** (fixed 2026-09-06). It accumulates raw
+  `GetTick()` deltas into a 64-bit counter, so the microseconds it returns roll over cleanly at
+  `2^32` and delta arithmetic is correct. ⚠ It is **foreground-only** — the static state is not
+  reentrant. `backing.cpp` and `sd_spi.c` are the only callers.
+  The bug it fixes was not cosmetic: `backing_service()` bounds its work with
+  `(time_us_32() - t0) < SERVICE_BUDGET_US`, and across a `GetUs()` rollover that went true
+  immediately, so **once every 21.5 s the backing track was starved for no reason**. It also
+  produced `max service=4273495447 us` in `bk stat`.
 
 ## Terminal commands
 
@@ -318,10 +323,15 @@ refused to link**. It is now `DSY_SDRAM_BSS`. The Daisy has 64 MB of SDRAM nothi
 a streamed audio ring is exactly what it suits — sequential access, refilled in the foreground,
 never on a latency-critical path.
 
-⚠ Watch `SERVICE_BUDGET_US` (2000) against `CHUNK_BYTES` (256). The Pico recorded that **the budget
-must exceed one chunk read or the ring silently sits at 2 %** — granularity, not throughput, was the
-constraint there. The bit-bang SD read speed differs on this board, so that relationship is worth
-re-checking rather than assuming it carried over.
+✅ **`SERVICE_BUDGET_US` (2000) vs `CHUNK_BYTES` (256) VERIFIED on this board, 2026-09-06.**
+`bk stat` with a track playing reports **ring 98–99 %, 0 underruns** in steady state. The Pico's
+failure — *the budget must exceed one chunk read or the ring silently sits at 2 %* — **does not occur
+here**; the bit-bang read is fast enough that granularity is not the constraint. No change needed.
+
+⚠ `svc=` peaks around **6 ms**, well over the 2000 µs budget, and that is expected rather than a
+fault: the budget is checked **before starting** each chunk, so one slow card read overshoots it. It
+bounds when to stop issuing reads, not the duration of one. With the ring at 99 % and no underruns
+there is nothing to chase.
 
 ## Tuner and GR meter
 

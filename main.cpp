@@ -1015,8 +1015,9 @@ static void HandleCommand(const char* line)
                      pct, (unsigned long)un, (unsigned long)mx,
                      (unsigned long)backing_service_budget_us(),
                      (unsigned long)backing_chunk_bytes());
-        hw.PrintLine("  ⚠ ring stuck near 2%% with the budget below one chunk read is the Pico's"
-                     " known failure -- granularity, not throughput. `bk bench` measures the card.");
+        // ⚠ Keep this SHORT. The first version ran past libDaisy's line buffer and was truncated
+        // mid-word ("`bk $$"), which ate the following status line too.
+        hw.PrintLine("  ring near 2%% = budget under one chunk read (the Pico's failure)");
         backing_stats_reset();
         return;
     }

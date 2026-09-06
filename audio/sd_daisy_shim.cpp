@@ -76,9 +76,38 @@ uint32_t tt_shim_now_ms(void)
     return System::GetNow();
 }
 
+// ⚠ WRAP-CLEAN MICROSECONDS. System::GetUs() is GetTick() DIVIDED DOWN, so its value rolls over at
+// ~21.47e6 rather than at 2^32 -- ordinary unsigned delta arithmetic across that rollover is simply
+// wrong. Measured 2026-09-06: `bk stat` reported "max service=4273495447 us", a 4273-second read.
+//
+// Worse than a silly number, it broke the thing the clock is FOR: backing_service() bounds its work
+// with `(time_us_32() - t0) < SERVICE_BUDGET_US`, and across a rollover that comparison goes true
+// immediately, so the service returns having done nothing. Once every 21.5 s the backing track was
+// being starved for no reason.
+//
+// Accumulating the RAW tick deltas into a 64-bit counter fixes both: tick deltas are wrap-safe
+// (plain 32-bit counter, unsigned subtraction handles it), and the microsecond value derived from
+// the accumulator then rolls over cleanly at 2^32, where delta arithmetic is correct again.
+//
+// ⚠ FOREGROUND ONLY -- the static state is not reentrant. backing.cpp and sd_spi.c are the only
+// callers and both run in the foreground loop. Do not call this from an interrupt.
 uint32_t tt_shim_now_us(void)
 {
-    return System::GetUs();
+    static uint32_t last = 0;
+    static uint64_t acc  = 0;
+    static uint32_t div  = 0;
+
+    if(div == 0)
+    {
+        div = System::GetTickFreq() / 1000000u;
+        if(div == 0)
+            div = 1;
+        last = System::GetTick();
+    }
+    const uint32_t now = System::GetTick();
+    acc += (uint32_t)(now - last);      // wrap-safe: raw counter, unsigned subtraction
+    last = now;
+    return (uint32_t)(acc / div);
 }
 
 void tt_shim_sleep_ms(uint32_t ms)
