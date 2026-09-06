@@ -124,6 +124,19 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 static bool          g_in_menu  = false;
 static bool          g_oled_dirty = true;
 
+// ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
+//
+// SelectPreset() reads a WAV off the SD card and re-initialises the convolver -- hundreds of
+// milliseconds. Doing that on every detent made the pedal appear to hang for seconds when spinning
+// through presets, and got noticeably worse the moment IR loading actually started working
+// (2026-09-06): before that the load failed fast, so the cost was invisible.
+//
+// Turning now moves an index and repaints immediately; the load fires once the encoder has been
+// still for kPresetSettleMs. Spin freely, and it commits where you stop.
+static constexpr uint32_t kPresetSettleMs = 400;
+static int      g_preset_pending = -1;      // -1 = nothing waiting
+static uint32_t g_preset_moved_at = 0;
+
 // ⚠ The encoder is polled from the AUDIO CALLBACK, at a rock-steady 750 Hz.
 //
 // Polling it from the foreground loop meant an irregular ~300 Hz -- backing_service() alone may
@@ -467,14 +480,18 @@ static void OledHome(void)
     // --- what is SET ---------------------------------------------------------------------------
     oled_text(0, 0, g_dsp_bypass ? "Tone Trixter  BYP" : "Tone Trixter   ON");
 
-    snprintf(buf, sizeof(buf), "P  %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
+    // Show the PENDING preset while the encoder is still moving -- the name must track the knob
+    // even though the load has not happened yet, or turning feels dead.
+    const int shown = (g_preset_pending >= 0) ? g_preset_pending : g_preset_idx;
+    snprintf(buf, sizeof(buf), "P  %s%s", g_preset_count > 0 ? dsp_chain_preset_name(shown) : "-",
+             g_preset_pending >= 0 ? " ..." : "");
     oled_text(0, 12, buf);
 
     // ⚠ Show the preset's IR NAME even when it is not loaded, with a marker for which. Reporting a
     // bare "none" for a preset that names an IR made a failed LOAD look like a preset with no IR
     // (2026-09-06) -- two very different faults that need telling apart.
     {
-        const char* ir = (g_preset_count > 0) ? dsp_chain_preset_ir(g_preset_idx) : "";
+        const char* ir = (g_preset_count > 0) ? dsp_chain_preset_ir(shown) : "";
         if(ir && *ir)
         {
             const char* base = strrchr(ir, '/');
@@ -1085,6 +1102,16 @@ int main(void)
             g_cmd_ready = false;
         }
 
+        // Commit a deferred preset change once the encoder has settled.
+        if(g_preset_pending >= 0 && (t - g_preset_moved_at) >= kPresetSettleMs)
+        {
+            int want = g_preset_pending;
+            g_preset_pending = -1;
+            if(want != g_preset_idx)
+                SelectPreset(want);
+            g_oled_dirty = true;
+        }
+
         backing_service();
 
         // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
@@ -1118,7 +1145,14 @@ int main(void)
             if(g_in_menu)
                 menu_event(inc > 0 ? 1 : -1, false);
             else if(g_preset_count > 0)
-                SelectPreset(g_preset_idx + (inc > 0 ? 1 : -1));
+            {
+                int nx = (g_preset_pending >= 0 ? g_preset_pending : g_preset_idx)
+                         + (inc > 0 ? 1 : -1);
+                if(nx < 0)               nx = g_preset_count - 1;
+                if(nx >= g_preset_count) nx = 0;
+                g_preset_pending  = nx;
+                g_preset_moved_at = t;
+            }
             g_oled_dirty = true;
         }
 
