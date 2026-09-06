@@ -232,6 +232,26 @@ wraps the right edge.
 repaints the instant the encoder moves — which feels *faster* than the old 100 ms timer while doing
 far less work. Only the home screen still ticks, because its meters change on their own.
 
+## ⚠ libDaisy gotcha: System::GetUs() wraps every ~21.5 seconds
+
+```c
+uint32_t GetUs() { return GetTick() / (GetFreq() / 1000000); }
+```
+
+`GetTick()` is a 32-bit hardware counter. Divided down to microseconds it **wraps roughly every 21.5
+seconds**, and because it is a *divided* counter it does **not** wrap cleanly at `2^32` — so ordinary
+unsigned delta arithmetic is wrong across a wrap. Observed 2026-09-06 as a period reading of
+`4273494460` µs, i.e. a 21.5 s jump backwards.
+
+**Rules:**
+- ⚠ Use **`System::GetNow()`** (HAL_GetTick, clean milliseconds, wraps at 49.7 days) for anything
+  longer than a few seconds, or for any duration that might straddle a wrap.
+- `GetUs()` is fine for genuinely short intervals, but **discard implausible results** rather than
+  reporting them — the instrumentation counts these as `wraps=`.
+- ⚠ **`backing.cpp` uses `time_us_32()` for its `SERVICE_BUDGET_US` check**, which the shim maps to
+  `GetUs()`. A wrap there makes the budget appear exceeded and the service return early — harmless
+  in itself, but worth knowing before trusting a backing-track timing measurement.
+
 ## Terminal commands
 
 ⚠ Restored from the RP2350 build. `dsp_chain_command()` was already ported and implements the whole

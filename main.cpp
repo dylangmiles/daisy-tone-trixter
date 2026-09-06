@@ -135,7 +135,8 @@ static volatile uint32_t g_t_loop    = 0;   // us, worst whole iteration (work o
 // ⚠ PERIOD between iteration starts -- catches anything the work timer cannot, including
 // System::Delay() and any stall between passes. If a hang shows here but not in g_t_loop, the time
 // is going somewhere outside the instrumented work.
-static volatile uint32_t g_t_period  = 0;
+static volatile uint32_t g_t_period  = 0;   // ⚠ MILLISECONDS, not us -- see below
+static volatile uint32_t g_t_wraps   = 0;   // discarded samples, evidence of the wrap
 
 // ⚠ Preset changes from the HOME screen are DEFERRED until the encoder settles.
 //
@@ -724,11 +725,11 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "status") == 0)  { PrintFullReport(); return; }
     if(strcmp(line, "times") == 0)
     {
-        hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu PERIOD=%lu",
+        hw.PrintLine("worst-case us: flush=%lu render=%lu service=%lu loop=%lu PERIOD=%lums wraps=%lu",
                      (unsigned long)g_t_flush, (unsigned long)g_t_render,
                      (unsigned long)g_t_service, (unsigned long)g_t_loop,
-                     (unsigned long)g_t_period);
-        g_t_flush = g_t_render = g_t_service = g_t_loop = g_t_period = 0;
+                     (unsigned long)g_t_period, (unsigned long)g_t_wraps);
+        g_t_flush = g_t_render = g_t_service = g_t_loop = g_t_period = g_t_wraps = 0;
         hw.PrintLine("(reset)");
         return;
     }
@@ -1108,10 +1109,10 @@ int main(void)
                          g_sd_r1,
                          sd_ok ? "ok" : (g_sd_r1 == 0x00 ? "MISO-LOW!" : "no-card"),
                          g_sd_cd ? "cd=HIGH" : "cd=LOW");
-            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu per=%lu",
+            hw.PrintLine("        us: flush=%lu render=%lu svc=%lu loop=%lu per=%lums w=%lu",
                          (unsigned long)g_t_flush, (unsigned long)g_t_render,
                          (unsigned long)g_t_service, (unsigned long)g_t_loop,
-                         (unsigned long)g_t_period);
+                         (unsigned long)g_t_period, (unsigned long)g_t_wraps);
             hw.PrintLine("        audio: sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
                          (int)hw.AudioSampleRate(),
                          (unsigned long)g_cb_size,
@@ -1141,14 +1142,25 @@ int main(void)
 
         const uint32_t loop_t0 = System::GetUs();
         {
-            static uint32_t prev = 0;
-            if(prev)
+            // ⚠ PERIOD IS MEASURED IN MILLISECONDS via GetNow(), deliberately.
+            //
+            // System::GetUs() is GetTick()/(GetFreq()/1e6) -- a 32-bit hardware counter divided
+            // down -- so it WRAPS EVERY ~21.5 SECONDS, and because it is divided it does not wrap
+            // cleanly at 2^32. Ordinary unsigned delta arithmetic is therefore WRONG across a wrap,
+            // which is what produced per=4273494460 (a 21.5 s backwards jump) on 2026-09-06.
+            //
+            // GetNow() is HAL_GetTick(): a clean millisecond counter that wraps at 49.7 days. For
+            // hunting a multi-second stall, millisecond resolution is ample and correctness matters
+            // more than granularity.
+            static uint32_t prev_ms = 0;
+            uint32_t        now_ms  = System::GetNow();
+            if(prev_ms)
             {
-                uint32_t d = loop_t0 - prev;
+                uint32_t d = now_ms - prev_ms;
                 if(d > g_t_period)
                     g_t_period = d;
             }
-            prev = loop_t0;
+            prev_ms = now_ms;
         }
 
         // Commit a deferred preset change once the encoder has settled.
@@ -1165,7 +1177,9 @@ int main(void)
             uint32_t t0 = System::GetUs();
             backing_service();
             uint32_t d = System::GetUs() - t0;
-            if(d > g_t_service)
+            if(d > 1000000u)        // ⚠ straddled a GetUs wrap -- discard, do not report a fiction
+                g_t_wraps++;
+            else if(d > g_t_service)
                 g_t_service = d;
         }
 
@@ -1308,8 +1322,13 @@ int main(void)
                 uint32_t t1 = System::GetUs();
                 oled_flush();
                 uint32_t t2 = System::GetUs();
-                if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
-                if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
+                if(t1 - t0 > 1000000u || t2 - t1 > 1000000u)
+                    g_t_wraps++;    // ⚠ GetUs wrap -- see the note on g_t_period
+                else
+                {
+                    if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
+                    if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
+                }
             }
         }
         else if(g_oled_dirty || t - last_oled >= 500)
@@ -1347,7 +1366,9 @@ int main(void)
         // matters because the DSP chain will spend the thermal headroom this would have bought.
         {
             uint32_t d = System::GetUs() - loop_t0;
-            if(d > g_t_loop)
+            if(d > 1000000u)
+                g_t_wraps++;
+            else if(d > g_t_loop)
                 g_t_loop = d;
         }
         System::Delay(1);
