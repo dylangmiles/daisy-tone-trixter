@@ -146,6 +146,23 @@ static volatile bool     g_enc_dbg   = false;
 static volatile int32_t  g_enc_total = 0;
 static volatile uint32_t g_enc_evts  = 0;
 static volatile uint8_t  g_enc_raw  = 3;   // last raw (A<<1)|B, for the `enc` report
+// ⚠ RAW PIN INSTRUMENTATION. Two decode fixes in a row each looked right and each left detents
+// missing, so stop reasoning about the decode and measure the PINS. These separate three questions
+// that have been running together:
+//   tick=  did the sampler actually run, and at what rate  (10 kHz => ~50000 per 5 s)
+//   trans= did the pins CHANGE STATE at all while the knob was turning
+//   seen=  which of the four A/B states have EVER been observed
+// trans=0 while turning is a joint or a pin, not firmware. trans large with cnt=0 is my logic.
+// seen missing a state says one of A/B never moves -- which is a wiring answer, not a code one.
+static volatile uint32_t g_enc_ticks = 0;
+static volatile uint32_t g_enc_trans = 0;
+static volatile uint8_t  g_enc_seen  = 0;   // bit N set = state N observed
+
+// ⚠ Quarter steps per detent. A PEC11R with 24 detents / 24 pulses does a FULL cycle per click (4),
+// but half-cycle variants exist that rest alternately at 11 and 00 -- on those, a 4 rule emits on
+// every OTHER click, which looks exactly like "missing many". Runtime-settable with `encdet` so the
+// question is answered on the bench in seconds instead of by another rebuild.
+static volatile int8_t g_q_per_detent = 4;
 
 // ⚠ OUR OWN QUADRATURE DECODE -- libDaisy's Encoder::Increment() cannot decode this encoder.
 //
@@ -182,8 +199,11 @@ static int32_t EncoderPoll()
 {
     const uint8_t cur = (uint8_t)((g_enc_a.Read() ? 2 : 0) | (g_enc_b.Read() ? 1 : 0));
     g_enc_raw         = cur;
+    g_enc_ticks++;
+    g_enc_seen |= (uint8_t)(1u << cur);
     if(cur == g_q_prev)
         return 0;
+    g_enc_trans++;
 
     int8_t step = kQuadStep[(g_q_prev << 2) | cur];
     if(step == 0)
@@ -201,9 +221,9 @@ static int32_t EncoderPoll()
     g_q_sub  = (int8_t)(g_q_sub + step);
     g_q_prev = cur;
 
-    // ⚠ A full cycle, in case the knob's rest position is not where we think it is.
-    if(g_q_sub >= 4)  { g_q_sub = 0; return +1; }
-    if(g_q_sub <= -4) { g_q_sub = 0; return -1; }
+    // ⚠ A complete detent's worth of quarter steps, wherever it happens to land.
+    if(g_q_sub >= g_q_per_detent)  { g_q_sub = 0; return +1; }
+    if(g_q_sub <= -g_q_per_detent) { g_q_sub = 0; return -1; }
 
     // ⚠ Otherwise emit only back at the detent rest position: the click is complete when the
     // contacts are open again. Partial nudges that spring back produce nothing, and because the
@@ -842,6 +862,19 @@ static void HandleCommand(const char* line)
         g_enc_evts  = 0;
         return;
     }
+    if(strncmp(line, "encdet ", 7) == 0)
+    {
+        int n = atoi(line + 7);
+        if(n == 2 || n == 4)
+        {
+            g_q_per_detent = (int8_t)n;
+            g_q_sub        = 0;
+            hw.PrintLine("quarter steps per detent = %d", n);
+        }
+        else
+            hw.PrintLine("encdet takes 4 (full cycle per click) or 2 (half cycle)");
+        return;
+    }
     if(strcmp(line, "enc") == 0)
     {
         hw.PrintLine("encoder: %ld counts in %lu events since last reset",
@@ -1276,6 +1309,18 @@ int main(void)
                          (unsigned long)g_t_flush, (unsigned long)g_t_render,
                          (unsigned long)g_t_service, (unsigned long)g_t_loop,
                          (unsigned long)g_t_period, (unsigned long)g_t_wraps);
+            hw.PrintLine("        enc: tick=%lu trans=%lu cnt=%ld raw=%d%d rest=%d%d sub=%d det=%d seen=%c%c%c%c",
+                         (unsigned long)g_enc_ticks, (unsigned long)g_enc_trans,
+                         (long)g_enc_total,
+                         (g_enc_raw >> 1) & 1, g_enc_raw & 1,
+                         (g_q_rest >> 1) & 1, g_q_rest & 1,
+                         (int)g_q_sub, (int)g_q_per_detent,
+                         (g_enc_seen & 1) ? '0' : '.',      // 00
+                         (g_enc_seen & 2) ? '1' : '.',      // 01
+                         (g_enc_seen & 4) ? '2' : '.',      // 10
+                         (g_enc_seen & 8) ? '3' : '.');     // 11
+            g_enc_ticks = 0;
+            g_enc_trans = 0;
             hw.PrintLine("        audio: sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
                          (int)hw.AudioSampleRate(),
                          (unsigned long)g_cb_size,
