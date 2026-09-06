@@ -127,9 +127,13 @@ independently it should become its own repo; until then a pointer beats a copy.
 ### ⚠ `bk.level` is a Daisy-only preset key
 
 `presets.txt` may carry `bk.level = <0..2>` per preset (backing-track level). **The Pico's parser
-ignores unknown keys**, so the card stays readable by both pedals — but `dsp_chain.h` and
-`tt_store.cpp` have now **diverged from the RP2350 copies**. Port the same change back if the two are
-meant to stay identical.
+ignores unknown keys**, so the card stays readable by both pedals.
+
+⚠ **This is a DELIBERATE, ACCEPTED fork** (decided 2026-09-06) — `dsp_chain.h` and `tt_store.cpp`
+differ from the RP2350 copies here and are **not** to be reconciled. Do not "fix" the divergence.
+The shared-source rule that governs `sd_spi.c` and `menu.cpp` does not extend to this key: the cost
+of the fork is bounded because the card format stays compatible in both directions, which is the
+property that actually matters when one physical card feeds both pedals.
 
 ⚠ `bk_level` of **0 means "not specified"**, not "silence". The built-in preset table predates the
 field and zero-initialises it, so treating 0 as a real level would mute the backing track on every
