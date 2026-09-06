@@ -100,6 +100,13 @@ static float         g_ir_buf[kIrMaxTaps];
 static int           g_ir_len  = 0;
 static char          g_ir_name[24] = "none";
 
+// ⚠ The OUTCOME of the SD phase, captured as it happens. The boot report is routinely lost to USB
+// CDC enumeration, so a failure reason that only prints at boot is a reason nobody reads. This has
+// now bitten three times (block size, the SD check, and the SD result itself) -- so the rule is:
+// every check records its verdict here, and PrintFullReport() shows it.
+static char g_sd_status[64] = "not attempted";
+static int  g_preset_idx = 0;
+
 // Convolver partitioning, same as the Pico. Head block matches the audio block size so the
 // low-latency path costs exactly one block.
 static constexpr size_t kIrHeadBlock = 64;
@@ -386,8 +393,10 @@ static void OledReport(bool board_ok,
     }
     OledLine(6, buf);
 
-    snprintf(buf, sizeof(buf), "dsp %s ir %s", g_dsp_bypass ? "BYP" : "ON!",
-             g_ir_active ? (g_ir_len >= 1000 ? "2k" : "yes") : "--");
+    snprintf(buf, sizeof(buf), "%s%s ir%s",
+             g_dsp_bypass ? "byp " : "ON  ",
+             g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-",
+             g_ir_active ? "*" : "-");
     OledLine(7, buf);
 
     oled.Update();
@@ -400,6 +409,7 @@ static bool LoadIr(const char* path)
     if(n <= 0)
     {
         hw.PrintLine("  IR load FAILED: %s (%s)", path, wav_err_str(n));
+        snprintf(g_sd_status, sizeof(g_sd_status), "IR FAILED %s: %s", path, wav_err_str(n));
         return false;
     }
 
@@ -409,6 +419,7 @@ static bool LoadIr(const char* path)
     if(rate != 48000)
     {
         hw.PrintLine("  IR REJECTED: %s is %lu Hz, need 48000", path, (unsigned long)rate);
+        snprintf(g_sd_status, sizeof(g_sd_status), "IR REJECTED: %lu Hz not 48k", (unsigned long)rate);
         return false;
     }
     if(avail > (uint32_t)kIrMaxTaps)
@@ -423,7 +434,45 @@ static bool LoadIr(const char* path)
     g_ir_len = n;
     snprintf(g_ir_name, sizeof(g_ir_name), "%s", path);
     hw.PrintLine("  IR loaded: %s (%d taps, %lu Hz)", path, n, (unsigned long)rate);
+    snprintf(g_sd_status, sizeof(g_sd_status), "IR ok: %d taps", n);
     return true;
+}
+
+// Switch preset and load whatever IR it names.
+//
+// ⚠ NOT audio-safe, and deliberately so: reading a WAV off the SD card blocks for a few hundred
+// milliseconds and the convolver is re-initialised underneath a running callback. The Pico build
+// records the same "multi-100 ms dropout" on an IR switch. That is acceptable at a deliberate
+// preset change and unacceptable anywhere else -- never call this from the audio callback.
+//
+// ⚠ g_ir_active is cleared FIRST so the callback stops touching the convolver before it is
+// re-initialised, with a short delay to let any in-flight block finish.
+static void SelectPreset(int idx)
+{
+    if(g_preset_count <= 0)
+        return;
+    if(idx < 0)
+        idx = g_preset_count - 1;
+    if(idx >= g_preset_count)
+        idx = 0;
+
+    g_ir_active = false;
+    System::Delay(5);
+
+    dsp_chain_load_preset(idx);
+    g_preset_idx = idx;
+    g_ir_len     = 0;
+    snprintf(g_ir_name, sizeof(g_ir_name), "none");
+
+    const char* ir = dsp_chain_preset_ir(idx);
+    if(ir && *ir)
+        g_ir_active = LoadIr(ir);
+
+    hw.PrintLine("  >> preset %d/%d \"%s\"  ir %s",
+                 idx + 1, g_preset_count, dsp_chain_preset_name(idx),
+                 g_ir_active ? g_ir_name : "none");
+    snprintf(g_sd_status, sizeof(g_sd_status), "%d preset(s), using \"%s\"",
+             g_preset_count, dsp_chain_preset_name(idx));
 }
 
 static void PrintFullReport()
@@ -441,6 +490,12 @@ static void PrintFullReport()
                  g_sd_ok ? "PASS" : (g_sd_r1 == 0x00 ? "MISO STUCK LOW" : "no card"),
                  g_sd_cd ? "HIGH" : "LOW");
     hw.PrintLine("  display        : %s", oled_ok ? "initialised" : "not running");
+    hw.PrintLine("  [5] audio      : sr=%d blk=%lu cb=%lu clips=%lu dsp=%s",
+                 (int)hw.AudioSampleRate(), (unsigned long)g_cb_size,
+                 (unsigned long)g_cb_count, (unsigned long)g_clips,
+                 g_dsp_bypass ? "BYPASS" : "ENGAGED");
+    hw.PrintLine("  [6] SD/preset  : %s", g_sd_status);
+    hw.PrintLine("  [6] IR         : %s (%d taps)", g_ir_active ? g_ir_name : "none loaded", g_ir_len);
     hw.PrintLine("  ⚠ audio tests need the 9 V JACK. On USB the rail sits ~4.9 V and the");
     hw.PrintLine("    op-amp daughter is outside its common-mode range.");
     hw.PrintLine("  hold encoder switch 2 s -> DFU, then: make flash");
@@ -592,9 +647,15 @@ int main(void)
     hw.PrintLine("");
     hw.PrintLine("[6] SD card: presets and IR");
     if(FATFS_LinkDriver(&tt_sd_driver, g_sd_path) != 0)
+    {
         hw.PrintLine("  FATFS_LinkDriver failed");
+        snprintf(g_sd_status, sizeof(g_sd_status), "LinkDriver failed");
+    }
     else if(f_mount(&g_fs, g_sd_path, 1) != FR_OK)
+    {
         hw.PrintLine("  no filesystem (card absent or not FAT?) -- passthrough only");
+        snprintf(g_sd_status, sizeof(g_sd_status), "f_mount FAILED (not FAT / read error)");
+    }
     else
     {
         g_sd_mounted = true;
@@ -605,20 +666,43 @@ int main(void)
             const Preset* pr = tt_store_presets(&g_preset_count);
             hw.PrintLine("  %d preset(s) from the card", g_preset_count);
 
-            // Load the boot preset's IR if it names one -- but leave the chain BYPASSED. Boot is
-            // passthrough by design; the bypass footswitch turns it on.
+            // ⚠ INSTALL them into the chain. Reading presets is not the same as installing them:
+            // dsp_chain_find_preset() searches the chain's OWN table, so without this it is still
+            // looking at the built-ins and returns -1 for every name on the card.
+            if(pr && g_preset_count > 0)
+                dsp_chain_install_presets(pr, g_preset_count);
+
+            // Pick the boot preset, falling back to the FIRST one if the name is not found --
+            // a config naming a preset that does not exist should not mean no preset at all.
             const char* boot = tt_store_boot_preset();
-            int         idx  = (boot && *boot) ? dsp_chain_find_preset(boot) : -1;
-            if(idx >= 0 && pr)
+            int         idx  = (boot && *boot) ? dsp_chain_find_preset(boot) : 0;
+            if(idx < 0)
             {
+                hw.PrintLine("  boot_preset \"%s\" not found -- using the first", boot);
+                idx = 0;
+            }
+
+            if(g_preset_count > 0)
+            {
+                dsp_chain_load_preset(idx);
+                g_preset_idx = idx;
+                hw.PrintLine("  preset: %s", dsp_chain_preset_name(idx));
+                snprintf(g_sd_status, sizeof(g_sd_status), "%d preset(s), using \"%s\"",
+                         g_preset_count, dsp_chain_preset_name(idx));
+
+                // ⚠ Loading a preset sets stage enables, but global bypass still overrides them --
+                // boot stays passthrough by design. The footswitch is what engages it.
                 const char* ir = dsp_chain_preset_ir(idx);
                 if(ir && *ir)
                     g_ir_active = LoadIr(ir);
+                else
+                    hw.PrintLine("  preset names no IR");
             }
         }
         else
         {
             hw.PrintLine("  no presets file -- built-in defaults");
+            snprintf(g_sd_status, sizeof(g_sd_status), "mounted, NO /tonetrix/presets.txt");
         }
     }
     hw.PrintLine("  ⚠ chain stays BYPASSED at boot. Bypass footswitch toggles it.");
@@ -655,6 +739,12 @@ int main(void)
                 // ⚠ The bypass footswitch toggles the chain on its PRESS edge. Interim control
                 // until there is a menu -- and it is the A/B this whole project turns on: the same
                 // playing, with and without the DSP, switched instantly.
+                // ⚠ Tuner footswitch cycles presets -- interim, until there is a menu. It is the
+                // only way to reach a preset that names an IR, since "default" deliberately has
+                // none. Expect a short dropout: the IR is read off the SD card.
+                if(i == 4 && !now)
+                    SelectPreset(g_preset_idx + 1);
+
                 if(i == 3 && !now)
                 {
                     g_dsp_bypass = !g_dsp_bypass;

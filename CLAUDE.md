@@ -159,6 +159,30 @@ not to be noticed for a while. Refusing beats playing something subtly wrong.
 Convolver partitioning matches the Pico: head block **64** (= the audio block size, so the
 low-latency path costs exactly one block), tail block **512**, up to **4096** taps.
 
+## Footswitch controls (interim, until there is a menu)
+
+| Control | Does |
+|---|---|
+| **Bypass footswitch** | toggles the whole chain — the A/B this project turns on |
+| **Tuner footswitch** | cycles to the next preset, loading whatever IR it names |
+| **Encoder short press** | print the full report to serial |
+| **Encoder hold 2 s** | enter DFU |
+
+⚠ **The `default` preset names no IR by design**, so at boot there is nothing to load and the OLED
+shows `ir-`. Cycling with the tuner switch is the only way to reach a preset that has one. That is
+not a fault — it is why preset cycling had to exist before the IR could be heard at all.
+
+⚠ **Preset switching is NOT audio-safe, deliberately.** Reading a WAV off the card blocks for a few
+hundred milliseconds and the convolver is re-initialised under a running callback — the Pico records
+the same "multi-100 ms dropout". `g_ir_active` is cleared **first** so the callback stops touching
+the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from the audio callback.
+
+⚠ **Installing presets is not the same as reading them.** `tt_store_load()` reads the card;
+`dsp_chain_install_presets()` hands them to the chain. Without the second call
+`dsp_chain_find_preset()` searches the built-in table and returns −1 for every name on the card —
+which silently produced "3 presets, no IR" for a while. If the named boot preset is missing, fall
+back to the **first** rather than to none.
+
 ## The bypass footswitch is the A/B control
 
 ⚠ Interim, until there is a menu. Boot is passthrough; **pressing the bypass footswitch toggles the
