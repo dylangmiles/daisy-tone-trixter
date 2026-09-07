@@ -144,6 +144,11 @@ changes at all** — the RP2350 implementation was written against `stdio/string
 the **front end alone** with no DSP on top. That matters while the analogue path is still being
 characterised.
 
+⚠ **And bypass stays unity AFTER a preset loads** (fixed 2026-09-07). It did not used to: the OUT
+stage was deliberately left running in bypass (*"level stays"*), so a bypass measurement was the
+front end **times the preset's make-up gain**. Any SNR figure taken that way describes the preset,
+not the buffer.
+
 ⚠ **The IR is NOT embedded.** It lives on the SD card and loads when a preset asks for one, so it
 costs nothing until wanted. Boot is IR-less by design, which is why embedding was dropped.
 
@@ -394,6 +399,23 @@ so here it costs nothing to leave on.
 ⚠ Interim, until there is a menu. Boot is passthrough; **pressing the bypass footswitch toggles the
 chain** (and the IR with it). That is the comparison this whole project turns on — the same playing,
 with and without, switched instantly.
+
+### ⚠ Bypass is TRUE UNITY, so the A/B is level-matched by construction
+
+`dsp_chain_process()` disables **every** stage under bypass, the OUT level included. It previously
+kept the out stage running, which was exactly backwards: a body IR **attenuates**, so a preset's out
+level exists largely to make that loss back up. Applying the make-up *without* the loss left **bypass
+louder than engaged** — measured 2026-09-07 on `tanglewood-slide` as `in −68 / out −58` while
+bypassed.
+
+⚠ **A loudness difference invalidates an ear A/B completely** — louder reliably reads as "better",
+and no amount of careful listening corrects for it. Unity bypass means that whenever a preset's out
+level compensates its IR, the two paths match **by construction**, and the only thing that changes
+when you stomp is the processing itself.
+
+⚠ If a preset's out level does *not* match its IR loss the two will still differ — but that is now a
+**preset tuning** question, visible in `out.level` and adjustable, rather than a hidden asymmetry
+built into the bypass path. `out.level` is the control for it.
 
 ## Build and flash
 

@@ -453,7 +453,24 @@ void dsp_chain_process(float *buf, int n) {
     for (int i = 0; i < N_STAGES; i++) {
         Stage *s = s_chain[i];
         bool on = s->enabled;
-        if (g_dsp_bypass && s != &s_out) on = false;   // bypass = EQ+Dyn off, level stays
+        // ⚠ BYPASS IS TRUE UNITY -- the OUT stage is bypassed too. It used to stay engaged
+        // ("level stays"), which was exactly backwards for an A/B: a body IR ATTENUATES, so a
+        // preset's out level exists largely to make that loss back up. Keeping it in bypass applied
+        // the make-up WITHOUT the loss, leaving bypass LOUDER than engaged -- measured 2026-09-07
+        // on the tanglewood-slide preset as in -68 / out -58 with the chain bypassed.
+        //
+        // Unity bypass makes three things true at once:
+        //   - the A/B is level-matched by CONSTRUCTION whenever a preset's out level compensates
+        //     its IR, which is what tuning that control is for;
+        //   - a bypass measurement is the FRONT END, not the front end times a hidden gain, so an
+        //     SNR figure taken here is publishable;
+        //   - the docs stop lying -- CLAUDE.md's "boot is complete passthrough ... reflects the
+        //     front end alone" was true at boot and false the moment a preset loaded.
+        //
+        // ⚠ If a preset's out level does NOT match its IR loss, bypass and engaged will differ --
+        // but that is now a PRESET TUNING question, visible in `out.level` and adjustable, rather
+        // than a hidden asymmetry in the bypass path.
+        if (g_dsp_bypass) on = false;
         if (!on) continue;
         if (s->dirty) { s->recompute(s, g_fs); s->dirty = false; }
         s->process(s, buf, n);
