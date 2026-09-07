@@ -909,6 +909,11 @@ static void SelectPreset(int idx)
     // every preset that has not opted in.
     int         np = 0;
     const Preset* pl = tt_store_presets(&np);
+    // ⚠ Bypass make-up: <=0 (or absent) means UNITY, not silence -- the built-in preset table
+    // predates the field and zero-initialises it, and a preset that never opted in must still pass
+    // audio when bypassed. Same reasoning as bk_level, opposite default.
+    dsp_chain_set_byp_level((pl && idx < np && pl[idx].byp_level > 0.f) ? pl[idx].byp_level : 1.0f);
+
     if(pl && idx < np && pl[idx].bk_level > 0.f)
         backing_set_level(pl[idx].bk_level);
 
@@ -984,6 +989,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  presets           list presets");
         hw.PrintLine("  preset <n|name>   select preset (loads its IR)");
         hw.PrintLine("  bypass on|off     chain bypass");
+        hw.PrintLine("  byplevel <0..8>   bypass make-up, to level-match the A/B");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine(" -- backing tracks --");
@@ -1137,6 +1143,13 @@ static void HandleCommand(const char* line)
     {
         if(strcmp(line + 3, "off") == 0) { backing_stop(); hw.PrintLine("bk off"); }
         else                             { backing_play(atoi(line + 3)); }
+        return;
+    }
+    if(strncmp(line, "byplevel ", 9) == 0)
+    {
+        dsp_chain_set_byp_level((float)atof(line + 9));
+        hw.PrintLine("byplevel=%.2f  (1.00 = true unity)", (double)dsp_chain_byp_level());
+        hw.PrintLine("  ⚠ set 1.00 for any measurement -- this lifts the DRY path");
         return;
     }
     if(strncmp(line, "bklevel ", 8) == 0)

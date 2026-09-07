@@ -449,7 +449,26 @@ void dsp_chain_init(float fs, float out_level_lin) {
     }
 }
 
+// ⚠ Gain applied ONLY in bypass, to level-match the A/B. See byp_level in dsp_chain.h.
+static volatile float g_byp_level = 1.0f;
+
+void dsp_chain_set_byp_level(float g) {
+    if (g < 0.f) g = 0.f;
+    if (g > 8.f) g = 8.f;
+    g_byp_level = g;
+}
+float dsp_chain_byp_level(void) { return g_byp_level; }
+
 void dsp_chain_process(float *buf, int n) {
+    // ⚠ Bypass takes the dry path and, optionally, a make-up gain -- nothing else. Returning early
+    // rather than falling through the stage loop keeps that literally true: no stage can be left
+    // running by accident the way the OUT stage was until 2026-09-07.
+    if (g_dsp_bypass) {
+        const float g = g_byp_level;
+        if (g != 1.0f)
+            for (int i = 0; i < n; i++) buf[i] *= g;
+        return;
+    }
     for (int i = 0; i < N_STAGES; i++) {
         Stage *s = s_chain[i];
         bool on = s->enabled;

@@ -47,6 +47,10 @@ extern volatile bool g_dsp_bypass;
 // seeds the output stage so it reproduces the legacy IR_OUTPUT_SCALE on boot.
 void dsp_chain_init(float fs, float out_level_lin);
 
+// Bypass make-up gain, 0..8, 1.0 = true unity. See byp_level in the Preset struct.
+void  dsp_chain_set_byp_level(float g);
+float dsp_chain_byp_level(void);
+
 // Process one mono block of n samples in place through all enabled stages.
 void dsp_chain_process(float *buf, int n);
 
@@ -84,6 +88,16 @@ typedef struct {
     int   pga;                            // ES8388 input PGA gain in dB (0..24, 3 dB steps); <0 = leave PGA
                                           // unchanged on load. Passive K&K wants ~12; active Garrison ~6.
                                           // ⚠ IGNORED on the Daisy: the TAC5242 has no software gain.
+    float byp_level;                      // ⚠ DAISY ADDITION (2026-09-07): gain applied ONLY in bypass,
+                                          // 0..8. <=0 = unity. Exists so the A/B is LEVEL-MATCHED:
+                                          // bypass is the raw input, while an engaged preset can be
+                                          // ~+10 dB louder (tanglewood-slide's compressor alone makes
+                                          // up 16 dB). A loudness difference invalidates an ear A/B --
+                                          // louder just reads as "better" -- so this lifts the DRY
+                                          // path to meet the wet one instead of turning the preset down.
+                                          // ⚠ SET IT TO 1.0 (or omit) FOR ANY MEASUREMENT. It is a
+                                          // listening aid; with it engaged a "bypass" reading is no
+                                          // longer the front end alone.
     float bk_level;                       // ⚠ DAISY ADDITION (2026-09-06): backing-track level, 0..2.
                                           // <0 = leave the current level alone. Parsed from "bk.level"
                                           // in presets.txt. The Pico's parser ignores the key, so the
