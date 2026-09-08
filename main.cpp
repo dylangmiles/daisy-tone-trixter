@@ -689,6 +689,31 @@ static void OledLine(int row, const char* text)
 // Home screen. ⚠ SETTINGS, not diagnostics -- the bring-up checks have served their purpose and
 // live in the terminal now. What a player needs at a glance is which preset and IR are live, whether
 // the chain is engaged, the input level, and gain reduction.
+// ⚠ BOOT SPLASH / PROGRESS. The bootloader copies the app into SRAM and Init() brings up the SDRAM
+// before a single pixel is possible, so the panel genuinely cannot light instantly. But everything
+// AFTER the display comes up -- microSD, presets, the IR read, the backing scan -- is the slow part,
+// and until now all of it was dead screen time: ~5 s of "is this thing even on?".
+//
+// Showing the stage turns that into visible progress. ⚠ And it is a diagnostic, not decoration: if
+// boot ever hangs, the last stage on the panel says exactly where, with no console attached. That is
+// the same reasoning as the LED boot signal, at a finer grain.
+static int           g_boot_step  = 0;
+static constexpr int kBootSteps   = 6;
+
+static void OledBoot(const char* stage)
+{
+    if(!oled_ok)
+        return;
+    oled_clear();
+    oled_text(28, 0, "Tone Trixter");
+    oled_text(46, 16, "Seed3");
+    oled_text(0, 40, stage);
+    if(g_boot_step < kBootSteps)
+        g_boot_step++;
+    oled_bar(0, 56, 128, 8, (float)g_boot_step / (float)kBootSteps);
+    oled_flush();
+}
+
 static void OledHome(void)
 {
     if(!oled_ok)
@@ -1278,10 +1303,12 @@ int main(void)
         oled_ok = true;
         menu_init();
         hw.PrintLine("  display initialised (batched page writes)");
+        OledBoot("starting...");
     }
 
 
     hw.PrintLine("");
+    OledBoot("inputs");
     hw.PrintLine("[3] digital inputs -- all active LOW, internal pull-ups");
 
     for(size_t i = 0; i < kNumInputs; i++)
@@ -1341,6 +1368,7 @@ int main(void)
     hw.PrintLine("   footswitches are wired this proves the pull-ups, not the wiring.)");
 
     hw.PrintLine("");
+    OledBoot("microSD");
     hw.PrintLine("[4] microSD -- bit-banged SPI, CMD0");
     bool sd_ok = TestSd();
     hw.PrintLine("  %s", sd_ok ? "PASS" : "FAIL (expected until the card + module are in)");
@@ -1348,6 +1376,7 @@ int main(void)
     failures += sd_ok ? 0 : 1;
 
     hw.PrintLine("");
+    OledBoot("audio");
     hw.PrintLine("[5] audio passthrough");
     // ⚠ Do NOT call SetAudioSampleRate here. 48 kHz is already libDaisy's default, the working
     // passthrough never called it, and the seed3-updates branch modifies sai.h -- so it is a new
@@ -1368,6 +1397,7 @@ int main(void)
     hw.PrintLine("  ⚠ 0 dBFS is the CODEC ceiling (1.8 V pk), not the buffer's limit");
 
     hw.PrintLine("");
+    OledBoot("presets + IR");
     hw.PrintLine("[6] SD card: presets and IR");
     if(FATFS_LinkDriver(&tt_sd_driver, g_sd_path) != 0)
     {
@@ -1428,6 +1458,7 @@ int main(void)
             snprintf(g_sd_status, sizeof(g_sd_status), "mounted, NO /tonetrix/presets.txt");
         }
 
+        OledBoot("backing tracks");
         backing_scan();
         hw.PrintLine("  %d backing track(s)", backing_count());
     }
