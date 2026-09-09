@@ -137,6 +137,20 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 // into the input.
 static bool g_meters_on = true;
 
+// ⚠ STATS SCREEN — double-click from HOME, single click to leave.
+//
+// ⚠ The double-click costs latency, so it is scoped to the HOME screen ONLY. Detecting a second
+// click means deferring the first, and deferring clicks INSIDE the menu would undo the
+// responsiveness work. Opening the menu is a once-in-a-while deliberate act, so ~300 ms there is
+// tolerable; a menu selection is not.
+//
+// ⚠ And note the tension: this screen repaints, so reading it is not a silent-bus state. It is for
+// checking bk underruns and CPU without a laptop -- NOT for judging crosstalk. Use `meters off` for
+// that.
+static bool              g_stats_screen = false;
+static uint32_t          g_click_at     = 0;     // pending single click from home; 0 = none
+static constexpr uint32_t kDoubleClickMs = 300;
+
 // ⚠ File-scope so the `i2c` command can re-initialise the bus at runtime. Kept together because
 // re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
 static I2CHandle         g_i2c_h;
@@ -838,6 +852,36 @@ static void OledHome(void)
     snprintf(buf, sizeof(buf), "%4d", odb);
     oled_text(84, 56, odb > -99 ? buf : "  --");
 
+    oled_flush();
+}
+
+// Stats, on the panel. The numbers that decide whether a fault is EMI or the SD ring -- readable
+// with the enclosure closed and no console attached.
+static void OledStats(void)
+{
+    if(!oled_ok)
+        return;
+    char     buf[26];
+    uint32_t un = 0, mx = 0;
+    int      ring = 0;
+    backing_stats(&un, &ring, &mx);
+
+    oled_clear();
+    oled_text(0, 0, "-- STATS --");
+    // ⚠ ring % and underruns are the pair that separates "EMI" from "the ring is starving".
+    snprintf(buf, sizeof(buf), "bk ring %3d%%  ur %lu", ring, (unsigned long)un);
+    oled_text(0, 16, buf);
+    snprintf(buf, sizeof(buf), "svc %lu/%lu us", (unsigned long)mx,
+             (unsigned long)backing_service_budget_us());
+    oled_text(0, 24, buf);
+    snprintf(buf, sizeof(buf), "cpu %d/%d %%", (int)(g_cpu_avg + 0.5f), (int)(g_cpu_pk + 0.5f));
+    oled_text(0, 32, buf);
+    snprintf(buf, sizeof(buf), "flush %lu us %dpg", (unsigned long)g_t_flush, oled_last_pages());
+    oled_text(0, 40, buf);
+    snprintf(buf, sizeof(buf), "loop %lu us per %lums", (unsigned long)g_t_loop,
+             (unsigned long)g_t_period);
+    oled_text(0, 48, buf);
+    oled_text(0, 56, "click to exit");
     oled_flush();
 }
 
@@ -1834,11 +1878,26 @@ int main(void)
             if(sw_down_at != 0 && (t - sw_down_at) < 2000)
             {
                 g_menu_at = t;
-                if(!g_in_menu)
+                if(g_stats_screen)
                 {
-                    menu_open();
-                    g_oled_dirty = true;
-                    g_in_menu = true;
+                    // Single click leaves the stats screen -- see kDoubleClickMs.
+                    g_stats_screen = false;
+                    g_click_at     = 0;
+                    g_oled_dirty   = true;
+                }
+                else if(!g_in_menu)
+                {
+                    // ⚠ HOME: defer, so a second click within the window can claim it instead.
+                    if(g_click_at != 0 && (uint32_t)(t - g_click_at) < kDoubleClickMs)
+                    {
+                        g_click_at     = 0;
+                        g_stats_screen = true;
+                        g_oled_dirty   = true;
+                    }
+                    else
+                    {
+                        g_click_at = t;      // resolved in the loop if no second click arrives
+                    }
                 }
                 else
                 {
@@ -1896,6 +1955,25 @@ int main(void)
                     if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
                     if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
                 }
+            }
+        }
+        // ⚠ A pending home click becomes "open the menu" once the double-click window closes.
+        if(g_click_at != 0 && (uint32_t)(t - g_click_at) >= kDoubleClickMs)
+        {
+            g_click_at   = 0;
+            menu_open();
+            g_in_menu    = true;
+            g_menu_at    = t;
+            g_oled_dirty = true;
+        }
+
+        if(g_stats_screen)
+        {
+            if(g_oled_dirty || (t - last_oled) >= 500)
+            {
+                g_oled_dirty = false;
+                last_oled    = t;
+                OledStats();
             }
         }
         else if(g_tuner_on)
