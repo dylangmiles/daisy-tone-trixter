@@ -166,6 +166,9 @@ static constexpr uint32_t kDfuHoldMs     = 5000;   // ⚠ 5 s, not 2. DFU is bar
 // re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
 static I2CHandle         g_i2c_h;
 static I2CHandle::Config g_i2c_cfg;
+static int               g_i2c_khz = 400;
+
+static bool SetI2cKhz(int khz);   // defined below, once g_oled_dirty is in scope
 
 // ⚠ 1000 ms, was 500. Halves the repaint rate, and the meters are glanceable data rather than
 // something you track continuously -- the tuner is what you watch, and it has its own 100 ms branch.
@@ -1046,6 +1049,25 @@ static void SelectPreset(int idx)
 // app_hooks.h — the bridge menu.cpp calls into. State lives here; the menu only drives it.
 
 
+// Shared by the `i2c` command and the menu row. ⚠ Re-inits the PANEL too: the controller is being
+// reconfigured underneath it, and an SH1106 left half-configured looks like a dead display.
+static bool SetI2cKhz(int khz)
+{
+    I2CHandle::Config::Speed sp;
+    if(khz == 100)       sp = I2CHandle::Config::Speed::I2C_100KHZ;
+    else if(khz == 400)  sp = I2CHandle::Config::Speed::I2C_400KHZ;
+    else if(khz == 1000) sp = I2CHandle::Config::Speed::I2C_1MHZ;
+    else                 return false;
+
+    g_i2c_cfg.speed = sp;
+    if(g_i2c_h.Init(g_i2c_cfg) != I2CHandle::Result::OK)
+        return false;
+    tt_oled_init(g_i2c_h, tt::kOledI2cAddr);
+    g_i2c_khz    = khz;
+    g_oled_dirty = true;
+    return true;
+}
+
 extern "C" {
 
 int         app_preset_count(void)      { return g_preset_count; }
@@ -1069,8 +1091,16 @@ const char* app_ir_name(int i)
 int         app_ir_current(void)        { return 0; }
 void        app_ir_select(int i)        { (void)i; }
 
-bool        app_gr_enabled(void)        { return g_gr_on; }
-void        app_gr_set(bool on)         { g_gr_on = on; }
+// ⚠ The menu row drives ALL meters, not just the GR band. A row labelled "GR meter" that leaves the
+// in/out bars repainting is the wrong control to reach for when the reason you want them off is I2C
+// crosstalk -- which is the only reason anyone turns them off. `gr on|off` still exists on the
+// console for the GR band alone.
+
+int         app_i2c_khz(void)           { return g_i2c_khz; }
+void        app_i2c_cycle(void)         { SetI2cKhz(g_i2c_khz == 100 ? 400 : g_i2c_khz == 400 ? 1000 : 100); }
+
+bool        app_gr_enabled(void)        { return g_meters_on; }
+void        app_gr_set(bool on)         { g_meters_on = on; g_gr_on = on; g_oled_dirty = true; }
 
 // ⚠ NO PGA ON THIS BOARD. These exist only because menu.cpp calls them. The Pico drove the
 // ES8388's input PGA (0..+24 dB in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no
@@ -1259,15 +1289,11 @@ static void HandleCommand(const char* line)
         else if(khz == 1000) sp = I2CHandle::Config::Speed::I2C_1MHZ;
         else { hw.PrintLine("i2c takes 100, 400 or 1000 (kHz)"); return; }
 
-        g_i2c_cfg.speed = sp;
-        if(g_i2c_h.Init(g_i2c_cfg) != I2CHandle::Result::OK)
+        if(!SetI2cKhz(khz))
         {
             hw.PrintLine("⚠ i2c re-init FAILED -- display may be dead until reboot");
             return;
         }
-        // ⚠ Re-init the panel too: the controller was reconfigured underneath it.
-        tt_oled_init(g_i2c_h, tt::kOledI2cAddr);
-        g_oled_dirty = true;
         hw.PrintLine("i2c=%d kHz (panel re-initialised)", khz);
         return;
     }
@@ -1958,7 +1984,16 @@ int main(void)
             g_oled_dirty = true;
         }
 
-        if(g_in_menu)
+        if(g_stats_screen)
+        {
+            if(g_oled_dirty || (t - last_oled) >= 500)
+            {
+                g_oled_dirty = false;
+                last_oled    = t;
+                OledStats();
+            }
+        }
+        else if(g_in_menu)
         {
             if(g_oled_dirty && (t - last_oled) >= 12)   // ⚠ was 50 -- affordable now the flush is partial
             {
@@ -1976,15 +2011,6 @@ int main(void)
                     if(t1 - t0 > g_t_render) g_t_render = t1 - t0;
                     if(t2 - t1 > g_t_flush)  g_t_flush  = t2 - t1;
                 }
-            }
-        }
-        if(g_stats_screen)
-        {
-            if(g_oled_dirty || (t - last_oled) >= 500)
-            {
-                g_oled_dirty = false;
-                last_oled    = t;
-                OledStats();
             }
         }
         else if(g_tuner_on)
