@@ -1880,16 +1880,24 @@ int main(void)
                 if(oled_ok)
                 {
                     oled_clear();
-                    OledLine(2, "  ENTERING DFU");
-                    OledLine(4, "  flash now:");
+                    OledLine(2, "  DFU - WAITING");
+                    OledLine(3, "  no timeout");
                     OledLine(5, "  make program-dfu");
+                    OledLine(7, "  power-cycle to exit");
                     oled_flush();
                 }
                 hw.PrintLine("Entering DFU bootloader -- run: make program-dfu");
                 System::Delay(400);
                 // ⚠ DAISY, not STM. With APP_TYPE = BOOT_SRAM the app is loaded by the Daisy
                 // bootloader; jumping to the STM ROM bootloader would bypass it.
-                System::ResetToBootloader(System::BootloaderMode::DAISY);
+                //
+                // ⚠ INFINITE_TIMEOUT, not plain DAISY. Plain DAISY leaves the bootloader's normal
+                // window -- a few seconds -- and then jumps to the app, so you lose the race and
+                // hold the switch again. INFINITE_TIMEOUT parks it in DFU until something flashes
+                // it, which removes the race entirely: there is no window to miss and no number to
+                // tune. The cost is that an accidental DFU entry sits there until a power cycle --
+                // acceptable, since getting here needs a deliberate 5 s hold.
+                System::ResetToBootloader(System::BootloaderMode::DAISY_INFINITE_TIMEOUT);
             }
             // ⚠ THE COUNTDOWN USED TO START AT 400 ms, which swallowed the whole stats window and
             // then told you "release to cancel" -- so a long press appeared to do nothing but

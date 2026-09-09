@@ -242,6 +242,12 @@ low-latency path costs exactly one block), tail block **512**, up to **4096** ta
 | **Encoder — hold 2 s** | **stats screen** (bk ring/underruns, cpu, flush, loop) · short click to leave |
 | **Encoder — hold 5 s** | enter DFU |
 
+⚠ **DFU uses `DAISY_INFINITE_TIMEOUT`, not plain `DAISY`.** Plain `DAISY` leaves the bootloader's
+normal window — a few seconds — then jumps to the app, so you lose the race and hold the switch
+again. Infinite parks it in DFU until something flashes it: no window to miss, no number to tune.
+⚠ The cost is that an accidental entry sits there until a power cycle, which is acceptable given it
+takes a deliberate 5 s hold to get there.
+
 ⚠ **DFU moved from a 2 s to a 5 s hold (2026-09-09).** It is barely used — the normal flow is
 `make flash-wait` then a power cycle — so it has no business owning the short end of the hold, where
 the gestures you actually reach for live. ⚠ And the countdown used to start at **400 ms**, which
@@ -519,7 +525,7 @@ The board reports three ways, because no single one is reliable:
 |---|---|
 | short press | re-print the full report to serial |
 | **hold 2 s** | **stats screen** — the panel shows *release for STATS* |
-| **hold 5 s** | countdown on the OLED, then **jump to DFU** |
+| **hold 5 s** | countdown on the OLED, then **jump to DFU and WAIT** |
 
 ⚠ **Hold-to-DFU may be the only way to flash this board.** The Daisy is **under-mounted**, so its
 `BOOT` and `RESET` buttons face the perfboard. `System::ResetToBootloader()` removes the need for
