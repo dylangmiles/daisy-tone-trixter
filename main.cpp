@@ -121,6 +121,25 @@ static Encoder g_enc;
 // on the Pico the equivalent was a `tuner on/off` command for the same reason.
 static volatile bool g_tuner_on = false;
 static bool          g_gr_on    = true;    // GR band on the home screen
+
+// ⚠ METER REPAINTS ARE AN EMI SOURCE. Every home-screen refresh drives an I2C burst on SDA/SCL, and
+// on this layout the audio-in run passes within a few pitches of them -- ~12.7 mm of exposed 1 MOhm
+// node, which the pinmap already flagged as the thing to suspect first if pickup showed up. It has:
+// a low blip in time with the meter refresh, and a buzz on menu changes (2026-09-09).
+//
+// The same fault ran the V1 build, where the GR meter shipped defaulting OFF for exactly this reason
+// ([[project_home_gr_meter_crosstalk]]). The real fix is layout -- a ground guard between the audio
+// run and the I2C pair -- but the cheap firmware lever is to repaint LESS.
+//
+// ⚠ `meters off` freezes the periodic repaint entirely: the home screen then updates only on a real
+// event (preset change, footswitch, encoder), so a silent pedal sends NOTHING on the bus. That is
+// the state to measure in -- you cannot characterise a noise floor while the display is repainting
+// into the input.
+static bool g_meters_on = true;
+
+// ⚠ 1000 ms, was 500. Halves the repaint rate, and the meters are glanceable data rather than
+// something you track continuously -- the tuner is what you watch, and it has its own 100 ms branch.
+static constexpr uint32_t kHomeRefreshMs = 1000;
 static bool          g_in_menu  = false;
 
 // ⚠ The menu times out back to the home screen. A pedal left sitting in a settings screen shows
@@ -1017,6 +1036,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  byplevel <0..8>   bypass make-up, to level-match the A/B");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
+        hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
         hw.PrintLine(" -- backing tracks --");
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
@@ -1148,6 +1168,15 @@ static void HandleCommand(const char* line)
         g_tune.valid = false;   // ⚠ or arming shows the note from LAST time until the first estimate
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
+        return;
+    }
+    if(strncmp(line, "meters ", 7) == 0)
+    {
+        g_meters_on  = (strcmp(line + 7, "on") == 0);
+        g_oled_dirty = true;                 // one last repaint so the screen is not stale
+        hw.PrintLine("meters=%s", g_meters_on ? "on" : "off (home repaints on events only)");
+        if(!g_meters_on)
+            hw.PrintLine("  ⚠ use this for any noise measurement -- no I2C traffic while idle");
         return;
     }
     if(strncmp(line, "gr ", 3) == 0)
@@ -1835,7 +1864,7 @@ int main(void)
                 OledTuner();
             }
         }
-        else if(g_oled_dirty || t - last_oled >= 500)
+        else if(g_oled_dirty || (g_meters_on && (t - last_oled) >= kHomeRefreshMs))
         {
             g_oled_dirty = false;
             last_oled    = t;
