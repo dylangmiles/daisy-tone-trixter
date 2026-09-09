@@ -137,6 +137,11 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 // into the input.
 static bool g_meters_on = true;
 
+// ⚠ File-scope so the `i2c` command can re-initialise the bus at runtime. Kept together because
+// re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
+static I2CHandle         g_i2c_h;
+static I2CHandle::Config g_i2c_cfg;
+
 // ⚠ 1000 ms, was 500. Halves the repaint rate, and the meters are glanceable data rather than
 // something you track continuously -- the tuner is what you watch, and it has its own 100 ms branch.
 static constexpr uint32_t kHomeRefreshMs = 1000;
@@ -785,6 +790,16 @@ static void OledHome(void)
         oled_text(0, 24, buf);
     }
 
+    // ⚠ `meters off` draws NO meters at all, rather than merely repainting less often. With the rows
+    // blank the pages are permanently unchanged, so oled_flush() sends NOTHING after the first paint
+    // -- an I2C bus that is genuinely silent, which is the only honest state to test crosstalk or
+    // measure a noise floor in. "Repaint slower" still repaints.
+    if(!g_meters_on)
+    {
+        oled_flush();
+        return;
+    }
+
     // --- meters: bar + written value ---------------------------------------------------------
     float pk = g_peak;
     g_peak   = 0.f;
@@ -1037,6 +1052,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
+        hw.PrintLine("  i2c 100|400|1000  bus clock kHz -- see the note, edges not clock");
         hw.PrintLine(" -- backing tracks --");
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
@@ -1170,6 +1186,36 @@ static void HandleCommand(const char* line)
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
         return;
     }
+    if(strncmp(line, "i2c ", 4) == 0)
+    {
+        // ⚠ CLOCK RATE IS PROBABLY THE WRONG LEVER, and this exists to prove that on the bench
+        // rather than argue it. EMI comes from the EDGE rate (dV/dt), which is set by the driver
+        // impedance, the pull-ups and the bus capacitance -- NOT by the clock. Dropping 400 -> 100
+        // kHz leaves every edge exactly as fast and stretches the burst to 4x the duration, so the
+        // total number of edges is unchanged and the bus is active far longer. It may sound
+        // different; it is not obviously better, and a full frame goes from ~24 ms to ~96 ms.
+        //
+        // The lever that genuinely softens edges is hardware: LARGER pull-ups (slower rise), or a
+        // lower GPIO slew-rate setting on SCL/SDA.
+        int khz = atoi(line + 4);
+        I2CHandle::Config::Speed sp;
+        if(khz == 100)       sp = I2CHandle::Config::Speed::I2C_100KHZ;
+        else if(khz == 400)  sp = I2CHandle::Config::Speed::I2C_400KHZ;
+        else if(khz == 1000) sp = I2CHandle::Config::Speed::I2C_1MHZ;
+        else { hw.PrintLine("i2c takes 100, 400 or 1000 (kHz)"); return; }
+
+        g_i2c_cfg.speed = sp;
+        if(g_i2c_h.Init(g_i2c_cfg) != I2CHandle::Result::OK)
+        {
+            hw.PrintLine("⚠ i2c re-init FAILED -- display may be dead until reboot");
+            return;
+        }
+        // ⚠ Re-init the panel too: the controller was reconfigured underneath it.
+        tt_oled_init(g_i2c_h, tt::kOledI2cAddr);
+        g_oled_dirty = true;
+        hw.PrintLine("i2c=%d kHz (panel re-initialised)", khz);
+        return;
+    }
     if(strncmp(line, "meters ", 7) == 0)
     {
         g_meters_on  = (strcmp(line + 7, "on") == 0);
@@ -1287,8 +1333,8 @@ int main(void)
 
     hw.PrintLine("");
     hw.PrintLine("[2] I2C1 bus scan (SCL=D%d SDA=D%d)", tt::kOledScl, tt::kOledSda);
-    I2CHandle        i2c;
-    I2CHandle::Config cfg;
+    I2CHandle&        i2c = g_i2c_h;      // file-scope, so `i2c <khz>` can re-init it live
+    I2CHandle::Config& cfg = g_i2c_cfg;
     cfg.periph         = I2CHandle::Config::Peripheral::I2C_1;
     cfg.speed          = I2CHandle::Config::Speed::I2C_400KHZ;
     cfg.mode           = I2CHandle::Config::Mode::I2C_MASTER;
