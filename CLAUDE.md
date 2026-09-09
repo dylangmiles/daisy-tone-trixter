@@ -391,8 +391,25 @@ OLED's input line, because tuning matters more than levels at the moment you are
 
 **GR meter** shares the existing meter line rather than getting its own repaint. ⚠ On the Pico the
 GR meter defaulted **off** because its extra I²C repaints coupled EMI into the high-Z input
-([[project_home_gr_meter_crosstalk]]). Folding it into the existing 2 Hz refresh adds no bus traffic,
-so here it costs nothing to leave on.
+([[project_home_gr_meter_crosstalk]]).
+
+⚠ **CORRECTED 2026-09-09 — "adds no bus traffic, so it costs nothing to leave on" was wrong.** The
+*repaint itself* is the bus traffic, and folding GR into it does not change that. The same coupling
+is audible here: a **low blip in time with the meter refresh** and a **buzz on menu changes**, through
+GC8 monitor headphones. ⚠ **Much reduced versus V1** — the batched page writes and shadow-compare
+partial flush cut I²C transactions by ~32× and take idle traffic to zero — but *reduced* is not
+*absent*.
+
+Levers, cheapest first: **`gr off`** drops one changing page · **`meters off`** freezes the periodic
+repaint entirely, so an idle pedal sends nothing · the home refresh is now **1000 ms**, was 500.
+
+⚠ **`meters off` is mandatory for any noise measurement.** You cannot characterise a noise floor
+while the display repaints into the input — that measures the display.
+
+⚠ **The real fix is layout, not firmware.** The audio-in run passes within a few pitches of SDA/SCL,
+and the pinmap already called it: *"~5 pitches (12.7 mm) of exposed 1 MΩ node — keep it short and
+dressed, and suspect it first if the SNR session shows pickup."* A **grounded guard wire** dressed
+between that run and the I²C pair is the change to make, and it needs no rework of anything existing.
 
 ## The bypass footswitch is the A/B control
 
