@@ -419,10 +419,26 @@ repaint entirely, so an idle pedal sends nothing · the home refresh is now **10
 ⚠ **`meters off` is mandatory for any noise measurement.** You cannot characterise a noise floor
 while the display repaints into the input — that measures the display.
 
-⚠ **The real fix is layout, not firmware.** The audio-in run passes within a few pitches of SDA/SCL,
-and the pinmap already called it: *"~5 pitches (12.7 mm) of exposed 1 MΩ node — keep it short and
-dressed, and suspect it first if the SNR session shows pickup."* A **grounded guard wire** dressed
-between that run and the I²C pair is the change to make, and it needs no rework of anything existing.
+⚠ **CORRECTED 2026-09-09 — the coupling is NOT the gate-in run next to SDA/SCL.** That claim came
+from misreading the pinmap: *"~5 pitches (12.7 mm) of exposed high-Z wire"* describes the **length of
+the run**, not its distance from the I²C pair. Measured on the board, **gate-in is row 43 and
+SCL/SDA are rows 21–22 — about 53 mm apart**. Direct field coupling at that separation is not a
+credible dominant path, and a guard wire between them would fix nothing.
+
+⚠ **The better hypothesis is CONDUCTED, not radiated — a shared supply.** The OLED draws burst
+current from **+3V3D**, which is the Daisy's own 3V3 regulator output — the same rail its analogue
+section references. Current bursts on that rail modulate the reference, and that mechanism is
+**independent of physical separation**, which is exactly what the 53 mm measurement demands.
+
+It also fits the rest: `meters off` silences it (no bursts), and the blip tracks the refresh
+*regardless* of where the runs sit.
+
+**Test it cheaply, with parts already in stock:** bulk decoupling at the OLED's own VCC pin —
+100 nF MLCC plus ~10 µF — and/or a small series resistor or ferrite feeding the module, so its
+current bursts are taken locally instead of off the shared rail.
+
+⚠ Ground is NOT the suspect: the Seed3's AGND and DGND are **not bonded on the module** (datasheet),
+and this layout bonds them at exactly one star on the power-entry row.
 
 ## The bypass footswitch is the A/B control
 
