@@ -147,14 +147,16 @@ static bool g_meters_on = true;
 //
 // Thresholds are chosen so there is NO dead zone and no way to trip DFU by accident:
 //     release < 500 ms   -> click   (open the menu / select)
-//     release 500-2000 ms -> stats
-//     held    >= 2000 ms -> DFU, which fires WHILE HELD with its own countdown, so holding
+//     release 500-1200 ms -> stats (panel shows "release for STATS")
+//     held 1200-2000 ms  -> DFU countdown ("release to cancel"), no action on release
+//     held    >= 2000 ms -> DFU, which fires WHILE HELD, so holding
 //                           past the stats window never also opens stats.
 //
 // ⚠ Note the tension: this screen repaints, so reading it is not a silent-bus state. It is for
 // checking bk underruns and CPU without a laptop -- NOT for judging crosstalk. Use `meters off`.
 static bool               g_stats_screen = false;
-static constexpr uint32_t kStatsHoldMs   = 500;
+static constexpr uint32_t kStatsHoldMs   = 500;    // release after this -> stats
+static constexpr uint32_t kStatsMaxMs    = 1200;   // ...and before this. Past it, DFU owns the hold.
 
 // ⚠ File-scope so the `i2c` command can re-initialise the bus at runtime. Kept together because
 // re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
@@ -1859,7 +1861,20 @@ int main(void)
                 // bootloader; jumping to the STM ROM bootloader would bypass it.
                 System::ResetToBootloader(System::BootloaderMode::DAISY);
             }
-            else if(oled_ok && held > 400)
+            // ⚠ THE COUNTDOWN USED TO START AT 400 ms, which swallowed the whole stats window and
+            // then told you "release to cancel" -- so a long press appeared to do nothing but
+            // threaten DFU. The hold now has three labelled zones, and the panel says which one you
+            // are in rather than leaving it to be guessed.
+            else if(oled_ok && held > kStatsHoldMs && held <= kStatsMaxMs)
+            {
+                oled_clear();
+                OledLine(3, "  release for");
+                OledLine(4, "  STATS");
+                oled_flush();
+                System::Delay(60);
+                continue;
+            }
+            else if(oled_ok && held > kStatsMaxMs)
             {
                 char b[24];
                 snprintf(b, sizeof(b), "  DFU in %lu.%lus",
@@ -1889,7 +1904,7 @@ int main(void)
                     g_stats_screen = false;      // any short click leaves
                     g_oled_dirty   = true;
                 }
-                else if(!g_in_menu && held_ms >= kStatsHoldMs)
+                else if(!g_in_menu && held_ms >= kStatsHoldMs && held_ms <= kStatsMaxMs)
                 {
                     g_stats_screen = true;       // ⚠ long press from HOME -- see kStatsHoldMs
                     g_oled_dirty   = true;
