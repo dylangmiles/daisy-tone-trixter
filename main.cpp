@@ -146,17 +146,21 @@ static bool g_meters_on = true;
 // hold 2 s = DFU.
 //
 // Thresholds are chosen so there is NO dead zone and no way to trip DFU by accident:
-//     release < 500 ms   -> click   (open the menu / select)
-//     release 500-1200 ms -> stats (panel shows "release for STATS")
-//     held 1200-2000 ms  -> DFU countdown ("release to cancel"), no action on release
-//     held    >= 2000 ms -> DFU, which fires WHILE HELD, so holding
+//     release < 2000 ms    -> click   (open the menu / select)
+//     release 2000-4000 ms -> stats (panel shows "release for STATS")
+//     held 4000-5000 ms    -> DFU countdown ("release to cancel"), no action on release
+//     held    >= 5000 ms   -> DFU, which fires WHILE HELD, so holding
 //                           past the stats window never also opens stats.
 //
 // ⚠ Note the tension: this screen repaints, so reading it is not a silent-bus state. It is for
 // checking bk underruns and CPU without a laptop -- NOT for judging crosstalk. Use `meters off`.
 static bool               g_stats_screen = false;
-static constexpr uint32_t kStatsHoldMs   = 500;    // release after this -> stats
-static constexpr uint32_t kStatsMaxMs    = 1200;   // ...and before this. Past it, DFU owns the hold.
+static constexpr uint32_t kStatsHoldMs   = 2000;   // release after this -> stats
+static constexpr uint32_t kStatsMaxMs    = 4000;   // ...and before this
+static constexpr uint32_t kDfuHoldMs     = 5000;   // ⚠ 5 s, not 2. DFU is barely used -- the normal
+                                                   // flow is `make flash-wait` then a power cycle --
+                                                   // so it has no business owning the short end of
+                                                   // the hold, where the useful gestures live.
 
 // ⚠ File-scope so the `i2c` command can re-initialise the bus at runtime. Kept together because
 // re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
@@ -1340,7 +1344,7 @@ static void PrintFullReport()
     hw.PrintLine("  [6] IR         : %s (%d taps)", g_ir_active ? g_ir_name : "none loaded", g_ir_len);
     hw.PrintLine("  ⚠ audio tests need the 9 V JACK. On USB the rail sits ~4.9 V and the");
     hw.PrintLine("    op-amp daughter is outside its common-mode range.");
-    hw.PrintLine("  hold encoder switch 2 s -> DFU, then: make flash");
+    hw.PrintLine("  encoder: hold 2 s = stats · hold 5 s = DFU");
     hw.PrintLine("-----------------------------------------------");
 }
 
@@ -1845,7 +1849,7 @@ int main(void)
             if(sw_down_at == 0)
                 sw_down_at = t;
             uint32_t held = t - sw_down_at;
-            if(held >= 2000)
+            if(held >= kDfuHoldMs)
             {
                 if(oled_ok)
                 {
@@ -1878,8 +1882,8 @@ int main(void)
             {
                 char b[24];
                 snprintf(b, sizeof(b), "  DFU in %lu.%lus",
-                         (unsigned long)((2000 - held) / 1000),
-                         (unsigned long)(((2000 - held) % 1000) / 100));
+                         (unsigned long)((kDfuHoldMs - held) / 1000),
+                         (unsigned long)(((kDfuHoldMs - held) % 1000) / 100));
                 oled_clear();
                 OledLine(3, b);
                 OledLine(5, "  release to cancel");
@@ -1896,7 +1900,7 @@ int main(void)
             // repeating 5 s summary line carries every check, which is why it was made comprehensive
             // -- the report was a convenience on top of it, not the only route to the information.
             const uint32_t held_ms = (sw_down_at != 0) ? (t - sw_down_at) : 0;
-            if(sw_down_at != 0 && held_ms < 2000)
+            if(sw_down_at != 0 && held_ms < kDfuHoldMs)
             {
                 g_menu_at = t;
                 if(g_stats_screen)

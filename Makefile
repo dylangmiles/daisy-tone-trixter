@@ -69,7 +69,7 @@ include $(SYSTEM_FILES_DIR)/Makefile
 LDFLAGS += -u _printf_float
 
 # Convenience: build then flash in one step. The board must already be in DFU --
-# hold the ENCODER SWITCH for 2 s (see main.cpp), or hold BOOT and tap RESET if
+# hold the ENCODER SWITCH for 5 s (see main.cpp), or hold BOOT and tap RESET if
 # those buttons are still reachable.
 .PHONY: flash
 flash: all program-dfu

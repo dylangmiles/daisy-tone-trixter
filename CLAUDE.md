@@ -239,7 +239,14 @@ low-latency path costs exactly one block), tail block **512**, up to **4096** ta
 |---|---|
 | **Encoder — turn** | home: select preset (loads its IR) · menu: navigate |
 | **Encoder — short press** | home: open the menu · menu: select. Also prints the full report |
-| **Encoder — hold 2 s** | enter DFU |
+| **Encoder — hold 2 s** | **stats screen** (bk ring/underruns, cpu, flush, loop) · short click to leave |
+| **Encoder — hold 5 s** | enter DFU |
+
+⚠ **DFU moved from a 2 s to a 5 s hold (2026-09-09).** It is barely used — the normal flow is
+`make flash-wait` then a power cycle — so it has no business owning the short end of the hold, where
+the gestures you actually reach for live. ⚠ And the countdown used to start at **400 ms**, which
+swallowed every longer gesture and then said *"release to cancel"*, so a long press appeared to do
+nothing but threaten DFU. Each zone now announces itself on the panel.
 | **Bypass footswitch** | toggle the whole chain — the A/B this project turns on |
 | **Tuner footswitch** | toggle the tuner |
 
@@ -511,7 +518,8 @@ The board reports three ways, because no single one is reliable:
 | Action | Result |
 |---|---|
 | short press | re-print the full report to serial |
-| **hold 2 s** | countdown on the OLED, then **jump to DFU** |
+| **hold 2 s** | **stats screen** — the panel shows *release for STATS* |
+| **hold 5 s** | countdown on the OLED, then **jump to DFU** |
 
 ⚠ **Hold-to-DFU may be the only way to flash this board.** The Daisy is **under-mounted**, so its
 `BOOT` and `RESET` buttons face the perfboard. `System::ResetToBootloader()` removes the need for
