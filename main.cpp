@@ -1895,6 +1895,7 @@ int main(void)
         else
         {
             // Short press (< 2 s): open the menu from home, or select within it.
+            // 2-4 s opens the stats screen; 5 s enters DFU (handled in the held branch above).
             //
             // ⚠ This replaces the on-demand report, which now has nowhere to be triggered from. The
             // repeating 5 s summary line carries every check, which is why it was made comprehensive
@@ -1915,7 +1916,13 @@ int main(void)
                 }
                 else if(!g_in_menu)
                 {
-                    menu_event(0, true);
+                    menu_open();                 // short click from HOME opens the menu
+                    g_oled_dirty = true;
+                    g_in_menu    = true;
+                }
+                else
+                {
+                    menu_event(0, true);         // short click INSIDE the menu selects
                     g_oled_dirty = true;
                     if(menu_take_home())
                         g_in_menu = false;
