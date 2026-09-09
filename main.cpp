@@ -137,19 +137,24 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 // into the input.
 static bool g_meters_on = true;
 
-// ⚠ STATS SCREEN — double-click from HOME, single click to leave.
+// ⚠ STATS SCREEN — LONG PRESS from home, short click to leave.
 //
-// ⚠ The double-click costs latency, so it is scoped to the HOME screen ONLY. Detecting a second
-// click means deferring the first, and deferring clicks INSIDE the menu would undo the
-// responsiveness work. Opening the menu is a once-in-a-while deliberate act, so ~300 ms there is
-// tolerable; a menu selection is not.
+// ⚠ Long press beats double-click here, and the reason is latency. A double-click can only be
+// detected by DEFERRING the first click, which put ~300 ms on every menu-open. A long press is
+// resolved from the duration the button was already held, so a short click still acts the instant
+// it is released and nothing is delayed. It also matches the gesture already on this pedal:
+// hold 2 s = DFU.
 //
-// ⚠ And note the tension: this screen repaints, so reading it is not a silent-bus state. It is for
-// checking bk underruns and CPU without a laptop -- NOT for judging crosstalk. Use `meters off` for
-// that.
-static bool              g_stats_screen = false;
-static uint32_t          g_click_at     = 0;     // pending single click from home; 0 = none
-static constexpr uint32_t kDoubleClickMs = 300;
+// Thresholds are chosen so there is NO dead zone and no way to trip DFU by accident:
+//     release < 500 ms   -> click   (open the menu / select)
+//     release 500-2000 ms -> stats
+//     held    >= 2000 ms -> DFU, which fires WHILE HELD with its own countdown, so holding
+//                           past the stats window never also opens stats.
+//
+// ⚠ Note the tension: this screen repaints, so reading it is not a silent-bus state. It is for
+// checking bk underruns and CPU without a laptop -- NOT for judging crosstalk. Use `meters off`.
+static bool               g_stats_screen = false;
+static constexpr uint32_t kStatsHoldMs   = 500;
 
 // ⚠ File-scope so the `i2c` command can re-initialise the bus at runtime. Kept together because
 // re-initing the controller without re-initing the panel leaves the SH1106 half-configured.
@@ -1875,31 +1880,21 @@ int main(void)
             // ⚠ This replaces the on-demand report, which now has nowhere to be triggered from. The
             // repeating 5 s summary line carries every check, which is why it was made comprehensive
             // -- the report was a convenience on top of it, not the only route to the information.
-            if(sw_down_at != 0 && (t - sw_down_at) < 2000)
+            const uint32_t held_ms = (sw_down_at != 0) ? (t - sw_down_at) : 0;
+            if(sw_down_at != 0 && held_ms < 2000)
             {
                 g_menu_at = t;
                 if(g_stats_screen)
                 {
-                    // Single click leaves the stats screen -- see kDoubleClickMs.
-                    g_stats_screen = false;
-                    g_click_at     = 0;
+                    g_stats_screen = false;      // any short click leaves
+                    g_oled_dirty   = true;
+                }
+                else if(!g_in_menu && held_ms >= kStatsHoldMs)
+                {
+                    g_stats_screen = true;       // ⚠ long press from HOME -- see kStatsHoldMs
                     g_oled_dirty   = true;
                 }
                 else if(!g_in_menu)
-                {
-                    // ⚠ HOME: defer, so a second click within the window can claim it instead.
-                    if(g_click_at != 0 && (uint32_t)(t - g_click_at) < kDoubleClickMs)
-                    {
-                        g_click_at     = 0;
-                        g_stats_screen = true;
-                        g_oled_dirty   = true;
-                    }
-                    else
-                    {
-                        g_click_at = t;      // resolved in the loop if no second click arrives
-                    }
-                }
-                else
                 {
                     menu_event(0, true);
                     g_oled_dirty = true;
@@ -1957,16 +1952,6 @@ int main(void)
                 }
             }
         }
-        // ⚠ A pending home click becomes "open the menu" once the double-click window closes.
-        if(g_click_at != 0 && (uint32_t)(t - g_click_at) >= kDoubleClickMs)
-        {
-            g_click_at   = 0;
-            menu_open();
-            g_in_menu    = true;
-            g_menu_at    = t;
-            g_oled_dirty = true;
-        }
-
         if(g_stats_screen)
         {
             if(g_oled_dirty || (t - last_oled) >= 500)
