@@ -452,6 +452,29 @@ still missing on this build:**
 
 ⚠ `meters off` remains mandatory for any noise measurement — it removes the aggressor entirely.
 
+### ⚠ Mains hum is a SEPARATE problem that enters the same way
+
+Measured 2026-09-10, farm bench. Plugging the **Spark Mini into mains via USB to charge** makes the
+**50 Hz hum about twice as loud**. Shorting the input tip kills that too — so it arrives through the
+same high-Z node, but it is **not** the I²C blip and has a different cause.
+
+⚠ **The tip-short does NOT distinguish the two candidates**, because a shorted input sits at ground
+either way:
+
+- **Radiated 50 Hz** — the charger's SMPS radiates; the 1 MΩ node picks it up. Fix: shielding.
+- **Ground loop** — the amp gains a mains earth via the USB charger while the pedal already has one
+  through its 9 V adapter. Two earth paths, and current flows in the cable shield between them.
+
+⚠ **The discriminator is BATTERY POWER**, which the PP3 build provides: run the pedal on battery with
+the amp still on mains USB. Hum **drops sharply** ⇒ ground loop. **Unchanged** ⇒ radiated field.
+That is another reason to finish the battery work, beyond portability.
+
+⚠ Practical either way, and worth stating in the write-up: **do not charge the amp while playing.**
+A doubling of hum from a cable that is not part of the signal chain is a large, reproducible effect.
+
+⚠ And for measurement discipline: this is the **farm** bench, which the notes already flag as having
+noisy mains ([[project_test_benches]]). Hum figures from here do not transfer to Thornton.
+
 ## The bypass footswitch is the A/B control
 
 ⚠ Interim, until there is a menu. Boot is passthrough; **pressing the bypass footswitch toggles the
