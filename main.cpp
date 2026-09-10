@@ -501,18 +501,40 @@ static constexpr float    kCentsSmooth  = 0.60f;  // ⚠ was 0.20 -- see below
 static constexpr float kTunerLoHz = 60.0f;
 static constexpr float kTunerHiHz = 1400.0f;      // tuner.h decimates for <= ~1.5 kHz anyway
 
+// ⚠ TUNER INSTRUMENTATION. Two wrong guesses at this freeze already (the gate, then the build), so
+// stop reasoning about it and print what the detector actually produces and what happens to it.
+// Every raw estimate, with the verdict: accepted, or rejected and why.
+static volatile bool g_tune_dbg = false;
+
 static void TunerAccept(const TunerResult& r, uint32_t now)
 {
     if(!r.valid)
+    {
+        if(g_tune_dbg) hw.PrintLine("  tun REJECT invalid (below gate %.4f?)", (double)tuner_min_rms());
         return;                                  // ⚠ hold the last reading; do not blank
+    }
     if(r.freq_hz < kTunerLoHz || r.freq_hz > kTunerHiHz)
+    {
+        if(g_tune_dbg) hw.PrintLine("  tun REJECT band %.1f Hz", (double)r.freq_hz);
         return;                                  // ⚠ subharmonic or junk -- see kTunerLoHz
+    }
 
     if(r.midi != g_tune_shown.midi || !g_tune_shown.valid)
     {
-        if(r.midi != g_tune_cand) { g_tune_cand = r.midi; g_tune_cand_n = 1; return; }
-        if(++g_tune_cand_n < kNoteConfirm) return;
+        if(r.midi != g_tune_cand)
+        {
+            g_tune_cand = r.midi; g_tune_cand_n = 1;
+            if(g_tune_dbg) hw.PrintLine("  tun cand %s%d (%.1f Hz) n=1", r.name, r.octave, (double)r.freq_hz);
+            return;
+        }
+        if(++g_tune_cand_n < kNoteConfirm)
+        {
+            if(g_tune_dbg) hw.PrintLine("  tun cand n=%d", g_tune_cand_n);
+            return;
+        }
         g_tune_shown = r;                        // confirmed: snap, do not glide
+        if(g_tune_dbg) hw.PrintLine("  tun SNAP  %s%d %.1f Hz %+.1f c", r.name, r.octave,
+                                    (double)r.freq_hz, (double)r.cents);
     }
     else
     {
@@ -520,6 +542,9 @@ static void TunerAccept(const TunerResult& r, uint32_t now)
         g_tune_shown.cents   += kCentsSmooth * (r.cents - g_tune_shown.cents);
         g_tune_shown.freq_hz += kCentsSmooth * (r.freq_hz - g_tune_shown.freq_hz);
         g_tune_shown.clarity  = r.clarity;
+        if(g_tune_dbg) hw.PrintLine("  tun track %s%d raw %+.1f -> shown %+.1f c  clar %.2f",
+                                    r.name, r.octave, (double)r.cents,
+                                    (double)g_tune_shown.cents, (double)r.clarity);
     }
     g_tune_cand = -1;
     g_tune_at   = now;
@@ -1293,7 +1318,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
         hw.PrintLine("  i2c 100|400|1000  bus clock kHz -- see the note, edges not clock");
-        hw.PrintLine("  tunergate <rms>   tuner noise gate, default 0.004 (~-48 dBFS)");
+        hw.PrintLine("  tunergate <rms>   tuner noise gate, default 0.0012 (~-58 dBFS)");
+        hw.PrintLine("  tunerdbg on|off   print every tuner estimate + verdict");
         hw.PrintLine(" -- backing tracks --");
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
@@ -1427,6 +1453,14 @@ static void HandleCommand(const char* line)
         g_tune_aud_at = 0;
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
+        return;
+    }
+    if(strncmp(line, "tunerdbg ", 9) == 0)
+    {
+        g_tune_dbg = (strcmp(line + 9, "on") == 0);
+        hw.PrintLine("tuner debug=%s  (gate %.4f, band %.0f-%.0f Hz, confirm %d, smooth %.2f)",
+                     g_tune_dbg ? "on" : "off", (double)tuner_min_rms(),
+                     (double)kTunerLoHz, (double)kTunerHiHz, kNoteConfirm, (double)kCentsSmooth);
         return;
     }
     if(strncmp(line, "tunergate ", 10) == 0)
