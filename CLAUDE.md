@@ -397,6 +397,32 @@ there is nothing to chase.
 
 ## Tuner and GR meter
 
+### ⚠ Tuner: three findings from 2026-09-10, all measured not guessed
+
+**1. The subharmonic lock was `TUNER_MAXLAG`, not the noise gate.** YIN's difference function keeps
+getting *lower* at MULTIPLES of the true period — `d'(2T)` and `d'(3T)` are routinely smaller than
+`d'(T)`. With `TUNER_MAXLAG = TUNER_WIN/2` the search ran down to 23 Hz, so whenever no dip cleared
+the threshold the global-minimum fallback landed on 2× or 3× the period. An E2 (82.4 Hz) produced a
+stream of **41.2 Hz and 27.5 Hz** readings — exactly E2/2 and E2/3. ⚠ **Capping the search at 60 Hz
+(`TUNER_MAXLAG 200`) makes those lags unreachable**, fixing it at source. A downstream band-limit can
+only ever discard them, which is what made it look like a gate problem for three attempts.
+
+**2. The raw estimate jitters ±40 cents on a sustained note.** Measured on one E2: `-44, -29, -48,
+-20, -9, -37, -7`. ⚠ That is the *signal*, not the code — a piezo with strong inharmonic content and
+an 85 ms window (~7 periods at 82 Hz). Smoothing is therefore **weighted by `clarity`** (0.5 → 12 %
+of rate, 1.0 → full): confident frames move the display, doubtful ones barely nudge it. ⚠ Chosen over
+*discarding* low-clarity frames, which just reinstates the drop-outs.
+
+**3. `tunerdbg on` is what settled it**, after two wrong guesses (the gate, then a stale build). It
+prints every estimate with its verdict — REJECT invalid / REJECT band / cand / SNAP / track. ⚠ It
+should have come first: the fault was visible in one capture.
+
+⚠ Runtime knobs: **`tunergate <rms>`** (default 0.0012 ≈ −58 dBFS) and `tunerdbg`. The gate is
+deliberately low — a gate that hides noise hides signal at the same threshold, and noise is a problem
+to solve at source. Raise it on a noisy night rather than editing source.
+
+⚠ **`tuner.cpp` is now FORKED from the Pico** (`TUNER_MAXLAG`, runtime gate, fallback 0.45).
+
 **Tuner** (`tuner.cpp`) ported unchanged — it depends only on `math.h`/`string.h`. ⚠ It is fed from
 the **RAW INPUT, before any DSP**: you tune the string, not the compressed and EQ'd version of it.
 Gated behind `g_tuner_on` so its autocorrelation costs nothing when unused. When armed it takes the
