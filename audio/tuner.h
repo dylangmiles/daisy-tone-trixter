@@ -28,4 +28,10 @@ bool tuner_feed(const float *samples, int n);
 
 TunerResult tuner_result(void);
 
+// ⚠ DAISY ADDITION: the RMS gate below which no pitch is reported, as a runtime knob. The right
+// value depends on the room's noise floor, so it is measured on the bench, not fixed in source.
+// Lower = keeps detecting further into a decay, but lets a noisy room drive false readings.
+void  tuner_set_min_rms(float v);
+float tuner_min_rms(void);
+
 #endif // TT_TUNER_H

@@ -476,9 +476,9 @@ static int               g_tune_cand_n = 0;
 // you can still hear the string, and not updated with rubbish in the meantime.
 static constexpr uint32_t kTunerHoldMs  = 2500;   // floor
 static constexpr uint32_t kTunerMaxMs   = 8000;   // ceiling
-static constexpr float    kTunerAudible = 0.0015f;// ⚠ must sit at or below TUNER_MIN_RMS, or the
-                                                  // display blanks while the detector is still
-                                                  // producing perfectly good readings
+// ⚠ Tracks the detector's own gate: blanking above it would hide readings the detector is still
+// producing, and below it would hold a frozen display over silence.
+#define kTunerAudible (tuner_min_rms() * 0.4f)
 static constexpr uint32_t kTunerFadeMs  = 1200;   // grace AFTER the note goes inaudible
 static uint32_t           g_tune_aud_at = 0;      // last moment the input was above kTunerAudible
 static constexpr int      kNoteConfirm  = 2;
@@ -1293,6 +1293,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
         hw.PrintLine("  i2c 100|400|1000  bus clock kHz -- see the note, edges not clock");
+        hw.PrintLine("  tunergate <rms>   tuner noise gate, default 0.004 (~-48 dBFS)");
         hw.PrintLine(" -- backing tracks --");
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
@@ -1426,6 +1427,16 @@ static void HandleCommand(const char* line)
         g_tune_aud_at = 0;
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
+        return;
+    }
+    if(strncmp(line, "tunergate ", 10) == 0)
+    {
+        // ⚠ Measure this, do not guess it. Too high and the tuner stops partway down a decaying
+        // string; too low and a noisy room drives false readings and the display freezes. Default
+        // 0.004 (~-48 dBFS) against a measured idle floor near -68.
+        tuner_set_min_rms((float)atof(line + 10));
+        hw.PrintLine("tuner gate=%.4f  (~%.0f dBFS)", (double)tuner_min_rms(),
+                     (double)(20.0 * log10((double)tuner_min_rms())));
         return;
     }
     if(strncmp(line, "i2c ", 4) == 0)
