@@ -477,6 +477,8 @@ static int               g_tune_cand_n = 0;
 static constexpr uint32_t kTunerHoldMs  = 2500;   // floor
 static constexpr uint32_t kTunerMaxMs   = 8000;   // ceiling
 static constexpr float    kTunerAudible = 0.004f; // ~ -48 dBFS; idle noise measures around -68
+static constexpr uint32_t kTunerFadeMs  = 1200;   // grace AFTER the note goes inaudible
+static uint32_t           g_tune_aud_at = 0;      // last moment the input was above kTunerAudible
 static constexpr int      kNoteConfirm  = 2;
 static constexpr float    kCentsSmooth  = 0.20f;  // per accepted frame; lower = steadier, laggier
 
@@ -1036,10 +1038,17 @@ static void OledTuner(void)
 
     // ⚠ HOLD the last reading rather than blanking -- see TunerAccept(). Only a genuinely long
     // silence returns to the idle state, and idle draws the bare rails: armed, nothing claimed.
-    const uint32_t age  = (uint32_t)(System::GetNow() - g_tune_at);
+    // ⚠ Three clocks, and they measure different things:
+    //   age            since the last GOOD reading     -> kTunerHoldMs is the floor
+    //   since audible  since the string was last heard -> kTunerFadeMs is the grace after silence
+    //   age            hard ceiling                    -> kTunerMaxMs, so hum cannot hold it forever
+    // The note therefore stays up while it rings, lingers briefly once it dies, and then goes.
+    const uint32_t now  = System::GetNow();
+    const uint32_t age  = (uint32_t)(now - g_tune_at);
+    const uint32_t quiet = (uint32_t)(now - g_tune_aud_at);
     const bool     live = g_tune_shown.valid
                           && age < kTunerMaxMs
-                          && (age < kTunerHoldMs || g_in_env > kTunerAudible);
+                          && (age < kTunerHoldMs || quiet < kTunerFadeMs);
 
     // The rails. Always present, so the display never looks dead.
     for(int x = 44; x <= 84; x++)
@@ -1408,6 +1417,7 @@ static void HandleCommand(const char* line)
         g_tuner_on   = (strcmp(line + 6, "on") == 0);
         g_tune.valid = g_tune_shown.valid = false;   // ⚠ or arming shows LAST session's note
         g_tune_cand = -1;
+        g_tune_aud_at = 0;
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
         return;
@@ -1806,6 +1816,7 @@ int main(void)
                     g_tuner_on   = !g_tuner_on;
                     g_tune.valid = g_tune_shown.valid = false;   // ⚠ stale note, see above
                     g_tune_cand  = -1;
+                    g_tune_aud_at = 0;
                     g_oled_dirty = true;
                     hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
                 }
@@ -1941,6 +1952,10 @@ int main(void)
         // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
         if(g_tuner_on)
         {
+            // ⚠ Stamped every iteration, not per render: the blank decision should not depend on
+            // how often the panel happens to redraw.
+            if(g_in_env > kTunerAudible)
+                g_tune_aud_at = t;
             // Feed everything written since last time, in order and without gaps.
             int w = g_tun_w;
             while(g_tun_r != w)
