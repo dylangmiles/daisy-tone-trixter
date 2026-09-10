@@ -455,14 +455,29 @@ static TunerResult       g_tune_shown  = {};    // filtered -- this is what the 
 static uint32_t          g_tune_at     = 0;     // when g_tune_shown last took a real reading
 static int               g_tune_cand   = -1;    // midi note awaiting confirmation
 static int               g_tune_cand_n = 0;
-static constexpr uint32_t kTunerHoldMs  = 900;
+static constexpr uint32_t kTunerHoldMs  = 2500;   // ⚠ was 900 -- a decaying note outlives that
 static constexpr int      kNoteConfirm  = 2;
-static constexpr float    kCentsSmooth  = 0.35f;  // per accepted frame; lower = steadier, laggier
+static constexpr float    kCentsSmooth  = 0.20f;  // per accepted frame; lower = steadier, laggier
+
+// ⚠ BAND-LIMIT THE DETECTOR TO A GUITAR. This is what stops "E2 ... then A0 ... then blank".
+//
+// A0 is 27.5 Hz and E2 is 82.4 Hz -- almost exactly 3x. That is not a random misread, it is the
+// classic autocorrelation failure: as the fundamental decays the detector locks onto a SUBHARMONIC,
+// and E2/3 is A0 to within a few cents. No amount of confirmation fixes it, because the detector
+// reports the subharmonic confidently and repeatedly.
+//
+// Refusing anything below a guitar's lowest string kills the whole family of errors outright: the
+// subharmonics all land beneath the band. 60 Hz leaves room for drop tunings (drop D is 73.4 Hz)
+// while sitting well above A0.
+static constexpr float kTunerLoHz = 60.0f;
+static constexpr float kTunerHiHz = 1400.0f;      // tuner.h decimates for <= ~1.5 kHz anyway
 
 static void TunerAccept(const TunerResult& r, uint32_t now)
 {
     if(!r.valid)
         return;                                  // ⚠ hold the last reading; do not blank
+    if(r.freq_hz < kTunerLoHz || r.freq_hz > kTunerHiHz)
+        return;                                  // ⚠ subharmonic or junk -- see kTunerLoHz
 
     if(r.midi != g_tune_shown.midi || !g_tune_shown.valid)
     {
@@ -1030,9 +1045,11 @@ static void OledTuner(void)
         }
     }
 
-    snprintf(buf, sizeof(buf), "%.1f Hz  %+d c", (double)g_tune_shown.freq_hz,
+    // ⚠ "cents" spelled out, and centred. A cent is 1/100 of a semitone, so +/-50 spans the gap to
+    // the next note -- the same quantity the segments show, for when you want the number.
+    snprintf(buf, sizeof(buf), "%.1f Hz   %+d cents", (double)g_tune_shown.freq_hz,
              (int)(g_tune_shown.cents + (g_tune_shown.cents < 0 ? -0.5f : 0.5f)));
-    oled_text(0, 48, buf);
+    oled_text(64 - (int)strlen(buf) * 3, 48, buf);
     oled_flush();
 }
 
