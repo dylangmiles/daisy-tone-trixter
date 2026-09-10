@@ -9,7 +9,18 @@
 
 #define TUNER_DECIM    4                 // input fs / 4 (48k -> 12k); guitar f0 <= ~1.5 kHz
 #define TUNER_WIN      1024              // decimated samples per window (~85 ms at 12 kHz)
-#define TUNER_MAXLAG   (TUNER_WIN / 2)   // lowest detectable f0 ~ 12000/512 ≈ 23 Hz
+#define TUNER_MAXLAG   200               // lowest detectable f0 = 12000/200 = 60 Hz
+// ⚠ WAS (TUNER_WIN / 2) = 512, i.e. down to 23 Hz -- and that was the real cause of the
+// subharmonic lock, not the noise gate. YIN's difference function keeps getting LOWER at MULTIPLES
+// of the true period: d'(2T) and d'(3T) are routinely smaller than d'(T). So whenever no dip cleared
+// the threshold, the global-minimum fallback below searched all the way out to 23 Hz and landed on
+// 2x or 3x the period. Measured 2026-09-10 on an E2 (82.4 Hz): a stream of 41.2 Hz and 27.5 Hz
+// readings, which are exactly E2/2 and E2/3.
+//
+// ⚠ Capping the search at 60 Hz makes those lags UNREACHABLE. For an 82 Hz string the true period is
+// ~146 samples and 2x is 292 -- outside the range, so it cannot be chosen. That fixes the fault at
+// source instead of filtering it downstream, which is all main.cpp's band-limit could do.
+// Bonus: the O(W * maxlag) difference loop gets 2.5x cheaper.
 #define TUNER_MINLAG   8                 // highest detectable f0 ~ 12000/8  = 1500 Hz
 #define TUNER_THRESH   0.15f             // YIN absolute threshold
 #define TUNER_MIN_RMS  0.0012f           // ~-58 dBFS default; below this = no pitch (just noise)
@@ -96,7 +107,11 @@ static void tuner_estimate(void) {
         int best = TUNER_MINLAG; float bestv = s_d[best];
         for (int tau = TUNER_MINLAG + 1; tau < maxlag; tau++)
             if (s_d[tau] < bestv) { bestv = s_d[tau]; best = tau; }
-        if (bestv < 0.30f) tau_est = best;
+        // ⚠ 0.45, was 0.30. The fallback can be trusted further now that subharmonic lags are out
+        // of range -- its old danger was picking a multiple, not picking a weak dip. Loosening it
+        // converts a great many "no pitch" frames into usable readings, which is what makes the
+        // display track a decaying note instead of freezing on the attack.
+        if (bestv < 0.45f) tau_est = best;
     }
     if (tau_est < 0) { tuner_no_pitch(); return; }
 
