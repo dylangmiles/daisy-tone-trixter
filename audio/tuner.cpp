@@ -12,7 +12,15 @@
 #define TUNER_MAXLAG   (TUNER_WIN / 2)   // lowest detectable f0 ~ 12000/512 ≈ 23 Hz
 #define TUNER_MINLAG   8                 // highest detectable f0 ~ 12000/8  = 1500 Hz
 #define TUNER_THRESH   0.15f             // YIN absolute threshold
-#define TUNER_MIN_RMS  0.004f            // ~-48 dBFS; below this = no pitch (just noise)
+#define TUNER_MIN_RMS  0.0012f           // ~-58 dBFS; below this = no pitch (just noise)
+// ⚠ DAISY FORK (2026-09-10): was 0.004f (~-48 dBFS). At -48 the detector went silent partway down a
+// decaying string, so the display froze and you had to strike the note again to see the effect of a
+// peg turn. -58 dBFS keeps it working through the decay, which is what the player actually wants:
+// the pitch genuinely drifts as a string decays, and seeing that is a true reflection of the sound,
+// not a fault to be hidden.
+// ⚠ Safe here because main.cpp band-limits results to 60-1400 Hz and requires note confirmation, so
+// the low-level false pitches this admits are rejected downstream. Measured idle noise is ~-68 dBFS,
+// leaving ~10 dB of margin. Do NOT lower this without those guards in place.
 
 static float       g_fs_dec  = 12000.0f;
 static float       s_win[TUNER_WIN];

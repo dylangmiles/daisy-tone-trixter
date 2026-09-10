@@ -476,11 +476,17 @@ static int               g_tune_cand_n = 0;
 // you can still hear the string, and not updated with rubbish in the meantime.
 static constexpr uint32_t kTunerHoldMs  = 2500;   // floor
 static constexpr uint32_t kTunerMaxMs   = 8000;   // ceiling
-static constexpr float    kTunerAudible = 0.004f; // ~ -48 dBFS; idle noise measures around -68
+static constexpr float    kTunerAudible = 0.0015f;// ⚠ must sit at or below TUNER_MIN_RMS, or the
+                                                  // display blanks while the detector is still
+                                                  // producing perfectly good readings
 static constexpr uint32_t kTunerFadeMs  = 1200;   // grace AFTER the note goes inaudible
 static uint32_t           g_tune_aud_at = 0;      // last moment the input was above kTunerAudible
 static constexpr int      kNoteConfirm  = 2;
-static constexpr float    kCentsSmooth  = 0.20f;  // per accepted frame; lower = steadier, laggier
+static constexpr float    kCentsSmooth  = 0.60f;  // ⚠ was 0.20 -- see below
+// ⚠ 0.20 was set to calm the OLD single-needle display and is far too slow for this one. Estimates
+// arrive every ~85 ms, so 0.20 settles in about 1.3 s: turn a peg and the lines lag visibly behind
+// your hand. 0.60 settles in ~0.2 s. The segment quantisation (4 cents) does the anti-twitch work
+// that the smoothing used to have to do, so the damping is no longer earning its cost.
 
 // ⚠ BAND-LIMIT THE DETECTOR TO A GUITAR. This is what stops "E2 ... then A0 ... then blank".
 //
