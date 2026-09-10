@@ -967,9 +967,18 @@ static void OledStats(void)
 //
 // In tune: no segments at all -- just the two rails above and below the note and a triangle pointing
 // in from each side. Nothing moving means nothing left to correct.
+//
+// ⚠ 8 segments at 6 cents each, so full scale stays ~51 cents -- about the whole gap to the next
+// semitone -- while the STEP halves from 8 cents to 6. Finer without losing range, which is the
+// trade the other direction (fewer cents per segment) would have cost.
+//
+// ⚠ There is a floor to this: if the detector's own cents estimate wobbles by a couple of cents,
+// segments finer than that display noise rather than pitch. 6 is about as fine as is honest.
 static constexpr float kInTuneCents = 3.0f;
-static constexpr int   kTunerSegs   = 6;
-static constexpr float kCentsPerSeg = 8.0f;
+static constexpr int   kTunerSegs   = 8;      // ⚠ 8 at a 5 px pitch = 40 px a side, against ~44 free
+static constexpr float kCentsPerSeg = 6.0f;   // 3 + 8*6 = ~51 cents full scale, same span as before
+static constexpr int   kSegPitch    = 5;      // 4 px bar + 1 px gap
+static constexpr int   kSegWidth    = 4;
 
 static void TriRight(int x, int ymid, int h)     // solid triangle, apex to the right
 {
@@ -1038,8 +1047,8 @@ static void OledTuner(void)
         const bool flat = g_tune_shown.cents < 0.f;
         for(int k = 0; k < segs; k++)
         {
-            const int x = flat ? (38 - k * 7) : (84 + k * 7);
-            for(int dx = 0; dx < 5; dx++)
+            const int x = flat ? (38 - k * kSegPitch) : (84 + k * kSegPitch);
+            for(int dx = 0; dx < kSegWidth; dx++)
                 for(int y = 18; y <= 37; y++)
                     oled_pixel(x + dx, y, true);
         }
