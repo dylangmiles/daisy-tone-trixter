@@ -419,26 +419,38 @@ repaint entirely, so an idle pedal sends nothing · the home refresh is now **10
 ⚠ **`meters off` is mandatory for any noise measurement.** You cannot characterise a noise floor
 while the display repaints into the input — that measures the display.
 
-⚠ **CORRECTED 2026-09-09 — the coupling is NOT the gate-in run next to SDA/SCL.** That claim came
-from misreading the pinmap: *"~5 pitches (12.7 mm) of exposed high-Z wire"* describes the **length of
-the run**, not its distance from the I²C pair. Measured on the board, **gate-in is row 43 and
-SCL/SDA are rows 21–22 — about 53 mm apart**. Direct field coupling at that separation is not a
-credible dominant path, and a guard wire between them would fix nothing.
+⚠ **MECHANISM SETTLED BY MEASUREMENT, 2026-09-10: I²C edges RADIATE into the high-impedance input
+node.** Not conducted, not the supply. Three tests, and the middle one is the discriminator:
 
-⚠ **The better hypothesis is CONDUCTED, not radiated — a shared supply.** The OLED draws burst
-current from **+3V3D**, which is the Daisy's own 3V3 regulator output — the same rail its analogue
-section references. Current bursts on that rail modulate the reference, and that mechanism is
-**independent of physical separation**, which is exactly what the 53 mm measurement demands.
+| Test | Result | Conclusion |
+|---|---|---|
+| Input tip shorted to ground | **silent** | noise enters via the **input**, not generated downstream |
+| Input shorted **+ meters ON** | ⚠ **still silent** | the blip arrives the **same way** — so NOT the supply |
+| Input normal + `meters off` | blip gone | I²C is the aggressor |
 
-It also fits the rest: `meters off` silences it (no bursts), and the blip tracks the refresh
-*regardless* of where the runs sit.
+⚠ **Two earlier hypotheses in this file were wrong and are retracted.** (1) *"The gate-in run passes
+within a few pitches of SDA/SCL"* — it does not; that misread the pinmap's *length* of the run.
+Measured, gate-in is row 43 and SCL/SDA rows 21–22, **~53 mm apart**. (2) *"Therefore it must be
+conducted via the shared +3V3D rail"* — disproved above: a supply-borne fault would still be audible
+with the input shorted, and it is not.
 
-**Test it cheaply, with parts already in stock:** bulk decoupling at the OLED's own VCC pin —
-100 nF MLCC plus ~10 µF — and/or a small series resistor or ferrite feeding the module, so its
-current bursts are taken locally instead of off the shared rail.
+⚠ **The error underneath both was weighting distance and ignoring impedance.** At a **1 MΩ** node,
+53 mm of separation is no defence — weak coupling still develops real voltage. Impedance is what
+makes this input sensitive, and it cannot be lowered: the K&K needs it.
 
-⚠ Ground is NOT the suspect: the Seed3's AGND and DGND are **not bonded on the module** (datasheet),
-and this layout bonds them at exactly one star on the power-entry row.
+**So the fix is shielding the high-Z input path, and both halves of the recorded V1 mitigation are
+still missing on this build:**
+
+1. ⚠ **The enclosure is bare plastic.** V1's *"Thank You" box was copper-tape-lined* and measured
+   well. This build lost that. Line it and bond the copper to **AGND at the star** — one point only.
+2. **The board ground plane** was deferred on the argument that a copper-lined enclosure would cover
+   it. ⚠ That argument only holds if the enclosure is actually lined, and it is not.
+3. Keep the gate-in run **short and dressed**; a grounded guard alongside *that run* is worth it —
+   ⚠ but not a guard between it and SDA/SCL, which was the wrong target.
+4. ⚠ **Do NOT foil the daughter** — tried and abandoned 2026-07-09 as too fiddly; the recorded
+   decision is enclosure copper + ground plane instead, and that still stands.
+
+⚠ `meters off` remains mandatory for any noise measurement — it removes the aggressor entirely.
 
 ## The bypass footswitch is the A/B control
 
