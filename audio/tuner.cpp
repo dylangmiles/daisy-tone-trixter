@@ -12,11 +12,19 @@
 #define TUNER_MAXLAG   (TUNER_WIN / 2)   // lowest detectable f0 ~ 12000/512 ≈ 23 Hz
 #define TUNER_MINLAG   8                 // highest detectable f0 ~ 12000/8  = 1500 Hz
 #define TUNER_THRESH   0.15f             // YIN absolute threshold
-#define TUNER_MIN_RMS  0.004f            // ~-48 dBFS default; below this = no pitch (just noise)
-// ⚠ RUNTIME-SETTABLE (2026-09-10). Tried at 0.0012f (-58 dBFS) to keep detecting through a decay,
-// and it made things WORSE on a noisy bench: the detector chews on hum, those readings are rejected
-// downstream (or briefly confirmed onto a noise pitch), and the display sits frozen. The right value
-// depends on the room, so it is a knob to measure rather than a constant to guess -- see `tunergate`.
+#define TUNER_MIN_RMS  0.0012f           // ~-58 dBFS default; below this = no pitch (just noise)
+// ⚠ DAISY FORK. Upstream is 0.004f (~-48 dBFS). Lowered deliberately: the gate exists to hide noise,
+// but it hides SIGNAL at the same threshold -- at -48 the detector stops partway down a decaying
+// string, the display freezes, and you have to strike the note again to see the effect of a peg
+// turn. Pitch drift during decay is a true property of the sound and is exactly what you use to pick
+// a sweet spot to tune to.
+//
+// ⚠ Builder's call, 2026-09-10, and the principle is the point: if the room is noisy, that is a
+// problem to solve AT SOURCE (enclosure shielding, ground), not to paper over by desensitising the
+// instrument. Measured idle floor on a quiet morning is ~-68 dBFS, so this leaves ~10 dB.
+//
+// ⚠ Only safe because main.cpp band-limits results to 60-1400 Hz and requires note confirmation.
+// Runtime-settable with `tunergate` -- raise it on a noisy night rather than editing this.
 static float s_min_rms = TUNER_MIN_RMS;
 void tuner_set_min_rms(float v) { s_min_rms = (v > 0.f) ? v : TUNER_MIN_RMS; }
 float tuner_min_rms(void)       { return s_min_rms; }
