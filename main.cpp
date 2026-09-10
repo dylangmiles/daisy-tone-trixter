@@ -214,6 +214,11 @@ static uint32_t          g_ticks_per_block = 0;
 // Output peak, metered after everything -- the level actually leaving the pedal.
 static volatile float g_out_peak = 0.f;
 
+// ⚠ INPUT ENVELOPE, for the tuner's blank decision. g_peak cannot be used: the meter CONSUMES it
+// (reads then zeroes), and in tuner mode the meter never runs. This is a separate follower with a
+// fast attack and a slow release, read non-destructively.
+static volatile float g_in_env = 0.f;
+
 // ⚠ ENCODER INSTRUMENTATION. Timing is measurably fine (max period 26 ms) yet navigation is hard,
 // so the next suspect is the INPUT rather than the loop: if one physical detent yields several
 // counts, the menu jumps unpredictably no matter how fast the display is. `enc on` prints every
@@ -455,7 +460,23 @@ static TunerResult       g_tune_shown  = {};    // filtered -- this is what the 
 static uint32_t          g_tune_at     = 0;     // when g_tune_shown last took a real reading
 static int               g_tune_cand   = -1;    // midi note awaiting confirmation
 static int               g_tune_cand_n = 0;
-static constexpr uint32_t kTunerHoldMs  = 2500;   // ⚠ was 900 -- a decaying note outlives that
+// ⚠ THE BLANK CONDITION IS AUDIBILITY, NOT A STOPWATCH. A fixed timeout is always wrong in one
+// direction: too short and it blanks while the note still rings, too long and it lingers after
+// silence. So the hold EXTENDS while the input is still audible.
+//
+// ⚠ Two guards, because audibility alone is not safe either:
+//   kTunerHoldMs  a floor -- hold at least this long even if the string is damped instantly, so a
+//                 quick mute does not snatch the reading away before it can be read.
+//   kTunerMaxMs   a ceiling -- hum, an open input or a noisy stage would otherwise clear the
+//                 "audible" test forever and the display would never blank at all.
+//
+// ⚠ And this pairs with the band-limit rather than duplicating it: as a note decays the PITCH
+// degrades before it becomes inaudible, which is the sweet spot the builder spotted. Bad readings
+// are already refused upstream, so what stays on screen is the last GOOD one -- held for as long as
+// you can still hear the string, and not updated with rubbish in the meantime.
+static constexpr uint32_t kTunerHoldMs  = 2500;   // floor
+static constexpr uint32_t kTunerMaxMs   = 8000;   // ceiling
+static constexpr float    kTunerAudible = 0.004f; // ~ -48 dBFS; idle noise measures around -68
 static constexpr int      kNoteConfirm  = 2;
 static constexpr float    kCentsSmooth  = 0.20f;  // per accepted frame; lower = steadier, laggier
 
@@ -550,6 +571,9 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     }
     if(pk > g_peak)
         g_peak = pk;
+    // Fast attack, slow release (~0.7 s at 750 blocks/s) -- tracks a decaying string, not a transient.
+    if(pk > g_in_env) g_in_env = pk;
+    else              g_in_env += (pk - g_in_env) * 0.002f;
 
     // Encoder, at the callback's steady rate -- see g_enc_delta.
     // ⚠ The SWITCH only. A/B are sampled by TIM4 at 10 kHz -- see EncTick().
@@ -975,10 +999,10 @@ static void OledStats(void)
 // ⚠ There is a floor to this: if the detector's own cents estimate wobbles by a couple of cents,
 // segments finer than that display noise rather than pitch. 6 is about as fine as is honest.
 static constexpr float kInTuneCents = 3.0f;
-static constexpr int   kTunerSegs   = 8;      // ⚠ 8 at a 5 px pitch = 40 px a side, against ~44 free
-static constexpr float kCentsPerSeg = 6.0f;   // 3 + 8*6 = ~51 cents full scale, same span as before
-static constexpr int   kSegPitch    = 5;      // 4 px bar + 1 px gap
-static constexpr int   kSegWidth    = 4;
+static constexpr int   kTunerSegs   = 12;     // ⚠ 12 at a 3 px pitch = 36 px a side, against ~44 free
+static constexpr float kCentsPerSeg = 4.0f;   // 3 + 12*4 = 51 cents full scale -- UNCHANGED span
+static constexpr int   kSegPitch    = 3;      // 2 px bar + 1 px gap
+static constexpr int   kSegWidth    = 2;
 
 static void TriRight(int x, int ymid, int h)     // solid triangle, apex to the right
 {
@@ -1012,8 +1036,10 @@ static void OledTuner(void)
 
     // ⚠ HOLD the last reading rather than blanking -- see TunerAccept(). Only a genuinely long
     // silence returns to the idle state, and idle draws the bare rails: armed, nothing claimed.
-    const bool live = g_tune_shown.valid
-                      && (uint32_t)(System::GetNow() - g_tune_at) < kTunerHoldMs;
+    const uint32_t age  = (uint32_t)(System::GetNow() - g_tune_at);
+    const bool     live = g_tune_shown.valid
+                          && age < kTunerMaxMs
+                          && (age < kTunerHoldMs || g_in_env > kTunerAudible);
 
     // The rails. Always present, so the display never looks dead.
     for(int x = 44; x <= 84; x++)
