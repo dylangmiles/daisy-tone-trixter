@@ -538,13 +538,25 @@ static void TunerAccept(const TunerResult& r, uint32_t now)
     }
     else
     {
-        // Same note -- smooth the needle only.
-        g_tune_shown.cents   += kCentsSmooth * (r.cents - g_tune_shown.cents);
-        g_tune_shown.freq_hz += kCentsSmooth * (r.freq_hz - g_tune_shown.freq_hz);
+        // ⚠ CLARITY-WEIGHTED SMOOTHING. Measured 2026-09-10: consecutive frames on a single
+        // sustained E2 read -44, -29, -48, -20, -9, -37, -7 cents -- about +/-40 cents of jitter on
+        // a note that is not moving. A fixed smoothing constant cannot fix that, because it treats a
+        // clarity-0.56 estimate as equal to a clarity-0.99 one.
+        //
+        // ⚠ The detector already tells us which frames to believe. Weighting by clarity uses every
+        // reading -- so the display still tracks a peg turn -- while letting the confident frames do
+        // the moving and the doubtful ones barely nudge it. That is strictly better than discarding
+        // low-clarity frames, which would just bring the drop-outs back.
+        float w = (r.clarity - 0.5f) * 2.0f;      // 0.5 -> 0, 1.0 -> 1
+        if(w < 0.f) w = 0.f;
+        if(w > 1.f) w = 1.f;
+        const float a = kCentsSmooth * (0.12f + 0.88f * w);
+        g_tune_shown.cents   += a * (r.cents - g_tune_shown.cents);
+        g_tune_shown.freq_hz += a * (r.freq_hz - g_tune_shown.freq_hz);
         g_tune_shown.clarity  = r.clarity;
-        if(g_tune_dbg) hw.PrintLine("  tun track %s%d raw %+.1f -> shown %+.1f c  clar %.2f",
+        if(g_tune_dbg) hw.PrintLine("  tun track %s%d raw %+.1f -> shown %+.1f c  clar %.2f a=%.2f",
                                     r.name, r.octave, (double)r.cents,
-                                    (double)g_tune_shown.cents, (double)r.clarity);
+                                    (double)g_tune_shown.cents, (double)r.clarity, (double)a);
     }
     g_tune_cand = -1;
     g_tune_at   = now;
