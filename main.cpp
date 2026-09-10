@@ -437,7 +437,49 @@ static float            g_tun_buf[kTunRing];
 static volatile int     g_tun_w  = 0;      // callback writes here
 static int              g_tun_r  = 0;      // foreground reads here
 static volatile bool    g_tun_ovf = false;
-static TunerResult   g_tune     = {};
+static TunerResult   g_tune     = {};      // raw, straight from the detector
+
+// ⚠ TUNER STABILITY. The raw detector flickers in two ways, and they need different cures:
+//
+//   DROP-OUTS -- `valid` goes false between plucks, or on a decaying note, and the display blanks.
+//   Cured by HOLDING the last good reading for kTunerHoldMs. A tuner that blanks every time the
+//   string quietens is unusable precisely when you are listening hardest.
+//
+//   NOTE JUMPING -- an octave or semitone error on a single frame throws the whole display. Cured by
+//   CONFIRMATION: a new note must be reported kNoteConfirm times running before it is accepted. One
+//   bad frame can no longer move it.
+//
+// ⚠ And the needle itself is smoothed, but ONLY within a note: a genuine note change must snap, not
+// glide, or the display lies about where you are while it catches up.
+static TunerResult       g_tune_shown  = {};    // filtered -- this is what the screen draws
+static uint32_t          g_tune_at     = 0;     // when g_tune_shown last took a real reading
+static int               g_tune_cand   = -1;    // midi note awaiting confirmation
+static int               g_tune_cand_n = 0;
+static constexpr uint32_t kTunerHoldMs  = 900;
+static constexpr int      kNoteConfirm  = 2;
+static constexpr float    kCentsSmooth  = 0.35f;  // per accepted frame; lower = steadier, laggier
+
+static void TunerAccept(const TunerResult& r, uint32_t now)
+{
+    if(!r.valid)
+        return;                                  // ⚠ hold the last reading; do not blank
+
+    if(r.midi != g_tune_shown.midi || !g_tune_shown.valid)
+    {
+        if(r.midi != g_tune_cand) { g_tune_cand = r.midi; g_tune_cand_n = 1; return; }
+        if(++g_tune_cand_n < kNoteConfirm) return;
+        g_tune_shown = r;                        // confirmed: snap, do not glide
+    }
+    else
+    {
+        // Same note -- smooth the needle only.
+        g_tune_shown.cents   += kCentsSmooth * (r.cents - g_tune_shown.cents);
+        g_tune_shown.freq_hz += kCentsSmooth * (r.freq_hz - g_tune_shown.freq_hz);
+        g_tune_shown.clarity  = r.clarity;
+    }
+    g_tune_cand = -1;
+    g_tune_at   = now;
+}
 
 // Convolver partitioning, same as the Pico. Head block matches the audio block size so the
 // low-latency path costs exactly one block.
@@ -899,13 +941,43 @@ static void OledStats(void)
     oled_flush();
 }
 
-// Tuner, FULL SCREEN. ⚠ Tuning is a mode, not a status line: when it is armed it is the only thing
-// wanted on the display, and the output is muted anyway so the flush costs nothing audible.
+// Tuner, FULL SCREEN, D'Addario-style. ⚠ Laid out LEFT/RIGHT rather than up/down: this panel is
+// 128 x 64, so the wide axis is where the resolution is.
 //
-// ⚠ NO "listening" text and NO needle until a note is actually found. A word that appears and
-// disappears draws the eye to the wrong place, and a needle parked at centre with no signal reads
-// as "in tune" -- which is worse than reading as nothing. The empty scale is the honest idle state:
-// it shows the instrument is armed and where the answer will appear, and claims nothing else.
+// Segments grow OUTWARD from the note as you go further off pitch, and extinguish one at a time as
+// you close in. ⚠ That reads far better than a single moving needle -- a needle encodes error as
+// POSITION, which the eye must measure against a scale, while a bar count encodes it as QUANTITY,
+// which the eye reads at a glance. It is also far less twitchy: a needle visibly jitters on every
+// frame, whereas a segment only changes when the error crosses a boundary.
+//
+// In tune: no segments at all -- just the two rails above and below the note and a triangle pointing
+// in from each side. Nothing moving means nothing left to correct.
+static constexpr float kInTuneCents = 3.0f;
+static constexpr int   kTunerSegs   = 6;
+static constexpr float kCentsPerSeg = 8.0f;
+
+static void TriRight(int x, int ymid, int h)     // solid triangle, apex to the right
+{
+    for(int i = 0; i <= h; i++)
+        for(int y = ymid - (h - i); y <= ymid + (h - i); y++)
+            oled_pixel(x + i, y, true);
+}
+static void TriLeft(int x, int ymid, int h)      // solid triangle, apex to the left
+{
+    for(int i = 0; i <= h; i++)
+        for(int y = ymid - (h - i); y <= ymid + (h - i); y++)
+            oled_pixel(x - i, y, true);
+}
+
+static int TunerSegs(float cents)
+{
+    const float a = (cents < 0.f) ? -cents : cents;
+    if(a <= kInTuneCents)
+        return 0;
+    const int n = 1 + (int)((a - kInTuneCents) / kCentsPerSeg);
+    return (n > kTunerSegs) ? kTunerSegs : n;
+}
+
 static void OledTuner(void)
 {
     if(!oled_ok)
@@ -913,38 +985,54 @@ static void OledTuner(void)
 
     char buf[26];
     oled_clear();
-    oled_text(0, 0, "TUNER");
 
-    // The scale is always drawn -- it is the thing that makes the needle readable when it arrives.
-    for(int x = 4; x <= 123; x++)
-        oled_pixel(x, 48, true);                      // baseline
-    for(int y = 44; y <= 52; y++)
-        oled_pixel(64, y, true);                      // centre = in tune
+    // ⚠ HOLD the last reading rather than blanking -- see TunerAccept(). Only a genuinely long
+    // silence returns to the idle state, and idle draws the bare rails: armed, nothing claimed.
+    const bool live = g_tune_shown.valid
+                      && (uint32_t)(System::GetNow() - g_tune_at) < kTunerHoldMs;
 
-    if(!g_tune.valid)
+    // The rails. Always present, so the display never looks dead.
+    for(int x = 44; x <= 84; x++)
+    {
+        oled_pixel(x, 14, true);
+        oled_pixel(x, 41, true);
+    }
+
+    if(!live)
     {
         oled_flush();
         return;
     }
 
-    snprintf(buf, sizeof(buf), "%s%d", g_tune.name, g_tune.octave);
-    oled_text2x(48, 16, buf);                         // big note, e.g. "E2"
+    const int segs = TunerSegs(g_tune_shown.cents);
 
-    snprintf(buf, sizeof(buf), "%.1f Hz", (double)g_tune.freq_hz);
-    oled_text(40, 32, buf);
+    // Big note, centred between the rails.
+    snprintf(buf, sizeof(buf), "%s%d", g_tune_shown.name, g_tune_shown.octave);
+    const int len = (int)strlen(buf);
+    oled_text2x(64 - len * 6, 20, buf);
 
-    int cx = 64 + (int)lroundf(g_tune.cents * 1.2f);  // +/-50 c maps to +/-60 px about centre
-    if(cx < 4)   cx = 4;
-    if(cx > 123) cx = 123;
-    for(int y = 42; y <= 54; y++)
+    if(segs == 0)
     {
-        oled_pixel(cx,     y, true);
-        oled_pixel(cx - 1, y, true);                  // 2 px wide, or it vanishes against the scale
+        TriRight(38, 27, 5);          // pointing IN from the left
+        TriLeft(90, 27, 5);           // pointing IN from the right
+    }
+    else
+    {
+        // ⚠ FLAT -> left, SHARP -> right, and segment 0 is the one NEAREST the note, so the block
+        // grows outward with the error and shrinks back in as you correct it.
+        const bool flat = g_tune_shown.cents < 0.f;
+        for(int k = 0; k < segs; k++)
+        {
+            const int x = flat ? (38 - k * 7) : (84 + k * 7);
+            for(int dx = 0; dx < 5; dx++)
+                for(int y = 18; y <= 37; y++)
+                    oled_pixel(x + dx, y, true);
+        }
     }
 
-    oled_text(0, 56, (g_tune.cents > 5.f)    ? "SHARP"
-                     : (g_tune.cents < -5.f) ? "FLAT"
-                                             : "IN TUNE");
+    snprintf(buf, sizeof(buf), "%.1f Hz  %+d c", (double)g_tune_shown.freq_hz,
+             (int)(g_tune_shown.cents + (g_tune_shown.cents < 0 ? -0.5f : 0.5f)));
+    oled_text(0, 48, buf);
     oled_flush();
 }
 
@@ -1266,7 +1354,8 @@ static void HandleCommand(const char* line)
     if(strncmp(line, "tuner ", 6) == 0)
     {
         g_tuner_on   = (strcmp(line + 6, "on") == 0);
-        g_tune.valid = false;   // ⚠ or arming shows the note from LAST time until the first estimate
+        g_tune.valid = g_tune_shown.valid = false;   // ⚠ or arming shows LAST session's note
+        g_tune_cand = -1;
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
         return;
@@ -1663,7 +1752,8 @@ int main(void)
                 if(i == 1 && !now)          // tuner footswitch -- its actual job now
                 {
                     g_tuner_on   = !g_tuner_on;
-                    g_tune.valid = false;   // ⚠ stale note from the previous session, see above
+                    g_tune.valid = g_tune_shown.valid = false;   // ⚠ stale note, see above
+                    g_tune_cand  = -1;
                     g_oled_dirty = true;
                     hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
                 }
@@ -1806,7 +1896,10 @@ int main(void)
                 int end = (g_tun_r < w) ? w : kTunRing;
                 int n   = end - g_tun_r;
                 if(tuner_feed(&g_tun_buf[g_tun_r], n))
+                {
                     g_tune = tuner_result();
+                    TunerAccept(g_tune, t);
+                }
                 g_tun_r = (g_tun_r + n) & (kTunRing - 1);
             }
         }
