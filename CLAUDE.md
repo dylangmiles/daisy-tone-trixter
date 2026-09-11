@@ -59,11 +59,17 @@ bug**.
 
 ### Open
 
-- **Rev D op-amp daughter** — still running rev C, 5.7 dB beyond its datasheet common-mode guarantee
-  at 8.86 V.
-- **Front-end SNR session** — the question the whole project turns on, and the Seed3's −120 dB codec
-  floor makes the buffer the determining factor. See the roadmap memory.
-- **Enclosure** — microSD panel mounting; the enclosure-ground header is fit-when-you-get-there.
+- ~~Rev D op-amp daughter~~ ✅ **built and running** (2026-09-10). Vref 2.73 V, ADC clips first.
+- ~~Front-end SNR session~~ ✅ **done** (2026-09-11) — see the front-end section above. Front end
+  decided; the JFET path is dropped.
+- **Mains hum at the input** — 31 dB above the electronics floor, and the whole measurable noise
+  budget. ⚠ Both halves of V1's recorded EMI mitigation — **copper lining** and a **board ground
+  plane** — are absent from this build. Enclosure work is next; lining first, measured on its own.
+- **I²C crosstalk** — measured at −67.0 dBFS, periodic at the 1000 ms home refresh, **7.4 dB below
+  the hum**. Inaudible today; becomes the next limit once the hum is fixed. `meters off` stays
+  mandatory for measurement.
+- **Enclosure** — battery box, USB extender, lining. The enclosure-ground pin is at (11,1). microSD
+  panel mounting is on hold pending the USB-mass-storage option (private pinmap §4m Option Z).
 - Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
   They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
@@ -88,15 +94,35 @@ get published to the blog.
 **Daisy Seed3** — STM32H750, Cortex-M7 @ 480 MHz, 64 MB SDRAM, USB-C. Pin-to-pin compatible with
 the earlier Daisy Seed, so external circuitry is unchanged.
 
-Codec is the **TI TAC5242**: 32-bit / 192 kHz, −120 dB noise floor. This matters for the project's
-central question — on the RP2350 build the ES8388 was a real part of the noise budget, whereas here
-**the analogue front end becomes the determining factor for noise floor.** The JFET buffer work
-carries over directly and matters more, not less.
+Codec is the **TI TAC5242**: 32-bit / 192 kHz, −120 dB noise floor. On the RP2350 build the ES8388
+was a real part of the noise budget; here the codec is not, and **the analogue front end sets the
+noise floor.**
 
-**The front-end buffer is still required.** The Daisy's codec input is line-level and the K&K
-pickup is high-Z (≥1 MΩ), so the JFET source-follower daughter sits in front of the ADC exactly as
-it does on the Pico build. Current Q1 is the Communica 2N3819 "BB20" at R1=10 M / R2=3.3 M,
-V_S ≈ 2.4 V (the 2026-08-08 rebias). Design docs and measurements live in the private repo.
+**A front-end buffer is required** — the Daisy's codec input is line-level and the K&K pickup is
+high-Z (≥1 MΩ), so a buffer sits in front of the ADC exactly as on the Pico build.
+
+⚠ **THE FRONT END IS THE OPA1642 OP-AMP DAUGHTER, REV D — NOT THE JFET.** Decided 2026-09-11 on
+the strength of a measured A/B on 2026-09-01 (9 V, both at unity, bracketed): the op-amp won **every
+axis** — hiss +3.2 dB (4.9 floor-corrected), HF +2.2 dB, THD 0.036 % vs 0.058 %, mains, and
+manufacturability. That **reversed** the July 5 V verdict, which had been measured with the op-amp
+at ×2.11 gain and 1.1 V past its common-mode ceiling, i.e. distorting. The JFET's penalty is its
+**3.2 MΩ gate-bias divider** against the op-amp's 1 MΩ input — thermal noise ∝ √R, predicted
+5.05 dB, measured 5.07 — the price of the operating point that bought it headroom.
+
+⚠ **Rev D specifically:** `Rb1 1 MΩ / Rb2 470 kΩ` (Vref ≈ 2.73 V, ratiometric), unity gain, on the
+9 V rail. Rev C's Vref of 4.5 V put the **CM ceiling** at 1.00 V, *below* the ADC's 1.35 V — the
+buffer clipped first. Rev D moves that to +2.2 dB *over* the ADC, so the converter clips first, which
+is recoverable with a pad where buffer clipping is not. ⚠ **Buffer crossover rail = 7.79 V** — below
+it the buffer becomes the clipping element again. Relevant to battery operation.
+
+**Measured on this board, 2026-09-11** (battery, farm bench): electronics floor **≈ −94 dBFS**
+(instrument-corrected; the GC-8 sits at −95.2), connected-input floor **−59.7 dBFS** — all of it
+mains pickup below 200 Hz at the high-Z node — SNR **51.2 dB** at reference. ⚠ **Above 2 kHz the
+shorted and connected inputs are identical**: nothing in the signal path contributes measurably.
+The noise you can measure is the input path, and shielding is what addresses it.
+
+The v1.6 JFET daughter is retained as a **spare**, socket-compatible. The connector pinout is frozen
+and shared. Design docs, both A/B sessions and the baseline live in the private repo.
 
 **Debug header:** on the Seed3 the JTAG/SWD header is an *unpopulated through-hole footprint* — a
 header must be soldered on before ST-LINK SWD debugging is possible. Flashing over USB DFU needs
