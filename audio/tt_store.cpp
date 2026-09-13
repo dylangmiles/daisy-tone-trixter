@@ -20,6 +20,12 @@ static char   s_name[MAX_SD_PRESETS][NAME_MAX];
 static char   s_ir[MAX_SD_PRESETS][IR_MAX];
 static int    s_n = 0;
 
+// Songs (songs.txt). Same flow-YAML shape as presets: a "name:" starts a song, "---" optional.
+static char   s_song_name[TT_MAX_SONGS][NAME_MAX];
+static char   s_song_preset[TT_MAX_SONGS][NAME_MAX];
+static char   s_song_backing[TT_MAX_SONGS][IR_MAX];
+static int    s_songs = 0;
+
 static char   s_boot[NAME_MAX] = "";
 static bool   s_gr = false, s_gr_set = false;
 static bool   s_have_config = false;
@@ -189,13 +195,70 @@ static void parse_presets(char *buf) {
     commit(&cur, nm, ir, &active);
 }
 
+// --- songs.txt -------------------------------------------------------------
+static void song_commit(const char *nm, const char *pr, const char *bk, bool *active) {
+    if (!*active) return;
+    *active = false;
+    if (nm[0] == 0 || s_songs >= TT_MAX_SONGS) return;
+    strncpy(s_song_name[s_songs],    nm, NAME_MAX - 1); s_song_name[s_songs][NAME_MAX - 1]  = 0;
+    strncpy(s_song_preset[s_songs],  pr, NAME_MAX - 1); s_song_preset[s_songs][NAME_MAX - 1] = 0;
+    strncpy(s_song_backing[s_songs], bk, IR_MAX - 1);   s_song_backing[s_songs][IR_MAX - 1]  = 0;
+    s_songs++;
+}
+
+static void parse_songs(char *buf) {
+    char nm[NAME_MAX] = "", pr[NAME_MAX] = "", bk[IR_MAX] = "";
+    bool active = false;
+    char *p = buf;
+    while (*p) {
+        char *nl = strchr(p, '\n');
+        if (nl) *nl = 0;
+        char *hash = strchr(p, '#');
+        if (hash) *hash = 0;
+        char *line = trim(p);
+        if (!*line) { if (!nl) break; p = nl + 1; continue; }
+
+        if (strcmp(line, "---") == 0) {
+            song_commit(nm, pr, bk, &active);
+            nm[0] = pr[0] = bk[0] = 0;
+            if (!nl) break; p = nl + 1; continue;
+        }
+        char *k, *v;
+        if (split_kv(line, &k, &v)) {
+            if (strcmp(k, "name") == 0) {
+                song_commit(nm, pr, bk, &active);
+                pr[0] = bk[0] = 0;
+                strncpy(nm, unquote(v), NAME_MAX - 1); nm[NAME_MAX - 1] = 0;
+                active = true;
+            } else if (active) {
+                if (strcmp(k, "preset") == 0) {
+                    strncpy(pr, unquote(v), NAME_MAX - 1); pr[NAME_MAX - 1] = 0;
+                } else if (strcmp(k, "backing") == 0) {
+                    const char *uv = unquote(v);
+                    if (uv[0] == 0 || strcasecmp(uv, "none") == 0 || strcasecmp(uv, "off") == 0) bk[0] = 0;
+                    else { strncpy(bk, uv, IR_MAX - 1); bk[IR_MAX - 1] = 0; }
+                }
+            }
+        }
+        if (!nl) break;
+        p = nl + 1;
+    }
+    song_commit(nm, pr, bk, &active);
+}
+
+int         tt_store_song_count(void)      { return s_songs; }
+const char *tt_store_song_name(int i)      { return (i >= 0 && i < s_songs) ? s_song_name[i]    : ""; }
+const char *tt_store_song_preset(int i)    { return (i >= 0 && i < s_songs) ? s_song_preset[i]  : ""; }
+const char *tt_store_song_backing(int i)   { return (i >= 0 && i < s_songs) ? s_song_backing[i] : ""; }
+
 // --- public API ------------------------------------------------------------
 bool tt_store_load(void) {
-    s_n = 0; s_have_config = false; s_gr = false; s_gr_set = false; s_boot[0] = 0;
+    s_n = 0; s_songs = 0; s_have_config = false; s_gr = false; s_gr_set = false; s_boot[0] = 0;
 
     static char buf[8192];
     if (read_file("/tonetrix/config.txt",  buf, sizeof buf) >= 0) parse_config(buf);
     if (read_file("/tonetrix/presets.txt", buf, sizeof buf) >= 0) parse_presets(buf);
+    if (read_file("/tonetrix/songs.txt",   buf, sizeof buf) >= 0) parse_songs(buf);
 
     return s_have_config || s_n > 0;
 }
@@ -219,4 +282,9 @@ void tt_store_dump(void) {
     printf("\nsdcfg: presets=%d%s\n", s_n, s_n ? "" : " (using built-ins)");
     for (int i = 0; i < s_n; i++)
         printf("  %-16s ir=%s\n", s_sd[i].name, s_sd[i].ir ? s_sd[i].ir : "(keep)");
+    printf("sdcfg: songs=%d\n", s_songs);
+    for (int i = 0; i < s_songs; i++)
+        printf("  %-16s preset=%s backing=%s\n", s_song_name[i],
+               s_song_preset[i][0] ? s_song_preset[i] : "(keep)",
+               s_song_backing[i][0] ? s_song_backing[i] : "(none)");
 }

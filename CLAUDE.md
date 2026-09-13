@@ -244,6 +244,27 @@ timeout inside the USB ISR never expires because SysTick is masked there. FatFs 
 
 Expect ~250 kB/s: the bit-bang is the ceiling, one 512-byte block per MSC transfer.
 
+### Song mode — a set list on the card
+
+`/tonetrix/songs.txt` (example in `pico/sdcard_template/tonetrix/`): a song is a **name**, a
+**preset** (by name) and a **backing** track (a file in `/tonetrix/backing`, or none). Parsed by
+`tt_store_load()` alongside presets; count 0 with no file, and nothing else changes.
+
+Footswitches only, so it works with the box closed and the hands on the guitar:
+
+| | tap | hold (≥ 800 ms) |
+|---|---|---|
+| **tuner** switch, normal mode | tuner on/off (now on the *release*) | **enter song mode** |
+| **tuner** switch, song mode | next song | leave song mode |
+| **bypass** switch, normal mode | bypass toggle — still on the **press** edge | — |
+| **bypass** switch, song mode | start / stop the backing | bypass toggle |
+
+Encoder turn = previous/next song; click opens the menu as usual (tuner is reachable there).
+Picking a song stops any backing, loads the preset, **engages the chain**, and waits — the backing
+starts on the tap, so a song is armed and started on the beat. The screen shows the name in 12×16
+type, the preset, the backing and play state; unmatched preset/backing names are called out on the
+bottom row rather than failing silently. Written 2026-09-13, ⚠ **not yet flashed**.
+
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 
 **SDMMC is impossible on this board.** The Daisy's SDMMC `CMD` line is **D5**, which the layout wires

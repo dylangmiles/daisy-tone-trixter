@@ -33,6 +33,15 @@ const Preset *tt_store_presets(int *n_out);
 const char *tt_store_boot_preset(void);
 bool        tt_store_gr_meter(bool *was_set);
 
+// /tonetrix/songs.txt -- SONG MODE. A song is a name, a preset (by name) and a backing track (a
+// file in /tonetrix/backing, or "none"). Parsed by tt_store_load(); count 0 when the file is absent.
+// Later a song may be a looping session with a bpm and triggerable sounds; for now it is these three.
+#define TT_MAX_SONGS 16
+int         tt_store_song_count(void);
+const char *tt_store_song_name(int i);      // "" out of range
+const char *tt_store_song_preset(int i);    // "" = keep whatever preset is loaded
+const char *tt_store_song_backing(int i);   // "" = no backing track
+
 // Print a one-shot summary of what was loaded (for the `sdcfg` UART command).
 void        tt_store_dump(void);
 
