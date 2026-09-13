@@ -8,6 +8,7 @@
 #include "usb_msc.h"
 #include "usbd_core.h"
 #include "usbd_msc.h"
+#include "stm32h7xx_hal.h"
 
 extern "C" USBD_DescriptorsTypeDef TT_MSC_Desc;
 extern "C" USBD_StorageTypeDef     USBD_TT_Storage;
@@ -23,7 +24,14 @@ bool usb_msc_start(void)
         return false;
     if(USBD_MSC_RegisterStorage(&hUsbMsc, &USBD_TT_Storage) != USBD_OK)
         return false;
-    return USBD_Start(&hUsbMsc) == USBD_OK;
+    if(USBD_Start(&hUsbMsc) != USBD_OK)
+        return false;
+    // ⚠ THE H7's USB TRANSCEIVER NEEDS ITS SUPPLY DETECTOR ENABLED, or the PHY never pulls D+ up
+    // and the host sees an empty port. libDaisy does this at the end of UsbHandle::Init; it is the
+    // one line in that path that is not the USB device library, and it was the whole fault on
+    // 2026-09-13: "host: waiting" with nothing on the Mac's USB tree.
+    HAL_PWREx_EnableUSBVoltageDetector();
+    return true;
 }
 
 bool     usb_msc_configured(void) { return hUsbMsc.dev_state == USBD_STATE_CONFIGURED; }
