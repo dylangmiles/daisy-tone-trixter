@@ -9,6 +9,7 @@
 #include "usbd_core.h"
 #include "usbd_msc.h"
 #include "stm32h7xx_hal.h"
+#include <stdio.h>
 
 extern "C" USBD_DescriptorsTypeDef TT_MSC_Desc;
 extern "C" USBD_StorageTypeDef     USBD_TT_Storage;
@@ -35,6 +36,17 @@ bool usb_msc_start(void)
 }
 
 bool     usb_msc_configured(void) { return hUsbMsc.dev_state == USBD_STATE_CONFIGURED; }
+
+extern "C" PCD_HandleTypeDef hpcd_USB_OTG_FS;
+void usb_msc_diag(char *out, int cap)
+{
+    USB_OTG_GlobalTypeDef *g = hpcd_USB_OTG_FS.Instance;
+    if(!g) { snprintf(out, cap, "no pcd"); return; }
+    USB_OTG_DeviceTypeDef *d = (USB_OTG_DeviceTypeDef *)((uint32_t)g + USB_OTG_DEVICE_BASE);
+    snprintf(out, cap, "st%d vb%d fn%lu gi%lx", (int)hUsbMsc.dev_state,
+             (int)((g->GOTGCTL & USB_OTG_GOTGCTL_BSESVLD) ? 1 : 0),
+             (unsigned long)((d->DSTS >> 8) & 0x3FFF), (unsigned long)(g->GINTSTS & 0xFFFF));
+}
 uint32_t usb_msc_reads(void)      { return g_msc_reads; }
 uint32_t usb_msc_writes(void)     { return g_msc_writes; }
 uint32_t usb_msc_errors(void)     { return g_msc_errors; }

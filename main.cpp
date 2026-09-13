@@ -1854,6 +1854,9 @@ static void UsbDriveMode(void)
         if(l2) oled_text(0, 24, l2);
         if(l3) oled_text(0, 32, l3);
         if(l4) oled_text(0, 40, l4);
+        char dg[22];
+        usb_msc_diag(dg, sizeof(dg));       // bring-up: what the OTG core sees
+        oled_text(0, 48, dg);
         oled_text(0, 56, "power off to exit");
         oled_flush();
     };
@@ -1894,9 +1897,7 @@ static void UsbDriveMode(void)
         const bool     c = usb_msc_configured();
         const uint32_t r = usb_msc_reads(), w = usb_msc_writes(), e = usb_msc_errors();
         hw.SetLed(((now / 250) & 1) || r != lr || w != lw);   // slow blink, solid on activity
-        if(c == lc && r == lr && w == lw && e == le)
-            continue;
-        lc = c; lr = r; lw = w; le = e;
+        lc = c; lr = r; lw = w; le = e;     // (repaint every tick: the diag line changes on its own)
         char rw[22], er[22];
         snprintf(rw, sizeof(rw), "rd %lu  wr %lu", (unsigned long)r, (unsigned long)w);
         snprintf(er, sizeof(er), "errors %lu", (unsigned long)e);

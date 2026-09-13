@@ -20,6 +20,10 @@ bool     usb_msc_configured(void);   // host has enumerated and configured us
 uint32_t usb_msc_reads(void);        // blocks served, for the panel
 uint32_t usb_msc_writes(void);
 uint32_t usb_msc_errors(void);
+// Bring-up diagnostics: "st" = USBD dev_state (1 default, 2 addressed, 3 configured, 4 suspended),
+// "vb" = the OTG core's B-session-valid bit (it sees VBUS), "fn" = SOF frame number (ticks only
+// while a host is talking to us), "gi" = raw GINTSTS.
+void     usb_msc_diag(char *out, int cap);
 
 #ifdef __cplusplus
 }
