@@ -1825,17 +1825,15 @@ static bool BootGestureUsbDrive(void)
 // FatFs, no encoder sampler -- the fewer things running beside the USB interrupt, the better.
 static void UsbDriveMode(void)
 {
-#if TT_DRIVE_MODE_BISECT_CDC == 2
-    hw.StartLog(false);                 // ⚠ BENCH BISECT 2: USB before anything else in this path
-#elif !TT_DRIVE_MODE_BISECT_CDC
     // ⚠ USB FIRST -- before the display, the I2C bus and the SD card. Found by bisection on
-    // 2026-09-13: with the display or the card initialised ahead of the USB stack the host either
-    // saw nothing at all or a half-enumerated device with no strings; with the USB stack started
-    // straight after hw.Init() it enumerates every time. Mechanism not identified; order is what is
-    // known to work, and the storage callbacks below tolerate the card not being ready yet (the
-    // host polls a removable drive until it is).
+    // 2026-09-13 (the CDC console standing in for the disk, started at three points in this path):
+    // with the display or the card initialised ahead of the USB stack the host saw nothing, or a
+    // half-enumerated device with no strings; started straight after hw.Init() it enumerates.
+    // Mechanism not identified; the order is what is known to work, and the storage callbacks
+    // tolerate the card not being ready yet (a host polls a removable drive until it is).
+    // The second half of the fix is in usb_msc_start(): the OTG core's ULPI clock must be disabled
+    // for Sleep, because this loop idles in __WFI.
     const bool usb_ok = usb_msc_start();
-#endif
     hw.SetLed(true);
 
     // Display, same recipe as the diagnostics (reset pin driven, then the bus).
@@ -1865,17 +1863,10 @@ static void UsbDriveMode(void)
         if(l2) oled_text(0, 24, l2);
         if(l3) oled_text(0, 32, l3);
         if(l4) oled_text(0, 40, l4);
-        char dg[22];
-        usb_msc_diag(dg, sizeof(dg));       // bring-up: what the OTG core sees
-        oled_text(0, 48, dg);
-        usb_msc_diag2(dg, sizeof(dg));
-        oled_text(0, 56, dg);               // (replaces "power off to exit" while diagnosing)
+        oled_text(0, 56, "power off to exit");
         oled_flush();
     };
 
-#if TT_DRIVE_MODE_BISECT_CDC == 3
-    hw.StartLog(false);                 // ⚠ BENCH BISECT 3: USB after the display, before the SD
-#endif
     screen("card...", nullptr, nullptr, nullptr);
     if(!sd_init())
     {
@@ -1892,22 +1883,12 @@ static void UsbDriveMode(void)
     const uint32_t mb = sd_sector_count() / 2048u;          // 512-byte sectors -> MB
     snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
 
-#if TT_DRIVE_MODE_BISECT_CDC == 1
-    // ⚠ BENCH BISECT 1: start the CDC console here instead of the disk. Everything else identical.
-    hw.StartLog(false);
-    screen(cap, "BISECT 1: CDC late", nullptr, nullptr);
-#elif TT_DRIVE_MODE_BISECT_CDC == 2
-    screen(cap, "BISECT 2: CDC first", nullptr, nullptr);
-#elif TT_DRIVE_MODE_BISECT_CDC == 3
-    screen(cap, "BISECT 3: CDC pre-SD", nullptr, nullptr);
-#else
     if(!usb_ok)
     {
         screen(cap, "USB init FAILED", nullptr, nullptr);
         for(;;)
             __WFI();
     }
-#endif
 
     // Idle on __WFI (SysTick and the USB interrupt both wake it); repaint on change, 4 Hz at most.
     uint32_t last = 0, lr = 0xFFFFFFFFu, lw = 0xFFFFFFFFu, le = 0xFFFFFFFFu;
@@ -1922,7 +1903,9 @@ static void UsbDriveMode(void)
         const bool     c = usb_msc_configured();
         const uint32_t r = usb_msc_reads(), w = usb_msc_writes(), e = usb_msc_errors();
         hw.SetLed(((now / 250) & 1) || r != lr || w != lw);   // slow blink, solid on activity
-        lc = c; lr = r; lw = w; le = e;     // (repaint every tick: the diag line changes on its own)
+        if(c == lc && r == lr && w == lw && e == le)
+            continue;                       // nothing changed: no I2C traffic at all
+        lc = c; lr = r; lw = w; le = e;
         char rw[22], er[22];
         snprintf(rw, sizeof(rw), "rd %lu  wr %lu", (unsigned long)r, (unsigned long)w);
         snprintf(er, sizeof(er), "errors %lu", (unsigned long)e);

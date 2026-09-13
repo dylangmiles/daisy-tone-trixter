@@ -70,9 +70,10 @@ bug**.
   mandatory for measurement.
 - **Enclosure** — ✅ done 2026-09-12/13: battery box, USB extender, copper lining bonded at (11,1).
   Hum gone; usable DR ≥96 dB on either source with the battery return on the **TSout** ring.
-- **USB drive mode** — written 2026-09-13, ⚠ **NOT YET FLASHED OR TESTED.** Hold the encoder while
-  powering up → the SD card enumerates as a USB disk; power-cycle to leave. See the section below.
-  Deletes the microSD panel extender (pinmap §4m Option Z). Bring up on a SCRATCH card first.
+- **USB drive mode** — ✅ **WORKING 2026-09-13.** Hold the encoder while powering up (USB alone
+  is enough to power it) → the card mounts on the Mac as a 31.9 GB FAT32 volume; written files
+  survive a power cycle. Power-cycle to leave. The microSD panel extender is deleted (pinmap §4m).
+- **Song mode** — written 2026-09-13, first songs.txt on the card; ⚠ footswitch test pending.
 - Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
   They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
@@ -242,7 +243,21 @@ and the four ST MSC class files pulled into the Makefile. `sd_spi.c` gained `sd_
 (CMD25, one path for n ≥ 1) and its data-path timeouts became **iteration-bounded** — a clock-based
 timeout inside the USB ISR never expires because SysTick is masked there. FatFs stays read-only.
 
-Expect ~250 kB/s: the bit-bang is the ceiling, one 512-byte block per MSC transfer.
+Expect ~250 kB/s: the bit-bang is the ceiling, one 512-byte block per MSC transfer. Mounting takes a
+few seconds: the bootloader's 2 s DFU window comes first, then the host enumerates a removable disk.
+The first time a Mac sees the device it asks **"Allow accessory to connect?"** — say yes.
+
+⚠⚠ **Two things that took an evening to find, both invisible from the code:**
+1. **USB must be initialised before the display, the I²C bus and the SD card.** With any of them
+   ahead of it the host saw nothing, or a half-enumerated device with no strings. Bisected with the
+   CDC console standing in for the disk at three points in the path; mechanism not identified.
+2. **The OTG_FS core stalls whenever the CPU sleeps unless
+   `__HAL_RCC_USB2_OTG_FS_ULPI_CLK_SLEEP_DISABLE()` has been called.** CubeMX emits it; libDaisy
+   does not, and never needed to because it never sleeps. Drive mode idles in `__WFI`, so the one
+   attempt that worked was the one where the host happened to enumerate during the init delays,
+   before the first sleep. Symptoms were `fn0` (idle bus) or `fn` stuck with `st1` (stopped
+   answering mid-enumeration). `usb_msc_start()` now calls it; `usb_msc_diag()/diag2()` remain for
+   the next time (device state, VBUS seen, frame number, DCTL/GCCFG/GUSBCFG/PWR).
 
 ### Song mode — a set list on the card
 
