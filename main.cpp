@@ -1857,7 +1857,8 @@ static void UsbDriveMode(void)
         char dg[22];
         usb_msc_diag(dg, sizeof(dg));       // bring-up: what the OTG core sees
         oled_text(0, 48, dg);
-        oled_text(0, 56, "power off to exit");
+        usb_msc_diag2(dg, sizeof(dg));
+        oled_text(0, 56, dg);               // (replaces "power off to exit" while diagnosing)
         oled_flush();
     };
 

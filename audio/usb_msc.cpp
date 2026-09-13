@@ -47,6 +47,18 @@ void usb_msc_diag(char *out, int cap)
              (int)((g->GOTGCTL & USB_OTG_GOTGCTL_BSESVLD) ? 1 : 0),
              (unsigned long)((d->DSTS >> 8) & 0x3FFF), (unsigned long)(g->GINTSTS & 0xFFFF));
 }
+
+// Second line: DCTL (bit1 = SDIS soft-disconnect -- must be 0), GCCFG (bit16 PWRDWN = transceiver
+// powered, bit21 VBDEN), GUSBCFG (bit30 FDMOD forced device), and the PWR USB33 detector/ready bits.
+void usb_msc_diag2(char *out, int cap)
+{
+    USB_OTG_GlobalTypeDef *g = hpcd_USB_OTG_FS.Instance;
+    if(!g) { snprintf(out, cap, "no pcd"); return; }
+    USB_OTG_DeviceTypeDef *d = (USB_OTG_DeviceTypeDef *)((uint32_t)g + USB_OTG_DEVICE_BASE);
+    snprintf(out, cap, "dc%lx gc%lx u%lx p%lx", (unsigned long)(d->DCTL & 0xFF),
+             (unsigned long)(g->GCCFG >> 16), (unsigned long)(g->GUSBCFG >> 28),
+             (unsigned long)((PWR->CR3 >> 24) & 0xF));
+}
 uint32_t usb_msc_reads(void)      { return g_msc_reads; }
 uint32_t usb_msc_writes(void)     { return g_msc_writes; }
 uint32_t usb_msc_errors(void)     { return g_msc_errors; }

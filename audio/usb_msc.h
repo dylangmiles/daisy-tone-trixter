@@ -24,6 +24,7 @@ uint32_t usb_msc_errors(void);
 // "vb" = the OTG core's B-session-valid bit (it sees VBUS), "fn" = SOF frame number (ticks only
 // while a host is talking to us), "gi" = raw GINTSTS.
 void     usb_msc_diag(char *out, int cap);
+void     usb_msc_diag2(char *out, int cap);
 
 #ifdef __cplusplus
 }
