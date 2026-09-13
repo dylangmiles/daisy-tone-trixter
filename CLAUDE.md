@@ -68,8 +68,11 @@ bug**.
 - **I²C crosstalk** — measured at −67.0 dBFS, periodic at the 1000 ms home refresh, **7.4 dB below
   the hum**. Inaudible today; becomes the next limit once the hum is fixed. `meters off` stays
   mandatory for measurement.
-- **Enclosure** — battery box, USB extender, lining. The enclosure-ground pin is at (11,1). microSD
-  panel mounting is on hold pending the USB-mass-storage option (private pinmap §4m Option Z).
+- **Enclosure** — ✅ done 2026-09-12/13: battery box, USB extender, copper lining bonded at (11,1).
+  Hum gone; usable DR ≥96 dB on either source with the battery return on the **TSout** ring.
+- **USB drive mode** — written 2026-09-13, ⚠ **NOT YET FLASHED OR TESTED.** Hold the encoder while
+  powering up → the SD card enumerates as a USB disk; power-cycle to leave. See the section below.
+  Deletes the microSD panel extender (pinmap §4m Option Z). Bring up on a SCRATCH card first.
 - Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
   They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
@@ -218,6 +221,28 @@ Ported from the RP2350 build: `sd_spi.c` (bit-banged SPI), `sd_diskio.c`, `tt_st
 parsing) and `wav_load.c`. ⚠ **Everything here is OPTIONAL** — no card, no presets, no IR, and the
 pedal still boots and passes audio. A missing SD card must never be the difference between a working
 pedal and a dead one.
+
+### USB drive mode — the card never leaves the box
+
+**Gesture: hold the encoder switch while applying power.** `BootGestureUsbDrive()` in `main.cpp`
+reads the switch twice, 30 ms apart, after the pull-up settles, and `UsbDriveMode()` then runs
+instead of the pedal: display, `sd_init()`, the MSC device — no console, no audio, no FatFs, no
+encoder sampler. The panel shows the card size, whether the host has connected, and read/write/error
+counts; the LED goes solid on activity. **The only exit is a power cycle.**
+
+⚠ **Two rules, both structural.** (1) Decided *before* `StartLog()` — the CDC console and the disk
+share the one USB port, and whichever claims it first wins. (2) Entered before `f_mount` and never
+left live — the host holds raw block access and caches it; a pedal that was ever both a FatFs client
+and a USB disk in one power cycle corrupts the card.
+
+Pieces: `audio/usb_msc.{h,cpp}` (start + status), `audio/usbd_msc_storage.c` (the MSC class's
+read/write table onto `sd_spi.c`, called **from the OTG interrupt**), `audio/usbd_desc_msc.c` (own
+VID:PID `0483:5750`, "Tone Trixter SD Card", device class 0 — libDaisy's set declares a CDC device),
+and the four ST MSC class files pulled into the Makefile. `sd_spi.c` gained `sd_write_blocks()`
+(CMD25, one path for n ≥ 1) and its data-path timeouts became **iteration-bounded** — a clock-based
+timeout inside the USB ISR never expires because SysTick is masked there. FatFs stays read-only.
+
+Expect ~250 kB/s: the bit-bang is the ceiling, one 512-byte block per MSC transfer.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 

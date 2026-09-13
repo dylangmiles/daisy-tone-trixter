@@ -50,10 +50,17 @@ static uint8_t sd_crc7(const uint8_t *buf, int len) {
     return (uint8_t)((crc << 1) | 1);
 }
 
+// ⚠ ITERATION-BOUNDED, NOT CLOCK-BOUNDED. The data path runs inside the USB interrupt in drive
+// mode (the MSC middleware calls Read/Write from the OTG ISR at priority 0), where SysTick is
+// masked and a millisecond clock stops. A clock-based timeout there never expires and a card
+// fault becomes a hang. One sd_xfer is ~3.4 us at native speed (291 kB/s measured), so
+// kXfersPerMs converts the old millisecond budgets into loop counts that work in any context.
+#define kXfersPerMs 300u
+
 // Poll MISO until the card releases the bus (0xFF = not busy). Best-effort.
 static bool sd_wait_ready(uint32_t timeout_ms) {
-    absolute_time_t end = make_timeout_time_ms(timeout_ms);
-    do { if (sd_xfer(0xFF) == 0xFF) return true; } while (!time_reached(end));
+    for (uint32_t i = 0; i < timeout_ms * kXfersPerMs; i++)
+        if (sd_xfer(0xFF) == 0xFF) return true;
     return false;
 }
 
@@ -188,9 +195,8 @@ bool sd_init(void) {
 
 // Wait for a data token, then read `len` bytes + 2 CRC bytes. CS must already be asserted.
 static bool sd_read_data(uint8_t *dst, int len) {
-    absolute_time_t end = make_timeout_time_ms(200);
-    uint8_t tok;
-    do { tok = sd_xfer(0xFF); } while (tok == 0xFF && !time_reached(end));
+    uint8_t tok = 0xFF;
+    for (uint32_t i = 0; i < 200u * kXfersPerMs && tok == 0xFF; i++) tok = sd_xfer(0xFF);
     if (tok != 0xFE) return false;                  // 0xFE = start-of-data token
     for (int i = 0; i < len; i++) dst[i] = sd_xfer(0xFF);
     sd_xfer(0xFF); sd_xfer(0xFF);                   // discard CRC16
@@ -202,6 +208,40 @@ bool sd_read_block(uint32_t lba, uint8_t *dst) {
     uint32_t addr = s_sdhc ? lba : lba * 512u;      // SDHC = block address, SDSC = byte
     sd_cs(true);
     bool ok = (sd_cmd(17, addr) == 0x00) && sd_read_data(dst, 512);
+    sd_cs(false);
+    sd_xfer(0xFF);
+    return ok;
+}
+
+// Write `n` consecutive sectors with CMD25 (multi-block write). One code path for every write,
+// n = 1 included, so the path USB drive mode exercises on day one is the same one FatFs will use.
+//
+// Per block: 0xFC start token, 512 bytes, 2 dummy CRC bytes (SPI mode ignores CRC16 unless
+// CMD59 enables it), then the DATA RESPONSE token -- low nibble 0b0101 = accepted, 0b1011 = CRC
+// error, 0b1101 = write error -- then the card holds DO low while it programs. 0xFD ends the
+// transfer, followed by one more busy period. ⚠ The busy waits are the long ones: the spec allows
+// 250 ms per block, so a whole write can take a while and this blocks the caller throughout.
+bool sd_write_blocks(uint32_t lba, const uint8_t *src, uint32_t n) {
+    if (!s_ready || n == 0) return false;
+    uint32_t addr = s_sdhc ? lba : lba * 512u;
+    bool ok = false;
+    sd_cs(true);
+    if (sd_cmd(25, addr) == 0x00) {
+        ok = true;
+        for (uint32_t b = 0; b < n && ok; b++) {
+            sd_xfer(0xFF);                          // >= 1 byte gap before each token
+            sd_xfer(0xFC);
+            for (int i = 0; i < 512; i++) sd_xfer(src[b * 512u + i]);
+            sd_xfer(0xFF); sd_xfer(0xFF);           // CRC16, ignored
+            uint8_t resp = sd_xfer(0xFF);
+            if ((resp & 0x1F) != 0x05) { ok = false; break; }
+            if (!sd_wait_ready(500)) { ok = false; break; }
+        }
+        sd_xfer(0xFF);
+        sd_xfer(0xFD);                              // stop transmission
+        sd_xfer(0xFF);
+        if (!sd_wait_ready(500)) ok = false;
+    }
     sd_cs(false);
     sd_xfer(0xFF);
     return ok;

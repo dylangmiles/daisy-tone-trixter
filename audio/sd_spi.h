@@ -10,8 +10,8 @@
 //
 // ⚠ The breakout silkscreen is CARD-referenced: its "DO" is MISO at the host and "DI" is MOSI.
 //
-// Read-only: enough to init a card and read 512-byte sectors, which is all FatFs needs to
-// load IR / preset files. Init runs at ~250 kHz (SD spec caps identify mode at 400 kHz);
+// Reads for FatFs (IR / preset files); writes exist for USB DRIVE MODE (main.cpp), where the host
+// owns the card through the MSC class -- FatFs itself stays read-only (sd_diskio.c). Init runs at ~250 kHz (SD spec caps identify mode at 400 kHz);
 // data transfer then runs at the bit-bang's native speed. Not audio-safe — reads block the
 // caller, so only load from SD at deliberate, glitch-tolerant moments (preset/IR switch).
 #ifndef TT_SD_SPI_H
@@ -31,6 +31,7 @@ extern "C" {
 
 bool     sd_init(void);                          // power-up + SPI-mode init; false if no card
 bool     sd_read_block(uint32_t lba, uint8_t *dst);   // read one 512-byte sector (LBA)
+bool     sd_write_blocks(uint32_t lba, const uint8_t *src, uint32_t n);  // CMD25, n sectors
 uint32_t sd_sector_count(void);                  // total 512-byte sectors (from CSD), 0 if unknown
 bool     sd_is_ready(void);                      // initialised OK
 bool     sd_is_sdhc(void);                       // block-addressed (SDHC/SDXC) vs byte (SDSC)

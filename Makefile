@@ -24,7 +24,17 @@ C_SOURCES = \
 	audio/sd_spi.c \
 	audio/sd_diskio.c \
 	audio/wav_load.c \
-	$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c
+	audio/usbd_msc_storage.c \
+	audio/usbd_desc_msc.c \
+	$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src/option/ccsbcs.c \
+	$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c \
+	$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c \
+	$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_scsi.c \
+	$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c
+
+# ⚠ USB DRIVE MODE. libDaisy builds only the CDC class; the MSC (mass-storage) class ships in its
+# tree unbuilt, so the four class files are pulled in here, with our own storage table and
+# descriptors (audio/usbd_msc_storage.c, audio/usbd_desc_msc.c). See audio/usb_msc.h.
 
 # ⚠ libDaisy compiles FatFs but NOT its code-page tables, while its ffconf.h sets _USE_LFN 1 --
 # so ff.c references ff_convert/ff_wtoupper and nothing defines them. ccsbcs.c supplies both for
@@ -39,13 +49,15 @@ CPP_SOURCES = \
 	audio/menu.cpp \
 	audio/oled_shim.cpp \
 	audio/backing.cpp \
+	audio/usb_msc.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \
 	lib/FFTConvolver/AudioFFT.cpp \
 	lib/FFTConvolver/Utilities.cpp
 
 C_INCLUDES += -I. -Ilib/FFTConvolver \
-	-I$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src
+	-I$(LIBDAISY_DIR)/Middlewares/Third_Party/FatFs/src \
+	-I$(LIBDAISY_DIR)/Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc
 
 # SDKs live outside the repo, alongside the Pico SDK, so they are never committed here.
 # Override on the command line if yours is elsewhere:  make LIBDAISY_DIR=/path/to/libDaisy

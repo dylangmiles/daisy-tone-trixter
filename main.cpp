@@ -25,6 +25,7 @@
 #include "audio/app_hooks.h"
 #include "audio/oled_shim.h"
 #include "audio/backing.h"
+#include "audio/usb_msc.h"
 extern "C" {
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -396,6 +397,10 @@ static void EncTick(void*)
 // friends to Pico spellings -- harmless in sd_spi.c, a minefield in this file.
 // ⚠ FOREGROUND ONLY (non-reentrant statics). Every call below is in the main loop.
 extern "C" uint32_t tt_shim_now_us(void);
+// sd_spi.h is clean C (no Pico spellings) but is normally reached through FatFs; USB drive mode
+// talks to the card directly, before FatFs exists.
+extern "C" bool     sd_init(void);
+extern "C" uint32_t sd_sector_count(void);
 
 static char           g_cmd[96];
 static volatile int   g_cmd_len   = 0;
@@ -1629,13 +1634,122 @@ static void PrintFullReport()
     hw.PrintLine("  [6] IR         : %s (%d taps)", g_ir_active ? g_ir_name : "none loaded", g_ir_len);
     hw.PrintLine("  ⚠ audio tests need the 9 V JACK. On USB the rail sits ~4.9 V and the");
     hw.PrintLine("    op-amp daughter is outside its common-mode range.");
-    hw.PrintLine("  encoder: hold 2 s = stats (cpu, clips, ring) · hold 5 s = DFU");
+    hw.PrintLine("  encoder: hold 2 s = stats (cpu, clips, ring) · hold 5 s = DFU · held at POWER-UP = USB drive");
     hw.PrintLine("-----------------------------------------------");
+}
+
+// =====================================================================================================
+// USB DRIVE MODE -- the SD card as a USB disk, so it never has to leave the enclosure.
+//
+// Gesture: ENCODER HELD while power is applied. Decided here, before StartLog() claims the USB port
+// for the CDC console and before anything mounts the card, and the only exit is a power cycle.
+// Both are load-bearing (audio/usb_msc.h): the host has raw block access and caches it, so the
+// pedal must never be a FatFs client and a USB disk at the same time, in either order.
+//
+// ⚠ Read the switch TWICE, 30 ms apart, after the pull-up has settled. Init-then-read reports a
+// false LOW on every pin ([[feedback_gpio_settle_before_first_read]]), which would drop into drive
+// mode on every power-up. A stuck-low switch still would -- the panel says so in that case.
+static bool BootGestureUsbDrive(void)
+{
+    GPIO sw;
+    sw.Init(tt::P(tt::kEncSw), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    System::Delay(20);
+    if(sw.Read())
+        return false;                       // released (pull-up wins) -- the normal boot
+    System::Delay(30);
+    return !sw.Read();                      // still held
+}
+
+// Never returns. Deliberately does NOT reuse the diagnostics' bring-up: no console, no audio, no
+// FatFs, no encoder sampler -- the fewer things running beside the USB interrupt, the better.
+static void UsbDriveMode(void)
+{
+    hw.SetLed(true);
+
+    // Display, same recipe as the diagnostics (reset pin driven, then the bus).
+    static GPIO oled_res;
+    oled_res.Init(tt::P(tt::kOledRes), GPIO::Mode::OUTPUT);
+    oled_res.Write(false);
+    System::Delay(10);
+    oled_res.Write(true);
+    System::Delay(50);
+    g_i2c_cfg.periph         = I2CHandle::Config::Peripheral::I2C_1;
+    g_i2c_cfg.speed          = I2CHandle::Config::Speed::I2C_400KHZ;
+    g_i2c_cfg.mode           = I2CHandle::Config::Mode::I2C_MASTER;
+    g_i2c_cfg.pin_config.scl = tt::P(tt::kOledScl);
+    g_i2c_cfg.pin_config.sda = tt::P(tt::kOledSda);
+    if(g_i2c_h.Init(g_i2c_cfg) == I2CHandle::Result::OK)
+    {
+        tt_oled_init(g_i2c_h, tt::kOledI2cAddr);
+        oled_ok = true;
+    }
+
+    auto screen = [](const char* l1, const char* l2, const char* l3, const char* l4) {
+        if(!oled_ok)
+            return;
+        oled_clear();
+        oled_text(0, 0, "-- USB DRIVE --");
+        if(l1) oled_text(0, 16, l1);
+        if(l2) oled_text(0, 24, l2);
+        if(l3) oled_text(0, 32, l3);
+        if(l4) oled_text(0, 40, l4);
+        oled_text(0, 56, "power off to exit");
+        oled_flush();
+    };
+
+    screen("card...", nullptr, nullptr, nullptr);
+    if(!sd_init())
+    {
+        // Nothing to export. Stay here rather than fall through to a boot the builder did not ask
+        // for -- the message says what happened.
+        screen("NO CARD", "check the socket", nullptr, nullptr);
+        for(;;)
+        {
+            hw.SetLed(false); System::Delay(100);
+            hw.SetLed(true);  System::Delay(100);
+        }
+    }
+    char cap[22];
+    const uint32_t mb = sd_sector_count() / 2048u;          // 512-byte sectors -> MB
+    snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
+
+    if(!usb_msc_start())
+    {
+        screen(cap, "USB init FAILED", nullptr, nullptr);
+        for(;;)
+            __WFI();
+    }
+
+    // Idle on __WFI (SysTick and the USB interrupt both wake it); repaint on change, 4 Hz at most.
+    uint32_t last = 0, lr = 0xFFFFFFFFu, lw = 0xFFFFFFFFu, le = 0xFFFFFFFFu;
+    bool     lc   = false;
+    for(;;)
+    {
+        __WFI();
+        const uint32_t now = System::GetNow();
+        if((uint32_t)(now - last) < 250)
+            continue;
+        last = now;
+        const bool     c = usb_msc_configured();
+        const uint32_t r = usb_msc_reads(), w = usb_msc_writes(), e = usb_msc_errors();
+        hw.SetLed(((now / 250) & 1) || r != lr || w != lw);   // slow blink, solid on activity
+        if(c == lc && r == lr && w == lw && e == le)
+            continue;
+        lc = c; lr = r; lw = w; le = e;
+        char rw[22], er[22];
+        snprintf(rw, sizeof(rw), "rd %lu  wr %lu", (unsigned long)r, (unsigned long)w);
+        snprintf(er, sizeof(er), "errors %lu", (unsigned long)e);
+        screen(cap, c ? "host: connected" : "host: waiting", rw, e ? er : nullptr);
+    }
 }
 
 int main(void)
 {
     hw.Init();
+
+    // ⚠ USB DRIVE MODE is decided FIRST -- before the CDC logger takes the USB port.
+    if(BootGestureUsbDrive())
+        UsbDriveMode();                     // never returns
     // ⚠ StartLog(FALSE) -- do NOT wait for a PC.
     //
     // StartLog(true) blocks until a terminal opens, which means on a 9 V supply with no USB the
