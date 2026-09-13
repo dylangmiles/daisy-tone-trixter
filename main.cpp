@@ -997,31 +997,76 @@ static void OledHome(void)
 
 // Stats, on the panel. The numbers that decide whether a fault is EMI or the SD ring -- readable
 // with the enclosure closed and no console attached.
+//
+// A scrolling key/value table: 6x8 font on 128x64 = 21 columns x 8 rows. Row 0 is the title with
+// the scroll position at the right; rows 1-7 show a window of kStatsVisible entries; the encoder
+// moves the window (a click leaves). Labels are left-justified, values RIGHT-justified to the last
+// column, so the eye reads one column of names and one column of numbers and a wider value never
+// pushes its neighbours about. Adding a row is one line in StatsRows(); nothing else changes.
+//
+//   STATS            3/16
+//   cpu avg          16 %
+//   cpu peak         45 %
+//   clips               3
+//   ...
+//
+// ⚠ `clips` counts input SAMPLES at >= 0.99 FS since boot, not strums -- one hard strum is typically
+// 1..50. Read it as "did the front end hit the ADC since boot". Same figure as the console's
+// `clips=`, and deliberately not reset by viewing, so the screen and the console never disagree.
+static constexpr int kStatsVisible = 7;
+static int           g_stats_top   = 0;      // first visible row; reset when the screen opens
+
+struct StatsRow { const char *label; char value[12]; };
+
+static int StatsRows(StatsRow *r, int max)
+{
+    uint32_t un = 0, mx = 0;
+    int      ring = 0;
+    backing_stats(&un, &ring, &mx);
+    int n = 0;
+    #define STAT(L, ...) do { if(n < max) { r[n].label = (L); \
+        snprintf(r[n].value, sizeof(r[n].value), __VA_ARGS__); n++; } } while(0)
+    STAT("cpu avg",   "%d %%",   (int)(g_cpu_avg + 0.5f));
+    STAT("cpu peak",  "%d %%",   (int)(g_cpu_pk + 0.5f));
+    STAT("clips",     "%lu",     (unsigned long)g_clips);
+    STAT("block",     "%lu",     (unsigned long)g_cb_size);
+    STAT("rate",      "%d",      (int)hw.AudioSampleRate());
+    STAT("callbacks", "%lu",     (unsigned long)g_cb_count);
+    STAT("bk ring",   "%d %%",   ring);
+    STAT("bk under",  "%lu",     (unsigned long)un);
+    STAT("sd svc",    "%lu us",  (unsigned long)mx);
+    STAT("sd budget", "%lu us",  (unsigned long)backing_service_budget_us());
+    STAT("flush",     "%lu us",  (unsigned long)g_t_flush);
+    STAT("pages",     "%d",      oled_last_pages());
+    STAT("loop",      "%lu us",  (unsigned long)g_t_loop);
+    STAT("period",    "%lu ms",  (unsigned long)g_t_period);
+    STAT("uptime",    "%lu s",   (unsigned long)(System::GetNow() / 1000));
+    #undef STAT
+    return n;
+}
+
 static void OledStats(void)
 {
     if(!oled_ok)
         return;
-    char     buf[26];
-    uint32_t un = 0, mx = 0;
-    int      ring = 0;
-    backing_stats(&un, &ring, &mx);
+    StatsRow rows[24];
+    const int n   = StatsRows(rows, 24);
+    const int max = n > kStatsVisible ? n - kStatsVisible : 0;
+    if(g_stats_top > max) g_stats_top = max;
+    if(g_stats_top < 0)   g_stats_top = 0;
 
+    char buf[22];
     oled_clear();
-    oled_text(0, 0, "-- STATS --");
-    // ⚠ ring % and underruns are the pair that separates "EMI" from "the ring is starving".
-    snprintf(buf, sizeof(buf), "bk ring %3d%%  ur %lu", ring, (unsigned long)un);
-    oled_text(0, 16, buf);
-    snprintf(buf, sizeof(buf), "svc %lu/%lu us", (unsigned long)mx,
-             (unsigned long)backing_service_budget_us());
-    oled_text(0, 24, buf);
-    snprintf(buf, sizeof(buf), "cpu %d/%d %%", (int)(g_cpu_avg + 0.5f), (int)(g_cpu_pk + 0.5f));
-    oled_text(0, 32, buf);
-    snprintf(buf, sizeof(buf), "flush %lu us %dpg", (unsigned long)g_t_flush, oled_last_pages());
-    oled_text(0, 40, buf);
-    snprintf(buf, sizeof(buf), "loop %lu us per %lums", (unsigned long)g_t_loop,
-             (unsigned long)g_t_period);
-    oled_text(0, 48, buf);
-    oled_text(0, 56, "click to exit");
+    oled_text(0, 0, "STATS");
+    snprintf(buf, sizeof(buf), "%d/%d", g_stats_top + 1, n);
+    oled_text(128 - 6 * (int)strlen(buf), 0, buf);          // right-justified, col 21
+    for(int i = 0; i < kStatsVisible && g_stats_top + i < n; i++)
+    {
+        const StatsRow &r = rows[g_stats_top + i];
+        const int       y = 8 * (i + 1);
+        oled_text(0, y, r.label);
+        oled_text(128 - 6 * (int)strlen(r.value), y, r.value);
+    }
     oled_flush();
 }
 
@@ -1584,7 +1629,7 @@ static void PrintFullReport()
     hw.PrintLine("  [6] IR         : %s (%d taps)", g_ir_active ? g_ir_name : "none loaded", g_ir_len);
     hw.PrintLine("  ⚠ audio tests need the 9 V JACK. On USB the rail sits ~4.9 V and the");
     hw.PrintLine("    op-amp daughter is outside its common-mode range.");
-    hw.PrintLine("  encoder: hold 2 s = stats · hold 5 s = DFU");
+    hw.PrintLine("  encoder: hold 2 s = stats (cpu, clips, ring) · hold 5 s = DFU");
     hw.PrintLine("-----------------------------------------------");
 }
 
@@ -2070,7 +2115,11 @@ int main(void)
             // 24 ms. Collapsing a batch of 3 into a single step threw two thirds of the movement
             // away, which felt like the menu ignoring the knob; forward-then-reverse was worst
             // because opposite detents cancelled inside one batch before anything was applied.
-            if(g_in_menu)
+            if(g_stats_screen)
+            {
+                g_stats_top += (int)inc;           // OledStats() clamps; a click still leaves
+            }
+            else if(g_in_menu)
             {
                 g_menu_at = t;                     // activity: restart the idle timeout
                 int dir   = inc > 0 ? 1 : -1;
@@ -2169,6 +2218,7 @@ int main(void)
                 else if(!g_in_menu && held_ms >= kStatsHoldMs && held_ms <= kStatsMaxMs)
                 {
                     g_stats_screen = true;       // ⚠ long press from HOME -- see kStatsHoldMs
+                    g_stats_top    = 0;
                     g_oled_dirty   = true;
                 }
                 else if(!g_in_menu)
