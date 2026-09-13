@@ -78,6 +78,11 @@ include $(SYSTEM_FILES_DIR)/Makefile
 #
 # ⚠ Appended AFTER the include on purpose: libDaisy sets LDFLAGS there, and the link rule expands
 # the variable when it runs, so adding to it here reaches the linker.
+# Bench bisect for USB drive mode (2026-09-13): make BISECT=1 starts the CDC console in drive mode.
+ifneq ($(BISECT),)
+C_DEFS += -DTT_DRIVE_MODE_BISECT_CDC=$(BISECT)
+endif
+
 LDFLAGS += -u _printf_float
 
 # Convenience: build then flash in one step. The board must already be in DFU --

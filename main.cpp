@@ -1825,6 +1825,17 @@ static bool BootGestureUsbDrive(void)
 // FatFs, no encoder sampler -- the fewer things running beside the USB interrupt, the better.
 static void UsbDriveMode(void)
 {
+#if TT_DRIVE_MODE_BISECT_CDC == 2
+    hw.StartLog(false);                 // ⚠ BENCH BISECT 2: USB before anything else in this path
+#elif !TT_DRIVE_MODE_BISECT_CDC
+    // ⚠ USB FIRST -- before the display, the I2C bus and the SD card. Found by bisection on
+    // 2026-09-13: with the display or the card initialised ahead of the USB stack the host either
+    // saw nothing at all or a half-enumerated device with no strings; with the USB stack started
+    // straight after hw.Init() it enumerates every time. Mechanism not identified; order is what is
+    // known to work, and the storage callbacks below tolerate the card not being ready yet (the
+    // host polls a removable drive until it is).
+    const bool usb_ok = usb_msc_start();
+#endif
     hw.SetLed(true);
 
     // Display, same recipe as the diagnostics (reset pin driven, then the bus).
@@ -1862,6 +1873,9 @@ static void UsbDriveMode(void)
         oled_flush();
     };
 
+#if TT_DRIVE_MODE_BISECT_CDC == 3
+    hw.StartLog(false);                 // ⚠ BENCH BISECT 3: USB after the display, before the SD
+#endif
     screen("card...", nullptr, nullptr, nullptr);
     if(!sd_init())
     {
@@ -1878,12 +1892,22 @@ static void UsbDriveMode(void)
     const uint32_t mb = sd_sector_count() / 2048u;          // 512-byte sectors -> MB
     snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
 
-    if(!usb_msc_start())
+#if TT_DRIVE_MODE_BISECT_CDC == 1
+    // ⚠ BENCH BISECT 1: start the CDC console here instead of the disk. Everything else identical.
+    hw.StartLog(false);
+    screen(cap, "BISECT 1: CDC late", nullptr, nullptr);
+#elif TT_DRIVE_MODE_BISECT_CDC == 2
+    screen(cap, "BISECT 2: CDC first", nullptr, nullptr);
+#elif TT_DRIVE_MODE_BISECT_CDC == 3
+    screen(cap, "BISECT 3: CDC pre-SD", nullptr, nullptr);
+#else
+    if(!usb_ok)
     {
         screen(cap, "USB init FAILED", nullptr, nullptr);
         for(;;)
             __WFI();
     }
+#endif
 
     // Idle on __WFI (SysTick and the USB interrupt both wake it); repaint on change, 4 Hz at most.
     uint32_t last = 0, lr = 0xFFFFFFFFu, lw = 0xFFFFFFFFu, le = 0xFFFFFFFFu;

@@ -32,6 +32,15 @@ bool usb_msc_start(void)
     // one line in that path that is not the USB device library, and it was the whole fault on
     // 2026-09-13: "host: waiting" with nothing on the Mac's USB tree.
     HAL_PWREx_EnableUSBVoltageDetector();
+    // ⚠ THE CPU SLEEPS IN DRIVE MODE (__WFI in the panel loop) AND THE OTG CORE MUST SURVIVE THAT.
+    // On the H7 the OTG_FS core's ULPI clock has to be disabled for Sleep mode when the embedded PHY
+    // is in use -- CubeMX emits this line in MspInit, libDaisy does not (it never sleeps). Without
+    // it every WFI stalls the core: the host sees an idle bus (fn0) or a device that stops
+    // answering mid-enumeration (fn stuck, st1). Found 2026-09-13 after the one attempt that
+    // enumerated turned out to be the one where the host arrived during the init delays, before
+    // the loop first slept.
+    __HAL_RCC_USB2_OTG_FS_ULPI_CLK_SLEEP_DISABLE();
+    __HAL_RCC_USB1_OTG_HS_ULPI_CLK_SLEEP_DISABLE();
     return true;
 }
 
