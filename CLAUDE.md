@@ -300,14 +300,21 @@ The first pass sets the length; an overdub records exactly one loop from whereve
 commits itself. Sits in the callback **after the chain, before the backing mix**: a layer is the
 sound the player heard. No dry capture — a looping song on `default` is the dry option.
 
-PLAY, looping song: **right press** = empty→rec, rec→play, play→overdub, overdub→play(early commit),
-stopped→play · **right hold** = undo a layer (during a pass: discard it) · **left tap** = stop ·
-**left hold** = clear, only while stopped/empty · **left long hold** = back to select (discards).
-Screen row 6: `REC/PLAY/OVER/STOP L<n> <bpm>` + a position bar.
+PLAY, looping song: **right press** = empty→**armed**, armed→rec on the first note (input ≥ −40 dBFS,
+from that sample), rec→play, play→overdub, overdub→play (early commit), stopped→play · **right hold** =
+undo a layer, any time (during a pass: discard it) · **left tap** = stop · **left hold** = clear, only
+while stopped/empty · **left long hold** = back to select (discards).
+Screen row 6: `ARMED/REC/PLAY/OVER/STOP L<n> <bpm>` + a position bar.
 
-`songs.txt`: `bpm` + `bars` = fixed length, first pass quantised · `bpm` alone = first pass snaps to
-whole bars · neither = free, and a bpm is guessed from the length (4/4, 60–160, nearest 100; very
-short loops show none). Leaving the song, or stepping to another, discards the loop.
+⚠ **A hold REVERTS the press that preceded it** (`looper_unpress()` then `looper_undo()`). The press
+fires on its edge, 0.8 s before the hold is known; without the revert, press-then-hold on PLAY
+started an overdub and then discarded it — visibly nothing, which read as "undo doesn't work"
+(2026-09-14). Requests go through a small FIFO so the two arrive in order.
+
+`songs.txt`: `bpm` + `bars` = fixed length, first pass quantised · `bpm` alone = the end press snaps
+to the nearest whole bar · neither = free: the end press snaps *back* to the last attack if it came
+within 150 ms of it (the late foot), and a bpm is guessed from the length (4/4, 60–160, nearest 100;
+very short loops show none). Leaving the song, or stepping to another, discards the loop.
 
 ⚠ **No `memset` in the audio callback.** Zeroing a 5.8 MB SDRAM layer is tens of ms — a certain
 glitch on the press that starts recording. Each layer instead tracks how far it was *written*

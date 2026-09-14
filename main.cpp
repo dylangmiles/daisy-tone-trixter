@@ -1093,7 +1093,7 @@ static void OledSong(void)
         if(looping)
         {
             // State word + layers + a position bar, so a running loop can be read at a glance.
-            static const char* const kSt[] = {"EMPTY", "REC  ", "PLAY ", "OVER ", "STOP "};
+            static const char* const kSt[] = {"EMPTY", "ARMED", "REC  ", "PLAY ", "OVER ", "STOP "};
             const looper_state_t st = looper_state();
             const float bpm = looper_bpm();
             if(bpm > 0.f)
@@ -1102,7 +1102,7 @@ static void OledSong(void)
                 snprintf(buf, sizeof(buf), "%s L%d", kSt[st], looper_layers());
             oled_text(0, 48, buf);
             const uint32_t len = looper_length();
-            oled_bar(80, 48, 48, 8, (st == LOOPER_RECORDING || len == 0) ? 0.f
+            oled_bar(80, 48, 48, 8, (st == LOOPER_RECORDING || st == LOOPER_ARMED || len == 0) ? 0.f
                                      : (float)looper_position() / (float)len);
         }
         else if(play)
@@ -2338,7 +2338,14 @@ int main(void)
                         if(SongIsLooping())
                         {
                             if(pressed_edge) { looper_press(); g_oled_dirty = true; }
-                            else if(hold)    { looper_undo();  g_oled_dirty = true; }
+                            else if(hold)
+                            {
+                                // ⚠ The press already fired 0.8 s ago. A hold means the player wanted
+                                // UNDO, not "do the press, then undo it" -- so revert the press first.
+                                looper_unpress();
+                                looper_undo();
+                                g_oled_dirty = true;
+                            }
                         }
                         else if(pressed_edge)
                             SongStartStop();
@@ -2728,7 +2735,7 @@ int main(void)
         else if(g_song != SongState::Off)
         {
             const looper_state_t ls = looper_state();
-            const uint32_t period = (ls == LOOPER_PLAYING || ls == LOOPER_OVERDUB || ls == LOOPER_RECORDING) ? 200 : 500;
+            const uint32_t period = (ls == LOOPER_PLAYING || ls == LOOPER_OVERDUB || ls == LOOPER_RECORDING || ls == LOOPER_ARMED) ? 200 : 500;
             if(g_oled_dirty || (t - last_oled) >= period)
             {
                 g_oled_dirty = false;

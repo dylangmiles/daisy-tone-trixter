@@ -19,6 +19,13 @@ static volatile int            s_layers = 0;        // committed layers
 // meet are past the end of an overdub that was cut short -- and those read as zero via s_written.
 // An overdub records for one full loop from wherever it started, so it also tracks its start.
 static uint32_t s_written[LOOPER_MAX_LAYERS];       // valid samples [0, written) for layers 0..n-1
+// Onset tracking during the first pass, for the free-loop end snap: the sample index of the most
+// recent attack (envelope crossing the threshold from below). A press within LOOPER_LATE_MS after
+// it ends the loop THERE -- the common "late foot" case -- instead of at the press.
+static uint32_t s_last_onset = 0;
+static float    s_env        = 0.f;                 // input envelope, fast attack / slow release
+static bool     s_above      = false;
+static looper_state_t s_before_press = LOOPER_EMPTY;   // for looper_unpress()
 static uint32_t s_od_start = 0;                     // overdub: position it began at
 static uint32_t s_od_count = 0;                     // overdub: samples recorded so far (ends at s_len)
 static bool     s_od_wrapped = false;
@@ -30,10 +37,16 @@ static float s_bpm  = 0.f;      // locked (set_tempo) or detected
 static int   s_bars = 0;
 static bool  s_bpm_locked = false;
 
-// Requests from the foreground, consumed by the callback at a block boundary. One pending action
-// is enough: the switches cannot outrun 750 blocks/s.
-enum Req : uint8_t { REQ_NONE, REQ_PRESS, REQ_STOP, REQ_UNDO, REQ_RESET };
-static volatile uint8_t s_req = REQ_NONE;
+// Requests from the foreground, consumed by the callback at a block boundary, in order. A small
+// FIFO rather than one slot: "unpress then undo" is two requests from one foreground iteration.
+enum Req : uint8_t { REQ_NONE, REQ_PRESS, REQ_STOP, REQ_UNDO, REQ_RESET, REQ_UNPRESS };
+static volatile uint8_t s_reqq[8];
+static volatile uint8_t s_rq_w = 0, s_rq_r = 0;
+static inline void Post(uint8_t r)
+{
+    const uint8_t nw = (uint8_t)((s_rq_w + 1) & 7);
+    if(nw != s_rq_r) { s_reqq[s_rq_w] = r; s_rq_w = nw; }
+}
 
 void looper_set_level(float g)
 {
@@ -49,10 +62,11 @@ void looper_set_tempo(float bpm, int bars)
     s_bpm_locked = s_bpm > 0.f;
 }
 
-void looper_reset(void)  { s_req = REQ_RESET; }
-void looper_press(void)  { s_req = REQ_PRESS; }
-void looper_stop(void)   { s_req = REQ_STOP;  }
-void looper_undo(void)   { s_req = REQ_UNDO;  }
+void looper_reset(void)   { Post(REQ_RESET); }
+void looper_press(void)   { Post(REQ_PRESS); }
+void looper_unpress(void) { Post(REQ_UNPRESS); }
+void looper_stop(void)    { Post(REQ_STOP); }
+void looper_undo(void)    { Post(REQ_UNDO); }
 
 looper_state_t looper_state(void)    { return s_state; }
 int            looper_layers(void)   { return s_layers; }
@@ -70,6 +84,12 @@ static inline uint32_t BarSamples(void)
 static void CloseFirstPass(uint32_t raw)
 {
     uint32_t len = raw;
+    // Free loop, late foot: the press came just after an attack -> that attack is beat one of the
+    // next time round, so the loop ends there. Only backwards, only within LOOPER_LATE_MS, and never
+    // to nothing.
+    if(!s_bpm_locked && s_last_onset > 4800 && raw > s_last_onset
+       && (raw - s_last_onset) <= (uint32_t)LOOPER_LATE_MS * LOOPER_RATE / 1000u)
+        len = raw = s_last_onset;
     if(s_bpm_locked && s_bars > 0)
         len = BarSamples() * (uint32_t)s_bars;                 // fixed length
     else if(s_bpm_locked)
@@ -111,11 +131,33 @@ static void Apply(uint8_t req)
             if(!s_bpm_locked) s_bpm = 0.f;
             break;
 
-        case REQ_PRESS:
+        case REQ_UNPRESS:
+            // The hold that follows a press: revert what the press did, so the undo that comes
+            // next acts on the state the player was IN when the foot landed.
             switch(s_state)
             {
-                case LOOPER_EMPTY:                              // first pass starts
-                    s_pos = 0; s_state = LOOPER_RECORDING;
+                case LOOPER_ARMED:     if(s_before_press == LOOPER_EMPTY)   { s_state = LOOPER_EMPTY; } break;
+                case LOOPER_OVERDUB:   if(s_before_press == LOOPER_PLAYING) { s_state = LOOPER_PLAYING; } break;
+                case LOOPER_PLAYING:
+                    if(s_before_press == LOOPER_OVERDUB && s_layers > 0)   // press committed early: un-commit
+                    { s_layers--; s_od_start = 0; s_od_count = s_len; s_od_wrapped = true; s_state = LOOPER_OVERDUB; }
+                    else if(s_before_press == LOOPER_STOPPED)              // press restarted: stop again
+                    { s_pos = 0; s_state = LOOPER_STOPPED; }
+                    break;
+                default: break;                                 // a press that closed the first pass stands
+            }
+            break;
+
+        case REQ_PRESS:
+            s_before_press = s_state;
+            switch(s_state)
+            {
+                case LOOPER_EMPTY:                              // ARM: recording starts on the first note
+                    s_pos = 0; s_env = 0.f; s_above = false; s_last_onset = 0;
+                    s_state = LOOPER_ARMED;
+                    break;
+                case LOOPER_ARMED:                              // pressed again before playing: back to empty
+                    s_state = LOOPER_EMPTY;
                     break;
                 case LOOPER_RECORDING:                          // first pass ends: length set, play
                     s_written[0] = s_pos;                       // a locked length beyond this reads as 0
@@ -173,6 +215,7 @@ static void Apply(uint8_t req)
                 case LOOPER_OVERDUB:                            // discard the pass in progress
                     s_state = LOOPER_PLAYING;
                     break;
+                case LOOPER_ARMED:
                 case LOOPER_RECORDING:                          // abandon the first pass
                     s_state = LOOPER_EMPTY; s_len = 0; s_pos = 0;
                     break;
@@ -198,12 +241,32 @@ static inline int16_t Clamp16(float v)
 
 void looper_process(float *buf, int n)
 {
-    const uint8_t req = s_req;
-    if(req != REQ_NONE) { s_req = REQ_NONE; Apply(req); }
+    while(s_rq_r != s_rq_w)
+    {
+        const uint8_t req = s_reqq[s_rq_r];
+        s_rq_r = (uint8_t)((s_rq_r + 1) & 7);
+        Apply(req);
+    }
 
-    const looper_state_t st = s_state;
+    looper_state_t st = s_state;
     if(st == LOOPER_EMPTY || st == LOOPER_STOPPED)
         return;
+
+    // Armed: watch the input, start recording on the first sample over the threshold -- from THAT
+    // sample, so the attack is in the loop. Nothing is mixed in; the player hears the live input.
+    if(st == LOOPER_ARMED)
+    {
+        int start = -1;
+        for(int i = 0; i < n; i++)
+            if(fabsf(buf[i]) >= LOOPER_ARM_THRESHOLD) { start = i; break; }
+        if(start < 0)
+            return;
+        s_pos = 0; s_state = LOOPER_RECORDING; st = LOOPER_RECORDING;
+        s_env = 1.f; s_above = true; s_last_onset = 0;              // the first note IS the first onset
+        for(int i = start; i < n; i++)
+            s_layer[0][s_pos++] = Clamp16(buf[i]);
+        return;
+    }
 
     const float    lvl  = s_level;
     const int      nl   = s_layers;
@@ -217,6 +280,12 @@ void looper_process(float *buf, int n)
         {
             // First pass: write, hear the live input only. Runs until the press, or the cap.
             s_layer[0][pos] = Clamp16(in);
+            // Onset tracker for the free-loop end snap: envelope with ~1 ms attack / ~80 ms release;
+            // an "onset" is the envelope crossing the threshold from below.
+            const float a = fabsf(in);
+            s_env = (a > s_env) ? s_env + (a - s_env) * 0.02f : s_env + (a - s_env) * 0.00026f;
+            if(!s_above && s_env >= LOOPER_ARM_THRESHOLD) { s_above = true; s_last_onset = pos; }
+            else if(s_above && s_env < LOOPER_ARM_THRESHOLD * 0.5f) s_above = false;
             if(++pos >= LEN_MAX) { s_pos = pos; Apply(REQ_PRESS); return; }   // cap reached: close
             continue;
         }

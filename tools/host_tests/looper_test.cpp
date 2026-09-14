@@ -16,11 +16,14 @@ int main(){
     looper_reset(); run(BLK,0);
     CHECK(looper_state()==LOOPER_EMPTY);
 
-    // first pass: 1 s of 0.25, then press -> PLAY, length 48000, one layer
-    looper_press(); run(4*48000, 0.25f);
+    // press ARMS; silence keeps it armed; signal starts the pass
+    looper_press(); run(BLK*10, 0.f);
+    CHECK(looper_state()==LOOPER_ARMED);
+    run(4*48000, 0.25f);
     CHECK(looper_state()==LOOPER_RECORDING);
     looper_press(); run(BLK, 0.f);
-    CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_layers()==1); CHECK(looper_length()==4*48000+BLK || looper_length()==4*48000);
+    CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_layers()==1);
+    CHECK(looper_length() >= 4*48000 - BLK && looper_length() <= 4*48000 + BLK);
     printf("len=%u bpm=%.1f\n", looper_length(), looper_bpm());
     // playing: silent input, output should be ~0.25 (the layer)
     float o = run(BLK*10, 0.f); CHECK(fabsf(o-0.25f) < 0.002f);
@@ -68,6 +71,30 @@ int main(){
     looper_set_tempo(100.f, 0); looper_press(); run((int)(115200*1.3), 0.25f); looper_press(); run(BLK,0.f);
     CHECK(looper_length()==115200);
     looper_reset(); run(BLK,0.f); looper_set_tempo(0,0);
+
+    // press-then-hold: press starts an overdub, the hold reverts it and undoes a layer
+    looper_reset(); run(BLK,0.f); looper_set_tempo(0,0);
+    looper_press(); run(2*48000, 0.25f); looper_press(); run(BLK,0.f);      // 1 layer
+    looper_press(); run(looper_length(), 0.5f);                              // overdub, commits -> 2
+    CHECK(looper_layers()==2);
+    looper_press(); run(BLK, 0.5f); CHECK(looper_state()==LOOPER_OVERDUB);  // press starts a 3rd
+    looper_unpress(); looper_undo(); run(BLK,0.f);                           // hold: revert + undo
+    CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_layers()==1);
+
+    // free-loop late press: silence, note at 2.0 s, press 100 ms after -> loop ends at the note
+    looper_reset(); run(BLK,0.f);
+    looper_press(); run(48000, 0.25f);          // start on signal (t=0)
+    run(48000, 0.f);                            // silence to 2.0 s (env decays below threshold)
+    run(4800, 0.25f);                           // onset at 2.0 s, 100 ms of note
+    looper_press(); run(BLK,0.f);
+    printf("late-press len=%u (want ~96000)\n", looper_length());
+    CHECK(looper_length() >= 96000 - 2*BLK && looper_length() <= 96000 + 2*BLK);
+
+    // free-loop press well after the last onset (400 ms): no snap
+    looper_reset(); run(BLK,0.f);
+    looper_press(); run(48000, 0.25f); run(48000, 0.f); run(19200, 0.25f); looper_press(); run(BLK,0.f);
+    CHECK(looper_length() >= 115200 - 2*BLK && looper_length() <= 115200 + 2*BLK);
+    looper_reset(); run(BLK,0.f);
 
     // cap: record past 60 s closes automatically
     looper_press(); run(60*48000 + 4800, 0.1f);

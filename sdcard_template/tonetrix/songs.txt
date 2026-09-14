@@ -17,9 +17,10 @@
 #   normal:       right HOLD               -> song select
 #   song select:  left tap = previous       right tap = next
 #                 left hold = back to normal right hold = play this song
-#   song play:    right PRESS = start / stop (on the beat; looper: rec/play/overdub)
+#   song play:    right PRESS = start / stop (on the beat; looper: arm/rec/play/overdub)
 #                 left LONG hold = back to select
-#                 (looper: right hold = undo a layer, left tap = stop, left hold = clear)
+#                 (looper: right hold = undo a layer -- any time, even mid-overdub;
+#                  left tap = stop; left hold = clear all, only while stopped)
 #   encoder turn = previous / next song, in either state
 # Picking a song loads its preset and engages the chain; nothing starts until
 # the right switch — so arm the song, then start it on the beat.
@@ -43,4 +44,12 @@ backing: blues100
 name: Jam
 type: looping
 preset: tanglewood-slide
-# no backing, no bpm: free loop -- the first pass sets the length
+# no bpm: free loop. Press ARMS; recording starts on the first note; the
+# end press snaps back to the last attack if it came within 150 ms of it.
+---
+name: Jam 100
+type: looping
+preset: tanglewood-slide
+bpm: 100
+# tempo-locked: the end press snaps to the nearest whole bar at 100 bpm.
+# Add  bars: 4  to fix the length outright (first pass quantised to it).

@@ -32,7 +32,8 @@ extern "C" {
 #define LOOPER_RATE         48000
 
 typedef enum {
-    LOOPER_EMPTY,       // no loop yet; the next press starts the FIRST record pass
+    LOOPER_EMPTY,       // no loop yet; the next press ARMS the first record pass
+    LOOPER_ARMED,       // waiting for the first note: recording starts on the input threshold
     LOOPER_RECORDING,   // first pass in progress: the length is being set
     LOOPER_PLAYING,     // loop running, no layer being recorded
     LOOPER_OVERDUB,     // loop running AND a new layer being recorded (auto-ends after one loop)
@@ -41,14 +42,21 @@ typedef enum {
 
 // Foreground control. All cheap; the audio callback applies them at the next block boundary.
 void           looper_reset(void);           // discard everything (leaving the song, or "clear")
-void           looper_press(void);           // the RIGHT switch's press: empty->rec, rec->play, play->overdub, overdub->play, stopped->play
+void           looper_press(void);           // the RIGHT switch's press: empty->armed, armed/rec->play, play->overdub, overdub->play, stopped->play
+void           looper_unpress(void);         // ⚠ revert the LAST press (the hold that follows a press means "undo", not "do then undo")
 void           looper_stop(void);            // stop (a record pass in progress is kept as a layer)
 void           looper_undo(void);            // drop the top layer; if that was the only one -> EMPTY
 void           looper_set_level(float g);    // playback level 0..2 (default 1.0)
 
 // Optional tempo lock. bpm > 0 and bars > 0: the length is fixed at bars*4 beats and the first pass
-// is quantised to it. bpm > 0 alone: the first pass snaps to the nearest whole bar. Both 0: free.
+// is quantised to it. bpm > 0 alone: the first pass snaps to the nearest whole bar. Both 0: free --
+// the end press snaps back to the last onset if it came within LOOPER_LATE_MS after it.
 void           looper_set_tempo(float bpm, int bars);
+
+// Arming: the first pass does not start on the press but on the first note -- input |x| above
+// LOOPER_ARM_THRESHOLD. -40 dBFS sits 50 dB above this build's floor and 35 dB under a strum.
+#define LOOPER_ARM_THRESHOLD 0.01f
+#define LOOPER_LATE_MS       150
 
 looper_state_t looper_state(void);
 int            looper_layers(void);          // layers committed (not counting a pass in progress)
