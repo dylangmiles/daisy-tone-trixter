@@ -17,18 +17,18 @@
 # Later a song may be a looping session with a bpm and sounds triggered from
 # the switches; for now it is these three keys.
 
-name: BluesSlide71
+name: Blues Slide 71
 preset: tanglewood-slide
 backing: blues71
 ---
-name: BluesSlide81
+name: Blues Slide 81
 preset: tanglewood-slide
 backing: blues81
 ---
-name: BluesSlide92
+name: Blues Slide 92
 preset: tanglewood-slide
 backing: blues92
 ---
-name: BluesSlide100
+name: Blues Slide 100
 preset: tanglewood-slide
 backing: blues100

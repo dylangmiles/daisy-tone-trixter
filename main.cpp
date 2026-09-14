@@ -703,21 +703,24 @@ struct Input
     GPIO        gpio;
     bool        last;
     uint32_t    down_at;     // ms when pressed; 0 = not pressed
-    bool        hold_fired;  // the hold action already ran for this press
+    uint8_t     hold_level;  // 0 none · 1 hold fired · 2 long hold fired, for this press
 };
 
-// ⚠ FOOTSWITCH TAP vs HOLD. A hold is recognised WHILE the switch is down, at kFswHoldMs, so it
-// does not wait for the release; a tap is a release before that. The bypass switch in normal mode
-// keeps acting on the PRESS edge -- that is the A/B the project turns on and it must be instant.
-// Everything that needs a hold lives on the other switch, or in song mode where the trade is
-// deliberate (start/stop on release costs nothing musically; a hold to bypass is rare).
-static constexpr uint32_t kFswHoldMs = 800;
+// ⚠ FOOTSWITCH TAP / HOLD / LONG HOLD. Both holds are recognised WHILE the switch is down, at their
+// thresholds, so neither waits for the release; a tap is a release before the first threshold.
+// No dead zone: release < 0.8 s = tap · 0.8-1.5 s = hold · >= 1.5 s = long hold (fires while
+// held, like DFU). Chosen over double-tap so the timing-critical tap -- rec/play on the beat --
+// never has to wait to be disambiguated (same reasoning as the encoder's long-press note above).
+// The bypass switch in NORMAL mode keeps acting on the PRESS edge: that is the A/B the project
+// turns on and it must be instant.
+static constexpr uint32_t kFswHoldMs     = 800;
+static constexpr uint32_t kFswLongHoldMs = 1500;
 
 // ⚠ FOOTSWITCHES ONLY. A/B/SW moved to libDaisy's Encoder, which does the quadrature decoding --
 // the raw-GPIO monitoring proved those three joints during bring-up and has done its job.
 static Input inputs[] = {
-    {"footsw bypass", tt::kFswBypass, {}, true, 0, false},
-    {"footsw tuner", tt::kFswTuner, {}, true, 0, false},
+    {"footsw bypass", tt::kFswBypass, {}, true, 0, 0},
+    {"footsw tuner", tt::kFswTuner, {}, true, 0, 0},
 };
 constexpr size_t kNumInputs = sizeof(inputs) / sizeof(inputs[0]);
 
@@ -910,19 +913,28 @@ static void OledBoot(const char* stage)
 // =====================================================================================================
 // SONG MODE -- a set list on the card (/tonetrix/songs.txt), driven entirely from the footswitches.
 //
-//   normal mode:  hold TUNER switch      -> enter song mode (song 1, or the last one played)
-//   song mode:    tap  BYPASS switch     -> start / stop this song's backing track
-//                 hold BYPASS switch     -> toggle the DSP chain (bypass), as normal mode's tap does
-//                 tap  TUNER switch      -> next song (wraps); loads its preset, stops any backing
-//                 hold TUNER switch      -> leave song mode (stops the backing)
-//                 encoder turn           -> previous / next song; click opens the menu as usual
+// Three states, tuner hold steps FORWARD, bypass (long) hold steps BACK:
 //
-// A song is a name, a preset (by name) and a backing track (a file in /tonetrix/backing). Selecting
-// a song loads the preset and ENGAGES the chain -- a song is a sound, and the A/B is a hold away.
-// The tuner is reachable from the menu while in song mode.
-static bool g_song_mode = false;
-static int  g_song_idx  = 0;
-static char g_song_msg[22] = "";        // one-line status ("no backing", "preset?") on the song screen
+//   NORMAL ──tuner hold──▶ SONG SELECT ──tuner hold──▶ SONG PLAY
+//      ▲                       │  ▲                       │
+//      └────bypass hold────────┘  └──────bypass hold──────┘
+//
+//   SONG SELECT   bypass tap = previous · tuner tap = next  (each step loads the preset, so the
+//                 sound is audible before committing) · tuner hold = select → PLAY ·
+//                 bypass hold = back to NORMAL
+//   SONG PLAY     bypass tap = start / stop the backing (the beat-critical action) ·
+//                 bypass LONG hold = back to SELECT · encoder turn = step songs
+//
+// ⚠ NO DSP BYPASS ANYWHERE IN SONG MODE. That is a bench A/B gesture and lives in normal mode
+// only. A song is a sound; picking it engages the chain.
+//
+// A song is a name, a preset (by name) and a backing track (a file in /tonetrix/backing). The
+// looper (`type: looping`) will add its own PLAY table -- bypass hold = undo a layer, tuner tap =
+// stop, tuner hold = clear -- without touching SELECT or the outer gestures.
+enum class SongState : uint8_t { Off, Select, Play };
+static SongState g_song      = SongState::Off;
+static int       g_song_idx  = 0;
+static char      g_song_msg[22] = "";   // one-line status ("no backing", "preset?") on the song screen
 
 static int FindPresetByName(const char* nm)
 {
@@ -956,7 +968,7 @@ static int FindBackingByName(const char* nm)
 static void SelectPreset(int idx);
 
 // Make song i current: stop whatever is playing, load its preset, engage the chain. Does NOT start
-// the backing -- that is the bypass switch's tap, so a song can be armed and started on the beat.
+// the backing -- that is PLAY's bypass tap, so a song is armed here and started on the beat.
 static void SongPick(int i)
 {
     const int n = tt_store_song_count();
@@ -1008,27 +1020,32 @@ static void SongStartStop(void)
     g_oled_dirty = true;
 }
 
-static void SongModeEnter(void)
+static void SongGo(SongState to)
 {
-    g_song_mode = true;
-    g_tuner_on  = false;
-    if(tt_store_song_count() > 0)
-        SongPick(g_song_idx);
-    else
-    {
-        snprintf(g_song_msg, sizeof(g_song_msg), "no songs.txt on card");
-        g_oled_dirty = true;
-    }
-    hw.PrintLine("  >> SONG MODE (%d song(s))", tt_store_song_count());
-}
-
-static void SongModeLeave(void)
-{
+    if(to == g_song)
+        return;
     if(backing_playing())
-        backing_stop();
-    g_song_mode  = false;
+        backing_stop();                     // leaving PLAY, or leaving song mode: nothing keeps running
+    g_song       = to;
     g_oled_dirty = true;
-    hw.PrintLine("  >> song mode off");
+    switch(to)
+    {
+        case SongState::Select:
+            g_tuner_on = false;
+            if(tt_store_song_count() > 0)
+                SongPick(g_song_idx);       // arrive on the last song, preset loaded
+            else
+                snprintf(g_song_msg, sizeof(g_song_msg), "no songs.txt on card");
+            hw.PrintLine("  >> SONG SELECT (%d song(s))", tt_store_song_count());
+            break;
+        case SongState::Play:
+            g_song_msg[0] = 0;
+            hw.PrintLine("  >> SONG PLAY %s", tt_store_song_name(g_song_idx));
+            break;
+        case SongState::Off:
+            hw.PrintLine("  >> song mode off");
+            break;
+    }
 }
 
 // The song screen. Page-aligned like the home screen; the only row that changes on its own is the
@@ -1039,22 +1056,27 @@ static void OledSong(void)
         return;
     char buf[26];
     oled_clear();
-    const int n = tt_store_song_count();
-    snprintf(buf, sizeof(buf), "SONG %d/%d", n ? g_song_idx + 1 : 0, n);
+    const int  n    = tt_store_song_count();
+    const bool play = (g_song == SongState::Play);
+    snprintf(buf, sizeof(buf), "%s %d/%d", play ? "PLAY" : "SELECT", n ? g_song_idx + 1 : 0, n);
     oled_text(0, 0, buf);
-    oled_text(128 - 6 * 3, 0, g_dsp_bypass ? "BYP" : " ON");
     if(n > 0)
     {
-        oled_text15x(0, 16, tt_store_song_name(g_song_idx));     // 9x16, 14 chars: readable standing, fits a set-list name
+        oled_text15x(0, 16, tt_store_song_name(g_song_idx));     // 9x16, 14 chars: readable standing
         snprintf(buf, sizeof(buf), "P  %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
         oled_text(0, 40, buf);
         const char* bk = tt_store_song_backing(g_song_idx);
         const char* base = strrchr(bk, '/');
         base = base ? base + 1 : bk;
-        snprintf(buf, sizeof(buf), "%s %s", backing_playing() ? "PLAY" : "stop", *base ? base : "(no backing)");
+        if(play)
+            snprintf(buf, sizeof(buf), "%s %s", backing_playing() ? ">>" : "||", *base ? base : "(no backing)");
+        else
+            snprintf(buf, sizeof(buf), "bk %s", *base ? base : "none");
         oled_text(0, 48, buf);
     }
-    oled_text(0, 56, g_song_msg[0] ? g_song_msg : "byp:play/stop tun:next");
+    // Bottom row: the status if there is one, else the two switches' jobs in this state.
+    oled_text(0, 56, g_song_msg[0] ? g_song_msg
+                                   : (play ? "tap:play/stop hold:back" : "byp:prev tun:next/hold"));
     oled_flush();
 }
 
@@ -2160,7 +2182,7 @@ int main(void)
         OledBoot("backing tracks");
         backing_scan();
         hw.PrintLine("  %d backing track(s)", backing_count());
-        hw.PrintLine("  %d song(s) -- hold the tuner switch for song mode", tt_store_song_count());
+        hw.PrintLine("  %d song(s) -- hold the tuner switch for song select", tt_store_song_count());
     }
     hw.PrintLine("  ⚠ chain stays BYPASSED at boot. Bypass footswitch toggles it.");
 
@@ -2201,51 +2223,70 @@ int main(void)
             if(pressed_edge)
             {
                 in.down_at    = t;
-                in.hold_fired = false;
+                in.hold_level = 0;
             }
-            const bool tap  = released_edge && !in.hold_fired && in.down_at != 0
-                              && (uint32_t)(t - in.down_at) < kFswHoldMs;
-            const bool hold = !now && in.down_at != 0 && !in.hold_fired
-                              && (uint32_t)(t - in.down_at) >= kFswHoldMs;
-            if(hold)
-                in.hold_fired = true;
+            const uint32_t held = (in.down_at != 0) ? (uint32_t)(t - in.down_at) : 0;
+            const bool tap       = released_edge && in.hold_level == 0 && in.down_at != 0
+                                   && held < kFswHoldMs;
+            // Each hold level fires once, while still pressed, the moment its threshold is crossed.
+            const bool hold      = !now && in.down_at != 0 && in.hold_level < 1 && held >= kFswHoldMs;
+            const bool long_hold = !now && in.down_at != 0 && in.hold_level < 2 && held >= kFswLongHoldMs;
+            if(long_hold)      in.hold_level = 2;
+            else if(hold)      in.hold_level = 1;
             if(released_edge)
                 in.down_at = 0;
 
             if(i == 0)                      // BYPASS switch
             {
-                // ⚠ Normal mode toggles the chain on the PRESS edge -- the A/B this whole project
-                // turns on: the same playing, with and without the DSP, switched instantly.
-                // Song mode: tap = start/stop the backing, hold = the same bypass toggle.
-                const bool toggle = g_song_mode ? hold : pressed_edge;
-                if(toggle)
+                switch(g_song)
                 {
-                    g_dsp_bypass = !g_dsp_bypass;
-                    g_oled_dirty = true;
-                    hw.PrintLine("  >> DSP %s%s",
-                                 g_dsp_bypass ? "BYPASSED" : "ENGAGED",
-                                 (!g_dsp_bypass && g_ir_active) ? " (with IR)" : "");
+                    case SongState::Off:
+                        // ⚠ PRESS EDGE: the A/B this whole project turns on -- the same playing,
+                        // with and without the DSP, switched the instant the foot lands.
+                        if(pressed_edge)
+                        {
+                            g_dsp_bypass = !g_dsp_bypass;
+                            g_oled_dirty = true;
+                            hw.PrintLine("  >> DSP %s%s",
+                                         g_dsp_bypass ? "BYPASSED" : "ENGAGED",
+                                         (!g_dsp_bypass && g_ir_active) ? " (with IR)" : "");
+                        }
+                        break;
+                    case SongState::Select:
+                        if(tap)       SongPick(g_song_idx - 1);
+                        else if(hold) SongGo(SongState::Off);
+                        break;
+                    case SongState::Play:
+                        if(tap)            SongStartStop();
+                        else if(long_hold) SongGo(SongState::Select);
+                        // (plain hold is reserved for the looper's undo)
+                        break;
                 }
-                else if(g_song_mode && tap)
-                    SongStartStop();
             }
             else if(i == 1)                 // TUNER switch
             {
-                if(hold)
+                switch(g_song)
                 {
-                    if(g_song_mode) SongModeLeave();
-                    else            SongModeEnter();
-                }
-                else if(tap && g_song_mode)
-                    SongPick(g_song_idx + 1);
-                else if(tap)                // tuner toggles on the tap, so a hold can mean song mode
-                {
-                    g_tuner_on   = !g_tuner_on;
-                    g_tune.valid = g_tune_shown.valid = false;   // ⚠ stale note, see above
-                    g_tune_cand  = -1;
-                    g_tune_aud_at = 0;
-                    g_oled_dirty = true;
-                    hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
+                    case SongState::Off:
+                        if(hold)
+                            SongGo(SongState::Select);
+                        else if(tap)        // tuner toggles on the tap, so a hold can mean song mode
+                        {
+                            g_tuner_on   = !g_tuner_on;
+                            g_tune.valid = g_tune_shown.valid = false;   // ⚠ stale note, see above
+                            g_tune_cand  = -1;
+                            g_tune_aud_at = 0;
+                            g_oled_dirty = true;
+                            hw.PrintLine("  >> TUNER %s", g_tuner_on ? "ON" : "off");
+                        }
+                        break;
+                    case SongState::Select:
+                        if(tap)       SongPick(g_song_idx + 1);
+                        else if(hold) { if(tt_store_song_count() > 0) SongGo(SongState::Play); }
+                        break;
+                    case SongState::Play:
+                        // (tap = stop and hold = clear belong to the looper; a backing song ignores them)
+                        break;
                 }
             }
         }
@@ -2446,7 +2487,7 @@ int main(void)
                 for(int k = 0; k < steps; k++)
                     menu_event(dir, false);
             }
-            else if(g_song_mode)
+            else if(g_song != SongState::Off)
             {
                 if(tt_store_song_count() > 0)
                     SongPick(g_song_idx + (inc > 0 ? 1 : -1));
@@ -2628,7 +2669,7 @@ int main(void)
                 OledTuner();
             }
         }
-        else if(g_song_mode)
+        else if(g_song != SongState::Off)
         {
             if(g_oled_dirty || (t - last_oled) >= 500)
             {

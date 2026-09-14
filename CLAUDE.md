@@ -264,24 +264,28 @@ The first time a Mac sees the device it asks **"Allow accessory to connect?"** �
 
 ### Song mode — a set list on the card
 
-`/tonetrix/songs.txt` (example in `pico/sdcard_template/tonetrix/`): a song is a **name**, a
-**preset** (by name) and a **backing** track (a file in `/tonetrix/backing`, or none). Parsed by
-`tt_store_load()` alongside presets; count 0 with no file, and nothing else changes.
+`/tonetrix/songs.txt` (`sdcard_template/tonetrix/`): a song is a **name**, a **preset** (by name) and
+a **backing** track (a file in `/tonetrix/backing`, or none). Parsed by `tt_store_load()` alongside
+presets; count 0 with no file, and nothing else changes.
 
-Footswitches only, so it works with the box closed and the hands on the guitar:
+Three states, footswitches only — **tuner hold steps forward, bypass hold steps back**:
 
-| | tap | hold (≥ 800 ms) |
-|---|---|---|
-| **tuner** switch, normal mode | tuner on/off (now on the *release*) | **enter song mode** |
-| **tuner** switch, song mode | next song | leave song mode |
-| **bypass** switch, normal mode | bypass toggle — still on the **press** edge | — |
-| **bypass** switch, song mode | start / stop the backing | bypass toggle |
+```
+NORMAL ──tuner hold──▶ SONG SELECT ──tuner hold──▶ SONG PLAY
+   ▲                       │  ▲                       │
+   └────bypass hold────────┘  └──────bypass hold──────┘
+```
 
-Encoder turn = previous/next song; click opens the menu as usual (tuner is reachable there).
-Picking a song stops any backing, loads the preset, **engages the chain**, and waits — the backing
-starts on the tap, so a song is armed and started on the beat. The screen shows the name in 9×16 type
-(14 characters across), the preset, the backing and play state; unmatched preset/backing names are called out on the
-bottom row rather than failing silently. Written 2026-09-13, ⚠ **not yet flashed**.
+| state | bypass tap | bypass hold | tuner tap | tuner hold |
+|---|---|---|---|---|
+| **normal** | DSP bypass (press edge) | — | tuner (on release) | → song select |
+| **song select** | previous song | → normal | next song | → song play |
+| **song play** | start / stop backing | *(looper: undo)* · **long** hold → select | *(looper: stop)* | *(looper: clear)* |
+
+Each step in SELECT loads the preset, so the sound is audible before committing. Encoder turn steps
+songs in either state. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
+while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
+2026-09-14 from the flat first version; the looper (`type: looping`) will fill the PLAY gaps.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 
