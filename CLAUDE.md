@@ -276,16 +276,20 @@ NORMAL ──tuner hold──▶ SONG SELECT ──tuner hold──▶ SONG PLAY
    └────bypass hold────────┘  └──────bypass hold──────┘
 ```
 
-| state | bypass tap | bypass hold | tuner tap | tuner hold |
+**Left** = the bypass switch, **right** = the tuner switch, as the player faces the pedal. In song mode
+they are named by side: the beat-critical action goes on the **right (dominant) foot**, on the **press
+edge** (a foot landing is timed like a stomp; a lift is not).
+
+| state | left tap | left hold | right press / tap | right hold |
 |---|---|---|---|---|
 | **normal** | DSP bypass (press edge) | — | tuner (on release) | → song select |
 | **song select** | previous song | → normal | next song | → song play |
-| **song play** | start / stop backing | *(looper: undo)* · **long** hold → select | *(looper: stop)* | *(looper: clear)* |
+| **song play** | *(looper: stop)* | *(looper: clear)* · **long** hold → select | **start / stop** (press edge) · *(looper: rec/play/overdub)* | *(looper: undo)* |
 
 Each step in SELECT loads the preset, so the sound is audible before committing. Encoder turn steps
 songs in either state. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
 while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
-2026-09-14 from the flat first version; the looper (`type: looping`) will fill the PLAY gaps.
+2026-09-14 from the flat first version; the looper (`type: looping`) fills the PLAY gaps.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 

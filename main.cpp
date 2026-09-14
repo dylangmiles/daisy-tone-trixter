@@ -919,18 +919,24 @@ static void OledBoot(const char* stage)
 //      ▲                       │  ▲                       │
 //      └────bypass hold────────┘  └──────bypass hold──────┘
 //
-//   SONG SELECT   bypass tap = previous · tuner tap = next  (each step loads the preset, so the
-//                 sound is audible before committing) · tuner hold = select → PLAY ·
-//                 bypass hold = back to NORMAL
-//   SONG PLAY     bypass tap = start / stop the backing (the beat-critical action) ·
-//                 bypass LONG hold = back to SELECT · encoder turn = step songs
+//   SONG SELECT   left tap = previous · right tap = next  (each step loads the preset, so the
+//                 sound is audible before committing) · right hold = select → PLAY ·
+//                 left hold = back to NORMAL
+//   SONG PLAY     RIGHT PRESS = start / stop the backing (the beat-critical action, on the press
+//                 edge, on the dominant foot) · left LONG hold = back to SELECT ·
+//                 encoder turn = step songs
+//
+// ⚠ LEFT = the bypass switch, RIGHT = the tuner switch, as the player faces the pedal. In song mode
+// the switches are named by SIDE, not by their normal-mode job: the beat-critical action goes on
+// the right (dominant) foot, everything that can afford a less-practised foot goes on the left.
+// The press edge, not the release: a foot LANDING is timed like a stomp; a lift is not.
 //
 // ⚠ NO DSP BYPASS ANYWHERE IN SONG MODE. That is a bench A/B gesture and lives in normal mode
 // only. A song is a sound; picking it engages the chain.
 //
 // A song is a name, a preset (by name) and a backing track (a file in /tonetrix/backing). The
-// looper (`type: looping`) will add its own PLAY table -- bypass hold = undo a layer, tuner tap =
-// stop, tuner hold = clear -- without touching SELECT or the outer gestures.
+// looper (`type: looping`) will fill PLAY's gaps -- right press = rec/play/overdub, right hold =
+// undo a layer, left tap = stop, left hold = clear -- without touching SELECT or the outer moves.
 enum class SongState : uint8_t { Off, Select, Play };
 static SongState g_song      = SongState::Off;
 static int       g_song_idx  = 0;
@@ -1076,7 +1082,7 @@ static void OledSong(void)
     }
     // Bottom row: the status if there is one, else the two switches' jobs in this state.
     oled_text(0, 56, g_song_msg[0] ? g_song_msg
-                                   : (play ? "tap:play/stop hold:back" : "byp:prev tun:next/hold"));
+                                   : (play ? "L hold:back  R:play" : "L:prev  R:next/hold"));
     oled_flush();
 }
 
@@ -2236,7 +2242,7 @@ int main(void)
             if(released_edge)
                 in.down_at = 0;
 
-            if(i == 0)                      // BYPASS switch
+            if(i == 0)                      // LEFT switch (bypass, in normal mode)
             {
                 switch(g_song)
                 {
@@ -2257,13 +2263,12 @@ int main(void)
                         else if(hold) SongGo(SongState::Off);
                         break;
                     case SongState::Play:
-                        if(tap)            SongStartStop();
-                        else if(long_hold) SongGo(SongState::Select);
-                        // (plain hold is reserved for the looper's undo)
+                        if(long_hold) SongGo(SongState::Select);
+                        // (tap = stop and hold = clear belong to the looper; a backing song ignores them)
                         break;
                 }
             }
-            else if(i == 1)                 // TUNER switch
+            else if(i == 1)                 // RIGHT switch (tuner, in normal mode) -- the dominant foot
             {
                 switch(g_song)
                 {
@@ -2285,7 +2290,11 @@ int main(void)
                         else if(hold) { if(tt_store_song_count() > 0) SongGo(SongState::Play); }
                         break;
                     case SongState::Play:
-                        // (tap = stop and hold = clear belong to the looper; a backing song ignores them)
+                        // ⚠ PRESS EDGE, not tap: start/stop lands on the beat the way a stomp does.
+                        // A hold that follows is the looper's undo, and by convention it undoes the
+                        // layer this very press just closed -- so press-then-hold nets out right.
+                        if(pressed_edge) SongStartStop();
+                        // (plain hold is reserved for the looper's undo)
                         break;
                 }
             }
