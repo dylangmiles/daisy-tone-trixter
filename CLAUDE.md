@@ -312,10 +312,18 @@ fires on its edge, 0.8 s before the hold is known; without the revert, press-the
 started an overdub and then discarded it — visibly nothing, which read as "undo doesn't work"
 (2026-09-14). Requests go through a small FIFO so the two arrive in order.
 
-`songs.txt`: `bpm` + `bars` = fixed length, first pass quantised · `bpm` alone = the end press snaps
-to the nearest whole bar · neither = free: the end press snaps *back* to the last attack if it came
-within 150 ms of it (the late foot), and a bpm is guessed from the length (4/4, 60–160, nearest 100;
-very short loops show none). Leaving the song, or stepping to another, discards the loop.
+⚠ **The end press SCHEDULES the end; it never cuts.** "That was the last beat" — the loop must run one
+more beat so the last note gets its length before beat one comes round; recording continues to the
+computed point and closes there (builder's diagnosis 2026-09-14 after the first cut-at-the-press
+version ate the last beat). Where the beat comes from:
+- `bpm` + `bars`: fixed length, the pass runs on to it.
+- `bpm` alone: the end snaps **up** to the next bar line (never down — down is what lost the beat).
+  A **metronome** plays from ARMED through the first pass (1.5 kHz downbeat / 1 kHz beats, ~15 ms,
+  synthesised on the output so it cannot arm the loop), aligned to the first note, off once playing.
+- neither: the gap between the **last two attacks** is the beat; the loop ends one beat after the last
+  attack. One attack or none → ends at the press. bpm shown is that beat (or, failing that, a 4/4
+  guess from the length, 60–160 nearest 100).
+Leaving the song, or stepping to another, discards the loop.
 
 ⚠ **No `memset` in the audio callback.** Zeroing a 5.8 MB SDRAM layer is tens of ms — a certain
 glitch on the press that starts recording. Each layer instead tracks how far it was *written*

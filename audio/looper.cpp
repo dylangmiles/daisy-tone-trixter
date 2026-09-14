@@ -23,8 +23,19 @@ static uint32_t s_written[LOOPER_MAX_LAYERS];       // valid samples [0, written
 // recent attack (envelope crossing the threshold from below). A press within LOOPER_LATE_MS after
 // it ends the loop THERE -- the common "late foot" case -- instead of at the press.
 static uint32_t s_last_onset = 0;
+static uint32_t s_prev_onset = 0;                   // the one before it: their gap is the beat
 static float    s_env        = 0.f;                 // input envelope, fast attack / slow release
 static bool     s_above      = false;
+// ⚠ THE END PRESS SCHEDULES THE END, IT DOES NOT CUT. "That was the last beat" -- the loop has to run
+// one more beat so the last note gets its length before beat one comes round. Recording continues
+// to s_end_at (0 = not scheduled), then the pass closes there.
+static uint32_t s_end_at     = 0;
+// Metronome for bpm-locked songs: a short decaying tone on every beat (accented on the bar) from
+// the moment the loop is ARMED until it plays. On the OUTPUT only, so it cannot trigger the arm.
+static uint32_t s_click_pos  = 0;                   // samples into the current beat
+static uint32_t s_click_beat = 0;                   // beat index (0 = downbeat)
+static bool     s_click_on   = false;
+static float    s_click_amp  = 0.f, s_click_ph = 0.f;
 static looper_state_t s_before_press = LOOPER_EMPTY;   // for looper_unpress()
 static uint32_t s_od_start = 0;                     // overdub: position it began at
 static uint32_t s_od_count = 0;                     // overdub: samples recorded so far (ends at s_len)
@@ -80,45 +91,61 @@ static inline uint32_t BarSamples(void)
     return (uint32_t)(4.f * 60.f * (float)LOOPER_RATE / s_bpm + 0.5f);
 }
 
-// Close the FIRST pass at `raw` samples: apply the tempo rules, set s_len.
-static void CloseFirstPass(uint32_t raw)
+static inline uint32_t BeatSamples(void)
 {
-    uint32_t len = raw;
-    // Free loop, late foot: the press came just after an attack -> that attack is beat one of the
-    // next time round, so the loop ends there. Only backwards, only within LOOPER_LATE_MS, and never
-    // to nothing.
-    if(!s_bpm_locked && s_last_onset > 4800 && raw > s_last_onset
-       && (raw - s_last_onset) <= (uint32_t)LOOPER_LATE_MS * LOOPER_RATE / 1000u)
-        len = raw = s_last_onset;
+    return (uint32_t)(60.f * (float)LOOPER_RATE / s_bpm + 0.5f);
+}
+
+// The end press at `raw` samples: where does the loop END? Never before `raw` (the last note needs
+// its length), so recording runs on to the returned point.
+static uint32_t ScheduleEnd(uint32_t raw)
+{
+    uint32_t end;
     if(s_bpm_locked && s_bars > 0)
-        len = BarSamples() * (uint32_t)s_bars;                 // fixed length
+        end = BarSamples() * (uint32_t)s_bars;                  // fixed length, wherever the press was
     else if(s_bpm_locked)
     {
-        const uint32_t bar = BarSamples();                     // snap to whole bars, at least one
-        uint32_t bars = (raw + bar / 2) / bar;
-        if(bars < 1) bars = 1;
-        len = bar * bars;
+        const uint32_t bar = BarSamples();                      // snap UP to the bar line: the press
+        end = ((raw + bar - 1) / bar) * bar;                    // is "somewhere in the last bar"
+        if(end == 0) end = bar;
+    }
+    else if(s_prev_onset > 0 && s_last_onset > s_prev_onset)
+    {
+        // Free: the gap between the last two attacks is the beat. "That was the last beat" =
+        // the loop ends one beat after the last attack.
+        const uint32_t beat = s_last_onset - s_prev_onset;
+        end = s_last_onset + beat;
+        if(end < raw) end = raw;                                // never cut what has been played
     }
     else
+        end = raw;                                              // one attack or none: end at the press
+    if(end > LEN_MAX) end = LEN_MAX;
+    if(end < 4800)    end = 4800;
+    return end;
+}
+
+// The pass has reached its scheduled end (or the cap): set s_len, guess a tempo if free.
+static void CloseFirstPass(uint32_t len)
+{
+    if(!s_bpm_locked)
     {
-        // Free: the pass IS the length. Guess a bpm from it for the display: assume 4/4 and pick the
-        // bar count whose tempo lands in 60..160, nearest 100 -- where most jams sit. Loops shorter
-        // than ~1.5 s have no whole-bar reading in that range and show no bpm, which is honest.
-        float best = 0.f, best_d = 1e9f;
-        for(int bars = 1; bars <= 32; bars++)
+        // Guess a bpm for the display from the loop length: 4/4, bar count that lands 60..160 nearest
+        // 100. If we know the beat from the onsets, prefer that.
+        if(s_prev_onset > 0 && s_last_onset > s_prev_onset)
+            s_bpm = 60.f * (float)LOOPER_RATE / (float)(s_last_onset - s_prev_onset);
+        else
         {
-            // bars * 4 beats in raw/RATE seconds -> beats per minute
-            const float bpm = (float)bars * 4.f * 60.f * (float)LOOPER_RATE / (float)raw;
-            if(bpm < 60.f || bpm > 160.f) continue;
-            const float d = fabsf(bpm - 100.f);
-            if(d < best_d) { best_d = d; best = bpm; }
+            float best = 0.f, best_d = 1e9f;
+            for(int bars = 1; bars <= 32; bars++)
+            {
+                const float bpm = (float)bars * 4.f * 60.f * (float)LOOPER_RATE / (float)len;
+                if(bpm < 60.f || bpm > 160.f) continue;
+                const float d = fabsf(bpm - 100.f);
+                if(d < best_d) { best_d = d; best = bpm; }
+            }
+            s_bpm = best;
         }
-        s_bpm = best;                                           // 0 if nothing fits (a very short slip)
     }
-    if(len > LEN_MAX) len = LEN_MAX;
-    if(len < 4800)    len = 4800;                              // 100 ms floor: a slip is not a loop
-    // A locked length longer than what was recorded: the tail of the layer is silence already
-    // (layers are zeroed at the start of a pass), so nothing to do.
     s_len = len;
 }
 
@@ -127,7 +154,7 @@ static void Apply(uint8_t req)
     switch(req)
     {
         case REQ_RESET:
-            s_state = LOOPER_EMPTY; s_layers = 0; s_len = 0; s_pos = 0;
+            s_state = LOOPER_EMPTY; s_layers = 0; s_len = 0; s_pos = 0; s_click_on = false; s_end_at = 0;
             if(!s_bpm_locked) s_bpm = 0.f;
             break;
 
@@ -144,7 +171,8 @@ static void Apply(uint8_t req)
                     else if(s_before_press == LOOPER_STOPPED)              // press restarted: stop again
                     { s_pos = 0; s_state = LOOPER_STOPPED; }
                     break;
-                default: break;                                 // a press that closed the first pass stands
+                case LOOPER_RECORDING: if(s_before_press == LOOPER_RECORDING) s_end_at = 0; break;   // un-schedule
+                default: break;
             }
             break;
 
@@ -153,16 +181,17 @@ static void Apply(uint8_t req)
             switch(s_state)
             {
                 case LOOPER_EMPTY:                              // ARM: recording starts on the first note
-                    s_pos = 0; s_env = 0.f; s_above = false; s_last_onset = 0;
+                    s_pos = 0; s_env = 0.f; s_above = false; s_last_onset = 0; s_prev_onset = 0; s_end_at = 0;
                     s_state = LOOPER_ARMED;
+                    if(s_bpm_locked) { s_click_on = true; s_click_pos = 0; s_click_beat = 0; s_click_amp = 0.f; }
                     break;
                 case LOOPER_ARMED:                              // pressed again before playing: back to empty
-                    s_state = LOOPER_EMPTY;
+                    s_state = LOOPER_EMPTY; s_click_on = false;
                     break;
-                case LOOPER_RECORDING:                          // first pass ends: length set, play
-                    s_written[0] = s_pos;                       // a locked length beyond this reads as 0
-                    CloseFirstPass(s_pos);
-                    s_layers = 1; s_pos = 0; s_state = LOOPER_PLAYING;
+                case LOOPER_RECORDING:                          // "that was the last beat": schedule the end
+                    if(s_end_at == 0)
+                        s_end_at = ScheduleEnd(s_pos);
+                    // (a second press while waiting is ignored; the pass closes at s_end_at)
                     break;
                 case LOOPER_PLAYING:                            // start an overdub layer
                     if(s_layers < LOOPER_MAX_LAYERS)
@@ -196,7 +225,7 @@ static void Apply(uint8_t req)
         case REQ_STOP:
             switch(s_state)
             {
-                case LOOPER_RECORDING:  s_written[0] = s_pos; CloseFirstPass(s_pos); s_layers = 1; s_pos = 0; s_state = LOOPER_STOPPED; break;
+                case LOOPER_RECORDING:  s_written[0] = s_pos; CloseFirstPass(s_pos); s_layers = 1; s_pos = 0; s_state = LOOPER_STOPPED; s_click_on = false; break;
                 case LOOPER_OVERDUB:
                     if(s_od_wrapped)            s_written[s_layers] = s_len;
                     else if(s_od_start == 0)    s_written[s_layers] = s_od_count;
@@ -217,7 +246,7 @@ static void Apply(uint8_t req)
                     break;
                 case LOOPER_ARMED:
                 case LOOPER_RECORDING:                          // abandon the first pass
-                    s_state = LOOPER_EMPTY; s_len = 0; s_pos = 0;
+                    s_state = LOOPER_EMPTY; s_len = 0; s_pos = 0; s_click_on = false;
                     break;
                 case LOOPER_PLAYING:
                 case LOOPER_STOPPED:
@@ -228,6 +257,31 @@ static void Apply(uint8_t req)
             }
             break;
         default: break;
+    }
+}
+
+// Metronome (bpm-locked, armed or first pass): a 1.5 kHz / 1 kHz tick, ~15 ms, accented on the
+// downbeat. Added to the OUTPUT after the arm check, so it can never arm the loop itself.
+static void Click(float *buf, int n)
+{
+    if(!s_click_on)
+        return;
+    const uint32_t beat = BeatSamples();
+    for(int i = 0; i < n; i++)
+    {
+        if(s_click_pos == 0)
+        {
+            s_click_amp = (s_click_beat == 0) ? 0.5f : 0.3f;
+            s_click_ph  = 0.f;
+        }
+        if(s_click_amp > 0.001f)
+        {
+            const float f = (s_click_beat == 0) ? 1500.f : 1000.f;
+            buf[i] += s_click_amp * sinf(s_click_ph);
+            s_click_ph  += 6.2831853f * f / (float)LOOPER_RATE;
+            s_click_amp *= 0.9985f;                             // ~15 ms decay
+        }
+        if(++s_click_pos >= beat) { s_click_pos = 0; s_click_beat = (s_click_beat + 1) & 3; }
     }
 }
 
@@ -249,6 +303,7 @@ void looper_process(float *buf, int n)
     }
 
     looper_state_t st = s_state;
+
     if(st == LOOPER_EMPTY || st == LOOPER_STOPPED)
         return;
 
@@ -259,12 +314,16 @@ void looper_process(float *buf, int n)
         int start = -1;
         for(int i = 0; i < n; i++)
             if(fabsf(buf[i]) >= LOOPER_ARM_THRESHOLD) { start = i; break; }
-        if(start < 0)
-            return;
-        s_pos = 0; s_state = LOOPER_RECORDING; st = LOOPER_RECORDING;
-        s_env = 1.f; s_above = true; s_last_onset = 0;              // the first note IS the first onset
-        for(int i = start; i < n; i++)
-            s_layer[0][s_pos++] = Clamp16(buf[i]);
+        if(start >= 0)
+        {
+            s_pos = 0; s_state = LOOPER_RECORDING; st = LOOPER_RECORDING;
+            s_env = 1.f; s_above = true; s_last_onset = 0; s_prev_onset = 0;   // the first note IS onset 0
+            for(int i = start; i < n; i++)
+                s_layer[0][s_pos++] = Clamp16(buf[i]);
+            // With a click running, align the click to the first note: it started on beat 1.
+            if(s_click_on) { s_click_pos = (uint32_t)(n - start) % BeatSamples(); s_click_beat = 0; }
+        }
+        Click(buf, n);
         return;
     }
 
@@ -278,15 +337,31 @@ void looper_process(float *buf, int n)
         const float in = buf[i];
         if(st == LOOPER_RECORDING)
         {
-            // First pass: write, hear the live input only. Runs until the press, or the cap.
+            // First pass: write, hear the live input only. Runs until the scheduled end, or the cap.
             s_layer[0][pos] = Clamp16(in);
-            // Onset tracker for the free-loop end snap: envelope with ~1 ms attack / ~80 ms release;
-            // an "onset" is the envelope crossing the threshold from below.
+            // Onset tracker: envelope with ~1 ms attack / ~80 ms release; an "onset" is the envelope
+            // crossing the threshold from below. The last two set the beat for a free loop.
             const float a = fabsf(in);
             s_env = (a > s_env) ? s_env + (a - s_env) * 0.02f : s_env + (a - s_env) * 0.00026f;
-            if(!s_above && s_env >= LOOPER_ARM_THRESHOLD) { s_above = true; s_last_onset = pos; }
+            if(!s_above && s_env >= LOOPER_ARM_THRESHOLD) { s_above = true; s_prev_onset = s_last_onset; s_last_onset = pos; }
             else if(s_above && s_env < LOOPER_ARM_THRESHOLD * 0.5f) s_above = false;
-            if(++pos >= LEN_MAX) { s_pos = pos; Apply(REQ_PRESS); return; }   // cap reached: close
+            pos++;
+            const bool at_end = (s_end_at != 0 && pos >= s_end_at) || pos >= LEN_MAX;
+            if(at_end)
+            {
+                s_written[0] = pos;
+                CloseFirstPass(pos);
+                s_layers = 1; s_pos = 0; s_state = LOOPER_PLAYING; s_click_on = false; s_end_at = 0;
+                // The rest of this block plays the new loop from its top.
+                uint32_t p2 = 0;
+                for(int j = i + 1; j < n; j++)
+                {
+                    buf[j] += (p2 < s_written[0] ? (float)s_layer[0][p2] : 0.f) * (1.f / 32768.f) * lvl;
+                    if(++p2 >= s_len) p2 = 0;
+                }
+                s_pos = p2;
+                return;
+            }
             continue;
         }
         // Playing (with or without an overdub in progress): sum the committed layers, reading
@@ -329,4 +404,6 @@ void looper_process(float *buf, int n)
         }
     }
     s_pos = pos;
+    if(st == LOOPER_RECORDING)
+        Click(buf, n);
 }

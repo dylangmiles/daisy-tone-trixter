@@ -44,12 +44,15 @@ backing: blues100
 name: Jam
 type: looping
 preset: tanglewood-slide
-# no bpm: free loop. Press ARMS; recording starts on the first note; the
-# end press snaps back to the last attack if it came within 150 ms of it.
+# no bpm: free loop. Press ARMS; recording starts on the first note. The end
+# press means "that was the last beat": the loop runs one more beat (the gap
+# between your last two attacks) and closes there, so the last note keeps
+# its length before beat one comes round.
 ---
 name: Jam 100
 type: looping
 preset: tanglewood-slide
 bpm: 100
-# tempo-locked: the end press snaps to the nearest whole bar at 100 bpm.
-# Add  bars: 4  to fix the length outright (first pass quantised to it).
+# tempo-locked: a metronome plays from arming through the first pass; the
+# end press snaps UP to the next bar line at 100 bpm (press anywhere in the
+# last bar). Add  bars: 4  to fix the length outright.
