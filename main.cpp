@@ -2550,7 +2550,13 @@ int main(void)
                 for(int k = 0; k < steps; k++)
                     menu_event(dir, false);
             }
-            else if(g_song != SongState::Off)
+            else if(g_song == SongState::Play)
+            {
+                // ⚠ ENCODER DISABLED IN PLAY. A knob brushed mid-song changed the song or opened the
+                // menu (2026-09-14). Nothing here is needed while playing; SELECT and normal mode
+                // keep the knob.
+            }
+            else if(g_song == SongState::Select)
             {
                 if(tt_store_song_count() > 0)
                     SongPick(g_song_idx + (inc > 0 ? 1 : -1));
@@ -2646,6 +2652,11 @@ int main(void)
                     g_stats_screen = true;       // ⚠ long press from HOME -- see kStatsHoldMs
                     g_stats_top    = 0;
                     g_oled_dirty   = true;
+                }
+                else if(!g_in_menu && g_song == SongState::Play)
+                {
+                    // ⚠ Short click ignored in PLAY -- see the encoder-turn note. The 2 s stats
+                    // hold and 5 s DFU hold above still work: those are deliberate.
                 }
                 else if(!g_in_menu)
                 {

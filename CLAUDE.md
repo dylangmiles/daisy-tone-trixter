@@ -287,7 +287,8 @@ edge** (a foot landing is timed like a stomp; a lift is not).
 | **song play** | *(looper: stop)* | *(looper: clear)* · **long** hold → select | **start / stop** (press edge) · *(looper: rec/play/overdub)* | *(looper: undo)* |
 
 Each step in SELECT loads the preset, so the sound is audible before committing. Encoder turn steps
-songs in either state. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
+songs in SELECT; ⚠ **in PLAY the encoder is disabled** (turn and click — a brushed knob was changing
+the song or opening the menu mid-loop); the 2 s stats and 5 s DFU holds still work. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
 while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
 2026-09-14 from the flat first version.
 
