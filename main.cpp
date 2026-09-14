@@ -1045,7 +1045,7 @@ static void OledSong(void)
     oled_text(128 - 6 * 3, 0, g_dsp_bypass ? "BYP" : " ON");
     if(n > 0)
     {
-        oled_text2x(0, 16, tt_store_song_name(g_song_idx));      // 12x16: readable from standing height
+        oled_text15x(0, 16, tt_store_song_name(g_song_idx));     // 9x16, 14 chars: readable standing, fits a set-list name
         snprintf(buf, sizeof(buf), "P  %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
         oled_text(0, 40, buf);
         const char* bk = tt_store_song_backing(g_song_idx);

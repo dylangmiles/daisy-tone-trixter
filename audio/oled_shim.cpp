@@ -196,6 +196,42 @@ void oled_text2x(int x, int y, const char* s)
         DrawChar2x(x + i * 12, y, s[i]);
 }
 
+// ⚠ 6x8 scaled to 9x16 -- 14 characters across the panel, for the song name. 12x16 fits only 10,
+// which clips a set-list name; 6x8 is not readable from standing height. Rows double cleanly; each
+// source column c lands at x + c*3/2, and the odd columns (1, 3, 5) also fill the pixel to their
+// right so a 1-px vertical stroke never disappears on a rounding boundary. Background written too,
+// same convention as DrawChar, so a redraw overwrites rather than merges.
+static void DrawChar15x(int x, int y, char c)
+{
+    if(c < 32 || c > 126)
+        c = ' ';
+    const FontDef& f = Font_6x8;
+    for(int row = 0; row < f.FontHeight; row++)
+    {
+        const uint16_t bits = f.data[(c - 32) * f.FontHeight + row];
+        for(int col = 0; col < f.FontWidth; col++)
+        {
+            const bool lit = ((bits << col) & 0x8000) != 0;
+            const int  px  = x + (col * 3) / 2;
+            PixelSet(px, y + row * 2,     lit);
+            PixelSet(px, y + row * 2 + 1, lit);
+            if(col & 1)
+            {
+                PixelSet(px + 1, y + row * 2,     lit);
+                PixelSet(px + 1, y + row * 2 + 1, lit);
+            }
+        }
+    }
+}
+
+void oled_text15x(int x, int y, const char* s)
+{
+    if(!s)
+        return;
+    for(int i = 0; s[i]; i++)
+        DrawChar15x(x + i * 9, y, s[i]);
+}
+
 void oled_rect(int x, int y, int w, int h, bool on)
 {
     for(int j = 0; j < h; j++)

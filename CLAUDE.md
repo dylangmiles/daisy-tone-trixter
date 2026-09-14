@@ -73,7 +73,7 @@ bug**.
 - **USB drive mode** — ✅ **WORKING 2026-09-13.** Hold the encoder while powering up (USB alone
   is enough to power it) → the card mounts on the Mac as a 31.9 GB FAT32 volume; written files
   survive a power cycle. Power-cycle to leave. The microSD panel extender is deleted (pinmap §4m).
-- **Song mode** — written 2026-09-13, first songs.txt on the card; ⚠ footswitch test pending.
+- **Song mode** — ✅ **working 2026-09-14** on the footswitches; set list in `sdcard_template/tonetrix/songs.txt`.
 - Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
   They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
@@ -279,8 +279,8 @@ Footswitches only, so it works with the box closed and the hands on the guitar:
 
 Encoder turn = previous/next song; click opens the menu as usual (tuner is reachable there).
 Picking a song stops any backing, loads the preset, **engages the chain**, and waits — the backing
-starts on the tap, so a song is armed and started on the beat. The screen shows the name in 12×16
-type, the preset, the backing and play state; unmatched preset/backing names are called out on the
+starts on the tap, so a song is armed and started on the beat. The screen shows the name in 9×16 type
+(14 characters across), the preset, the backing and play state; unmatched preset/backing names are called out on the
 bottom row rather than failing silently. Written 2026-09-13, ⚠ **not yet flashed**.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
