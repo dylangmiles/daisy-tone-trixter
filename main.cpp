@@ -26,6 +26,7 @@
 #include "audio/oled_shim.h"
 #include "audio/backing.h"
 #include "audio/usb_msc.h"
+#include "audio/looper.h"
 extern "C" {
 #include "ff.h"
 #include "ff_gen_drv.h"
@@ -652,6 +653,10 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
 
     dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
 
+    // ⚠ Looper AFTER the chain, BEFORE the backing: a layer captures the sound the player heard,
+    // and the loop is then a bed exactly like a backing track. Cheap when idle (one state read).
+    looper_process(g_work, (int)size);
+
     // ⚠ Backing track mixes in AFTER the chain, exactly as on the Pico: it is already-produced
     // audio and must not be run through the IR, EQ or compressor. Putting the bed through the
     // guitar's processing would be both wrong and a waste of the budget.
@@ -999,9 +1004,17 @@ static void SongPick(int i)
     g_dsp_bypass = false;
     if(*tt_store_song_backing(i) && FindBackingByName(tt_store_song_backing(i)) < 0 && !g_song_msg[0])
         snprintf(g_song_msg, sizeof(g_song_msg), "backing not found");
+    // The looper is per song: stepping to another song discards the loop (session-lifetime, and a
+    // loop belongs to the song it was played in). A looping song arrives EMPTY with its tempo set.
+    looper_reset();
+    if(tt_store_song_type(i) == TT_SONG_LOOPING)
+        looper_set_tempo(tt_store_song_bpm(i), tt_store_song_bars(i));
     g_oled_dirty = true;
-    hw.PrintLine("  >> SONG %d/%d %s", i + 1, n, tt_store_song_name(i));
+    hw.PrintLine("  >> SONG %d/%d %s%s", i + 1, n, tt_store_song_name(i),
+                 tt_store_song_type(i) == TT_SONG_LOOPING ? " [looping]" : "");
 }
+
+static bool SongIsLooping(void) { return tt_store_song_type(g_song_idx) == TT_SONG_LOOPING; }
 
 static void SongStartStop(void)
 {
@@ -1032,6 +1045,8 @@ static void SongGo(SongState to)
         return;
     if(backing_playing())
         backing_stop();                     // leaving PLAY, or leaving song mode: nothing keeps running
+    if(to != SongState::Play)
+        looper_reset();                     // loops are discarded on the way out (session-lifetime)
     g_song       = to;
     g_oled_dirty = true;
     switch(to)
@@ -1074,15 +1089,34 @@ static void OledSong(void)
         const char* bk = tt_store_song_backing(g_song_idx);
         const char* base = strrchr(bk, '/');
         base = base ? base + 1 : bk;
-        if(play)
+        const bool looping = tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
+        if(looping)
+        {
+            // State word + layers + a position bar, so a running loop can be read at a glance.
+            static const char* const kSt[] = {"EMPTY", "REC  ", "PLAY ", "OVER ", "STOP "};
+            const looper_state_t st = looper_state();
+            const float bpm = looper_bpm();
+            if(bpm > 0.f)
+                snprintf(buf, sizeof(buf), "%s L%d %3.0fbpm", kSt[st], looper_layers(), (double)bpm);
+            else
+                snprintf(buf, sizeof(buf), "%s L%d", kSt[st], looper_layers());
+            oled_text(0, 48, buf);
+            const uint32_t len = looper_length();
+            oled_bar(80, 48, 48, 8, (st == LOOPER_RECORDING || len == 0) ? 0.f
+                                     : (float)looper_position() / (float)len);
+        }
+        else if(play)
             snprintf(buf, sizeof(buf), "%s %s", backing_playing() ? ">>" : "||", *base ? base : "(no backing)");
         else
             snprintf(buf, sizeof(buf), "bk %s", *base ? base : "none");
-        oled_text(0, 48, buf);
+        if(!looping)
+            oled_text(0, 48, buf);
     }
     // Bottom row: the status if there is one, else the two switches' jobs in this state.
+    const bool lp = play && tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
     oled_text(0, 56, g_song_msg[0] ? g_song_msg
-                                   : (play ? "L hold:back  R:play" : "L:prev  R:next/hold"));
+                                   : (lp   ? "L:stop  R:rec/play"
+                                    : play ? "L hold:back  R:play" : "L:prev  R:next/hold"));
     oled_flush();
 }
 
@@ -2263,8 +2297,16 @@ int main(void)
                         else if(hold) SongGo(SongState::Off);
                         break;
                     case SongState::Play:
-                        if(long_hold) SongGo(SongState::Select);
-                        // (tap = stop and hold = clear belong to the looper; a backing song ignores them)
+                        if(long_hold)
+                            SongGo(SongState::Select);
+                        else if(SongIsLooping())
+                        {
+                            if(tap)
+                                looper_stop();
+                            else if(hold && (looper_state() == LOOPER_STOPPED || looper_state() == LOOPER_EMPTY))
+                                looper_reset();                 // clear: only while stopped, never mid-record
+                            g_oled_dirty = true;
+                        }
                         break;
                 }
             }
@@ -2290,11 +2332,16 @@ int main(void)
                         else if(hold) { if(tt_store_song_count() > 0) SongGo(SongState::Play); }
                         break;
                     case SongState::Play:
-                        // ⚠ PRESS EDGE, not tap: start/stop lands on the beat the way a stomp does.
-                        // A hold that follows is the looper's undo, and by convention it undoes the
-                        // layer this very press just closed -- so press-then-hold nets out right.
-                        if(pressed_edge) SongStartStop();
-                        // (plain hold is reserved for the looper's undo)
+                        // ⚠ PRESS EDGE, not tap: start/stop and rec/play land on the beat the way a
+                        // stomp does. A hold that follows is the looper's undo, and by convention it
+                        // undoes the layer this very press just closed -- press-then-hold nets out.
+                        if(SongIsLooping())
+                        {
+                            if(pressed_edge) { looper_press(); g_oled_dirty = true; }
+                            else if(hold)    { looper_undo();  g_oled_dirty = true; }
+                        }
+                        else if(pressed_edge)
+                            SongStartStop();
                         break;
                 }
             }
@@ -2680,7 +2727,9 @@ int main(void)
         }
         else if(g_song != SongState::Off)
         {
-            if(g_oled_dirty || (t - last_oled) >= 500)
+            const looper_state_t ls = looper_state();
+            const uint32_t period = (ls == LOOPER_PLAYING || ls == LOOPER_OVERDUB || ls == LOOPER_RECORDING) ? 200 : 500;
+            if(g_oled_dirty || (t - last_oled) >= period)
             {
                 g_oled_dirty = false;
                 last_oled    = t;

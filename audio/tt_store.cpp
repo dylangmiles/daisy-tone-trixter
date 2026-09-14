@@ -24,6 +24,9 @@ static int    s_n = 0;
 static char   s_song_name[TT_MAX_SONGS][NAME_MAX];
 static char   s_song_preset[TT_MAX_SONGS][NAME_MAX];
 static char   s_song_backing[TT_MAX_SONGS][IR_MAX];
+static uint8_t s_song_type[TT_MAX_SONGS];
+static float  s_song_bpm[TT_MAX_SONGS];
+static int    s_song_bars[TT_MAX_SONGS];
 static int    s_songs = 0;
 
 static char   s_boot[NAME_MAX] = "";
@@ -196,18 +199,20 @@ static void parse_presets(char *buf) {
 }
 
 // --- songs.txt -------------------------------------------------------------
-static void song_commit(const char *nm, const char *pr, const char *bk, bool *active) {
+static void song_commit(const char *nm, const char *pr, const char *bk, uint8_t ty, float bpm, int bars, bool *active) {
     if (!*active) return;
     *active = false;
     if (nm[0] == 0 || s_songs >= TT_MAX_SONGS) return;
     strncpy(s_song_name[s_songs],    nm, NAME_MAX - 1); s_song_name[s_songs][NAME_MAX - 1]  = 0;
     strncpy(s_song_preset[s_songs],  pr, NAME_MAX - 1); s_song_preset[s_songs][NAME_MAX - 1] = 0;
     strncpy(s_song_backing[s_songs], bk, IR_MAX - 1);   s_song_backing[s_songs][IR_MAX - 1]  = 0;
+    s_song_type[s_songs] = ty; s_song_bpm[s_songs] = bpm; s_song_bars[s_songs] = bars;
     s_songs++;
 }
 
 static void parse_songs(char *buf) {
     char nm[NAME_MAX] = "", pr[NAME_MAX] = "", bk[IR_MAX] = "";
+    uint8_t ty = TT_SONG_PLAIN; float bpm = 0.f; int bars = 0;
     bool active = false;
     char *p = buf;
     while (*p) {
@@ -219,15 +224,15 @@ static void parse_songs(char *buf) {
         if (!*line) { if (!nl) break; p = nl + 1; continue; }
 
         if (strcmp(line, "---") == 0) {
-            song_commit(nm, pr, bk, &active);
-            nm[0] = pr[0] = bk[0] = 0;
+            song_commit(nm, pr, bk, ty, bpm, bars, &active);
+            nm[0] = pr[0] = bk[0] = 0; ty = TT_SONG_PLAIN; bpm = 0.f; bars = 0;
             if (!nl) break; p = nl + 1; continue;
         }
         char *k, *v;
         if (split_kv(line, &k, &v)) {
             if (strcmp(k, "name") == 0) {
-                song_commit(nm, pr, bk, &active);
-                pr[0] = bk[0] = 0;
+                song_commit(nm, pr, bk, ty, bpm, bars, &active);
+                pr[0] = bk[0] = 0; ty = TT_SONG_PLAIN; bpm = 0.f; bars = 0;
                 strncpy(nm, unquote(v), NAME_MAX - 1); nm[NAME_MAX - 1] = 0;
                 active = true;
             } else if (active) {
@@ -237,14 +242,26 @@ static void parse_songs(char *buf) {
                     const char *uv = unquote(v);
                     if (uv[0] == 0 || strcasecmp(uv, "none") == 0 || strcasecmp(uv, "off") == 0) bk[0] = 0;
                     else { strncpy(bk, uv, IR_MAX - 1); bk[IR_MAX - 1] = 0; }
+                } else if (strcmp(k, "type") == 0) {
+                    const char *uv = unquote(v);
+                    ty = (strcasecmp(uv, "looping") == 0 || strcasecmp(uv, "loop") == 0 || strcasecmp(uv, "looper") == 0)
+                         ? TT_SONG_LOOPING : TT_SONG_PLAIN;
+                } else if (strcmp(k, "bpm") == 0) {
+                    bpm = strtof(v, NULL);
+                } else if (strcmp(k, "bars") == 0) {
+                    bars = (int)strtol(v, NULL, 10);
                 }
             }
         }
         if (!nl) break;
         p = nl + 1;
     }
-    song_commit(nm, pr, bk, &active);
+    song_commit(nm, pr, bk, ty, bpm, bars, &active);
 }
+
+tt_song_type_t tt_store_song_type(int i) { return (i >= 0 && i < s_songs) ? (tt_song_type_t)s_song_type[i] : TT_SONG_PLAIN; }
+float          tt_store_song_bpm(int i)  { return (i >= 0 && i < s_songs) ? s_song_bpm[i]  : 0.f; }
+int            tt_store_song_bars(int i) { return (i >= 0 && i < s_songs) ? s_song_bars[i] : 0; }
 
 int         tt_store_song_count(void)      { return s_songs; }
 const char *tt_store_song_name(int i)      { return (i >= 0 && i < s_songs) ? s_song_name[i]    : ""; }
@@ -284,7 +301,9 @@ void tt_store_dump(void) {
         printf("  %-16s ir=%s\n", s_sd[i].name, s_sd[i].ir ? s_sd[i].ir : "(keep)");
     printf("sdcfg: songs=%d\n", s_songs);
     for (int i = 0; i < s_songs; i++)
-        printf("  %-16s preset=%s backing=%s\n", s_song_name[i],
+        printf("  %-16s %s preset=%s backing=%s bpm=%.0f bars=%d\n", s_song_name[i],
+               s_song_type[i] == TT_SONG_LOOPING ? "looping" : "song",
                s_song_preset[i][0] ? s_song_preset[i] : "(keep)",
-               s_song_backing[i][0] ? s_song_backing[i] : "(none)");
+               s_song_backing[i][0] ? s_song_backing[i] : "(none)",
+               (double)s_song_bpm[i], s_song_bars[i]);
 }

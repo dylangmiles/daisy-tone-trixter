@@ -49,6 +49,7 @@ CPP_SOURCES = \
 	audio/menu.cpp \
 	audio/oled_shim.cpp \
 	audio/backing.cpp \
+	audio/looper.cpp \
 	audio/usb_msc.cpp \
 	lib/FFTConvolver/FFTConvolver.cpp \
 	lib/FFTConvolver/TwoStageFFTConvolver.cpp \

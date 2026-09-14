@@ -41,6 +41,11 @@ int         tt_store_song_count(void);
 const char *tt_store_song_name(int i);      // "" out of range
 const char *tt_store_song_preset(int i);    // "" = keep whatever preset is loaded
 const char *tt_store_song_backing(int i);   // "" = no backing track
+// type: "song" (default) or "looping"; more later. bpm 0 = unspecified; bars 0 = unspecified.
+typedef enum { TT_SONG_PLAIN = 0, TT_SONG_LOOPING = 1 } tt_song_type_t;
+tt_song_type_t tt_store_song_type(int i);
+float          tt_store_song_bpm(int i);
+int            tt_store_song_bars(int i);
 
 // Print a one-shot summary of what was loaded (for the `sdcfg` UART command).
 void        tt_store_dump(void);

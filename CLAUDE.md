@@ -289,7 +289,30 @@ edge** (a foot landing is timed like a stomp; a lift is not).
 Each step in SELECT loads the preset, so the sound is audible before committing. Encoder turn steps
 songs in either state. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
 while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
-2026-09-14 from the flat first version; the looper (`type: looping`) fills the PLAY gaps.
+2026-09-14 from the flat first version.
+
+### The looper — `type: looping` (2026-09-14, ⚠ host-tested, not yet played)
+
+`audio/looper.{h,cpp}`, host tests in `tools/host_tests/`. One loop per song, up to **8 layers × 60 s
+in SDRAM** (int16, 46 MB of the 64). Every record pass is a **new layer**, summed on playback — nothing
+is ever mixed into an existing buffer, which is what makes undo free (drop the top layer; no redo).
+The first pass sets the length; an overdub records exactly one loop from wherever it starts and
+commits itself. Sits in the callback **after the chain, before the backing mix**: a layer is the
+sound the player heard. No dry capture — a looping song on `default` is the dry option.
+
+PLAY, looping song: **right press** = empty→rec, rec→play, play→overdub, overdub→play(early commit),
+stopped→play · **right hold** = undo a layer (during a pass: discard it) · **left tap** = stop ·
+**left hold** = clear, only while stopped/empty · **left long hold** = back to select (discards).
+Screen row 6: `REC/PLAY/OVER/STOP L<n> <bpm>` + a position bar.
+
+`songs.txt`: `bpm` + `bars` = fixed length, first pass quantised · `bpm` alone = first pass snaps to
+whole bars · neither = free, and a bpm is guessed from the length (4/4, 60–160, nearest 100; very
+short loops show none). Leaving the song, or stepping to another, discards the loop.
+
+⚠ **No `memset` in the audio callback.** Zeroing a 5.8 MB SDRAM layer is tens of ms — a certain
+glitch on the press that starts recording. Each layer instead tracks how far it was *written*
+(`s_written[]`) and reads zero beyond that; the one bounded zero-fill is on the rare early-ended
+overdub that did not start at the loop top.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 
