@@ -189,17 +189,20 @@ diagnostics used.
 inline. It is a 480 MHz M7 with an FPU against a 150 MHz M33, so the budget should be there — but
 that is an assumption until measured with an IR actually loaded.
 
-## ⚠ The SD card template is NOT duplicated here
+## The SD card template lives HERE now — `sdcard_template/`
 
-The card layout lives once, in **`tone-trixter/pico/sdcard_template/`** (6.8 MB — `config.txt`,
-`presets.txt`, IR WAVs, backing tracks).
+`config.txt`, `presets.txt`, `songs.txt`, IR WAVs, backing tracks (~10 MB, WAVs under LFS). Sync it to
+the card with the pedal in USB drive mode:
 
-⚠ **Both pedals read the SAME physical card.** Copying the template into this repo would mean two
-copies that drift, and drift shows up as a preset that works on one pedal and not the other — which
-reads as a firmware difference and is miserable to chase. One artifact, one home.
+```
+rsync -rtv --size-only --exclude .DS_Store --exclude README.md sdcard_template/tonetrix/ /Volumes/VOLUME1/tonetrix/
+```
 
-Its location under `pico/` is historical rather than meaningful. If it ever needs handing to a user
-independently it should become its own repo; until then a pointer beats a copy.
+⚠ **Moved from `pico/sdcard_template/` on 2026-09-14, and the reasoning inverted with it.** While both
+pedals were being built the template lived once, under `pico/`, so one physical card could not drift
+between two firmwares. The Pico build has stopped, so the copy there is now a **frozen snapshot that
+still works with the last Pico firmware**, and this one is the live artifact: it evolves with the
+Daisy (song mode, and whatever a song becomes) with **no obligation to stay Pico-readable.**
 
 ### ⚠ `bk.level` is a Daisy-only preset key
 
