@@ -1096,7 +1096,14 @@ static void OledSong(void)
             static const char* const kSt[] = {"EMPTY", "ARMED", "REC  ", "PLAY ", "OD-AR", "OVER ", "STOP "};
             const looper_state_t st = looper_state();
             const float bpm = looper_bpm();
-            if(bpm > 0.f)
+            if(st == LOOPER_OD_ARMED)
+            {
+                // What the pickup hears while armed, so a false trigger can be diagnosed by eye.
+                const float fl = looper_input_floor();
+                snprintf(buf, sizeof(buf), "%s L%d in%4.0fdB", kSt[st], looper_layers(),
+                         (double)(fl > 1e-5f ? 20.f * log10f(fl) : -99.f));
+            }
+            else if(bpm > 0.f)
                 snprintf(buf, sizeof(buf), "%s L%d %3.0fbpm", kSt[st], looper_layers(), (double)bpm);
             else
                 snprintf(buf, sizeof(buf), "%s L%d", kSt[st], looper_layers());

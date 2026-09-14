@@ -54,10 +54,17 @@ void           looper_set_level(float g);    // playback level 0..2 (default 1.0
 // the end press snaps back to the last onset if it came within LOOPER_LATE_MS after it.
 void           looper_set_tempo(float bpm, int bars);
 
-// Arming: the first pass does not start on the press but on the first note -- input |x| above
-// LOOPER_ARM_THRESHOLD. -40 dBFS sits 50 dB above this build's floor and 35 dB under a strum.
-#define LOOPER_ARM_THRESHOLD 0.01f
+// Arming: a record pass does not start on the press but on the first note.
+//  First pass: nothing is playing, the room is quiet -> a fixed -40 dBFS (50 dB over this build's
+//  floor, 35 dB under a strum).
+//  Overdub: the LOOP is playing through the amp and a piezo hears the amp -> the bar is the greater
+//  of -30 dBFS and (the input floor measured while armed + 12 dB). A loud amp raises it on its own.
+#define LOOPER_ARM_THRESHOLD    0.01f      // first pass, absolute
+#define LOOPER_OD_THRESHOLD     0.03f      // overdub, absolute minimum (-30 dBFS)
+#define LOOPER_OD_MARGIN        4.0f       // overdub, x floor (+12 dB)
 #define LOOPER_LATE_MS       150
+
+float          looper_input_floor(void);     // input envelope tracked while armed, for the screen
 
 looper_state_t looper_state(void);
 int            looper_layers(void);          // layers committed (not counting a pass in progress)

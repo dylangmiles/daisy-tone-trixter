@@ -37,6 +37,9 @@ static uint32_t s_click_beat = 0;                   // beat index (0 = downbeat)
 static bool     s_click_on   = false;
 static float    s_click_amp  = 0.f, s_click_ph = 0.f;
 static looper_state_t s_before_press = LOOPER_EMPTY;   // for looper_unpress()
+// Input floor while an overdub is armed: a slow-release envelope of what the pickup hears with the
+// loop playing (amp bleed, room). The onset must clear it by LOOPER_OD_MARGIN.
+static volatile float s_floor = 0.f;
 static uint32_t s_od_start = 0;                     // overdub: position it began at
 static uint32_t s_od_count = 0;                     // overdub: samples recorded so far (ends at s_len)
 static bool     s_od_wrapped = false;
@@ -84,6 +87,7 @@ int            looper_layers(void)   { return s_layers; }
 uint32_t       looper_length(void)   { return s_len; }
 uint32_t       looper_position(void) { return s_pos; }
 float          looper_bpm(void)      { return s_bpm; }
+float          looper_input_floor(void) { return s_floor; }
 
 // Length of one bar in samples at the locked bpm, 4/4.
 static inline uint32_t BarSamples(void)
@@ -200,6 +204,7 @@ static void Apply(uint8_t req)
                     if(s_layers < LOOPER_MAX_LAYERS)
                     {
                         s_written[s_layers] = 0;                // nothing valid yet
+                        s_floor = LOOPER_OD_THRESHOLD / LOOPER_OD_MARGIN;   // seed at the minimum
                         s_state = LOOPER_OD_ARMED;
                     }
                     break;
@@ -371,11 +376,21 @@ void looper_process(float *buf, int n)
             }
             continue;
         }
-        // Overdub armed: the moment the input crosses the threshold, start the pass from THIS sample.
-        if(st == LOOPER_OD_ARMED && fabsf(in) >= LOOPER_ARM_THRESHOLD)
+        // Overdub armed: track the input floor (what the pickup hears with the loop playing) and start
+        // the pass from the first sample that clears it by the margin -- never below -30 dBFS.
+        if(st == LOOPER_OD_ARMED)
         {
-            s_od_start = pos; s_od_count = 0; s_od_wrapped = false;
-            s_state = LOOPER_OVERDUB; st = LOOPER_OVERDUB;
+            const float a   = fabsf(in);
+            float       thr = s_floor * LOOPER_OD_MARGIN;
+            if(thr < LOOPER_OD_THRESHOLD) thr = LOOPER_OD_THRESHOLD;
+            if(a >= thr)
+            {
+                s_od_start = pos; s_od_count = 0; s_od_wrapped = false;
+                s_state = LOOPER_OVERDUB; st = LOOPER_OVERDUB;
+            }
+            else
+                // ~0.3 s time constant, up and down: settles on the bleed level in well under a bar
+                s_floor += (a - s_floor) * 0.00007f;
         }
         // Playing (with or without an overdub in progress): sum the committed layers, reading
         // zero past each layer's written extent.

@@ -307,6 +307,10 @@ note, overdub→play (early commit), stopped→play · **right hold** = undo a l
 pass: discard it) · **left tap** = stop · **left hold** = clear, only while stopped/empty · **left long
 hold** = back to select (discards). ⚠ Every record pass — first or overdub — starts on the **input
 threshold, never on the foot** (2026-09-14): the press says "the next thing I play is a new layer".
+The first pass uses a fixed −40 dBFS (the room is quiet). An **overdub** cannot: the loop is playing
+through the amp and a piezo hears the amp, so its bar is the greater of **−30 dBFS** and the input
+floor tracked while armed **+12 dB** — a loud amp raises it by itself. The screen shows that floor
+(`OD-AR L2 in -38dB`) so a false trigger can be diagnosed by eye.
 Screen row 6: `ARMED/REC/PLAY/OD-AR/OVER/STOP L<n> <bpm>` + a position bar.
 
 ⚠ **A hold REVERTS the press that preceded it** (`looper_unpress()` then `looper_undo()`). The press
