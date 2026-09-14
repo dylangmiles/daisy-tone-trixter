@@ -42,5 +42,5 @@ backing: blues100
 ---
 name: Jam
 type: looping
-preset: default
+preset: tanglewood-slide
 # no backing, no bpm: free loop -- the first pass sets the length
