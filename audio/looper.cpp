@@ -164,7 +164,10 @@ static void Apply(uint8_t req)
             switch(s_state)
             {
                 case LOOPER_ARMED:     if(s_before_press == LOOPER_EMPTY)   { s_state = LOOPER_EMPTY; } break;
-                case LOOPER_OVERDUB:   if(s_before_press == LOOPER_PLAYING) { s_state = LOOPER_PLAYING; } break;
+                case LOOPER_OD_ARMED:  if(s_before_press == LOOPER_PLAYING) { s_state = LOOPER_PLAYING; } break;
+                case LOOPER_OVERDUB:                                    // press armed it and a note started it since
+                    if(s_before_press == LOOPER_PLAYING) { s_state = LOOPER_PLAYING; }   // discard the pass
+                    break;
                 case LOOPER_PLAYING:
                     if(s_before_press == LOOPER_OVERDUB && s_layers > 0)   // press committed early: un-commit
                     { s_layers--; s_od_start = 0; s_od_count = s_len; s_od_wrapped = true; s_state = LOOPER_OVERDUB; }
@@ -193,13 +196,15 @@ static void Apply(uint8_t req)
                         s_end_at = ScheduleEnd(s_pos);
                     // (a second press while waiting is ignored; the pass closes at s_end_at)
                     break;
-                case LOOPER_PLAYING:                            // start an overdub layer
+                case LOOPER_PLAYING:                            // ARM an overdub: starts on the first note
                     if(s_layers < LOOPER_MAX_LAYERS)
                     {
-                        s_od_start = s_pos; s_od_count = 0; s_od_wrapped = false;
                         s_written[s_layers] = 0;                // nothing valid yet
-                        s_state = LOOPER_OVERDUB;               // records from the CURRENT position
+                        s_state = LOOPER_OD_ARMED;
                     }
+                    break;
+                case LOOPER_OD_ARMED:                           // pressed again before playing: cancel
+                    s_state = LOOPER_PLAYING;
                     break;
                 case LOOPER_OVERDUB:                            // end the overdub early: keep it
                     // Recorded [od_start, od_start+count) mod len. s_written expresses a prefix
@@ -233,6 +238,7 @@ static void Apply(uint8_t req)
                            s_written[s_layers] = s_od_start + s_od_count;
                            if(s_written[s_layers] > s_len) s_written[s_layers] = s_len; }
                     s_layers++; s_pos = 0; s_state = LOOPER_STOPPED; break;
+                case LOOPER_OD_ARMED:
                 case LOOPER_PLAYING:                           s_pos = 0; s_state = LOOPER_STOPPED; break;
                 default: break;
             }
@@ -241,6 +247,7 @@ static void Apply(uint8_t req)
         case REQ_UNDO:
             switch(s_state)
             {
+                case LOOPER_OD_ARMED:                           // nothing recorded yet: just disarm
                 case LOOPER_OVERDUB:                            // discard the pass in progress
                     s_state = LOOPER_PLAYING;
                     break;
@@ -363,6 +370,12 @@ void looper_process(float *buf, int n)
                 return;
             }
             continue;
+        }
+        // Overdub armed: the moment the input crosses the threshold, start the pass from THIS sample.
+        if(st == LOOPER_OD_ARMED && fabsf(in) >= LOOPER_ARM_THRESHOLD)
+        {
+            s_od_start = pos; s_od_count = 0; s_od_wrapped = false;
+            s_state = LOOPER_OVERDUB; st = LOOPER_OVERDUB;
         }
         // Playing (with or without an overdub in progress): sum the committed layers, reading
         // zero past each layer's written extent.

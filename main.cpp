@@ -1093,7 +1093,7 @@ static void OledSong(void)
         if(looping)
         {
             // State word + layers + a position bar, so a running loop can be read at a glance.
-            static const char* const kSt[] = {"EMPTY", "ARMED", "REC  ", "PLAY ", "OVER ", "STOP "};
+            static const char* const kSt[] = {"EMPTY", "ARMED", "REC  ", "PLAY ", "OD-AR", "OVER ", "STOP "};
             const looper_state_t st = looper_state();
             const float bpm = looper_bpm();
             if(bpm > 0.f)
@@ -2746,7 +2746,7 @@ int main(void)
         else if(g_song != SongState::Off)
         {
             const looper_state_t ls = looper_state();
-            const uint32_t period = (ls == LOOPER_PLAYING || ls == LOOPER_OVERDUB || ls == LOOPER_RECORDING || ls == LOOPER_ARMED) ? 200 : 500;
+            const uint32_t period = (ls == LOOPER_PLAYING || ls == LOOPER_OD_ARMED || ls == LOOPER_OVERDUB || ls == LOOPER_RECORDING || ls == LOOPER_ARMED) ? 200 : 500;
             if(g_oled_dirty || (t - last_oled) >= period)
             {
                 g_oled_dirty = false;

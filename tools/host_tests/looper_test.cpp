@@ -30,7 +30,8 @@ int main(){
     float o = run(BLK*10, 0.f); CHECK(fabsf(o-0.25f) < 0.002f);
 
     // overdub: 0.5 for one full loop -> auto-commit, 2 layers, output 0.75
-    looper_press(); run(BLK, 0.5f); CHECK(looper_state()==LOOPER_OVERDUB);
+    looper_press(); run(BLK, 0.f); CHECK(looper_state()==LOOPER_OD_ARMED);   // silence: stays armed
+    run(BLK, 0.5f); CHECK(looper_state()==LOOPER_OVERDUB);                   // first note starts it
     run(looper_length(), 0.5f);
     CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_layers()==2);
     o = run(BLK*10, 0.f); CHECK(fabsf(o-0.75f) < 0.003f);
@@ -83,7 +84,7 @@ int main(){
     looper_press(); run(2*48000, 0.25f); looper_press(); run(2*BLK,0.f);    // 1 layer (ends at press)
     looper_press(); run(looper_length(), 0.5f);                              // overdub, commits -> 2
     CHECK(looper_layers()==2);
-    looper_press(); run(BLK, 0.5f); CHECK(looper_state()==LOOPER_OVERDUB);  // press starts a 3rd
+    looper_press(); run(BLK, 0.5f); CHECK(looper_state()==LOOPER_OVERDUB);  // press arms, 0.5 starts a 3rd
     looper_unpress(); looper_undo(); run(BLK,0.f);                           // hold: revert + undo
     CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_layers()==1);
 

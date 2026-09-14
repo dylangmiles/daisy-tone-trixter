@@ -36,13 +36,14 @@ typedef enum {
     LOOPER_ARMED,       // waiting for the first note: recording starts on the input threshold
     LOOPER_RECORDING,   // first pass in progress: the length is being set
     LOOPER_PLAYING,     // loop running, no layer being recorded
+    LOOPER_OD_ARMED,    // loop running, overdub armed: recording starts on the first note
     LOOPER_OVERDUB,     // loop running AND a new layer being recorded (auto-ends after one loop)
     LOOPER_STOPPED,     // loop exists, not running; press = play from the top
 } looper_state_t;
 
 // Foreground control. All cheap; the audio callback applies them at the next block boundary.
 void           looper_reset(void);           // discard everything (leaving the song, or "clear")
-void           looper_press(void);           // the RIGHT switch's press: empty->armed, armed/rec->play, play->overdub, overdub->play, stopped->play
+void           looper_press(void);           // the RIGHT switch's press: empty->armed, armed/rec->play, play->od-armed, od-armed/overdub->play, stopped->play
 void           looper_unpress(void);         // ⚠ revert the LAST press (the hold that follows a press means "undo", not "do then undo")
 void           looper_stop(void);            // stop (a record pass in progress is kept as a layer)
 void           looper_undo(void);            // drop the top layer; if that was the only one -> EMPTY

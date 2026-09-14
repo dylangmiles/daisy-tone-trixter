@@ -302,10 +302,12 @@ commits itself. Sits in the callback **after the chain, before the backing mix**
 sound the player heard. No dry capture — a looping song on `default` is the dry option.
 
 PLAY, looping song: **right press** = empty→**armed**, armed→rec on the first note (input ≥ −40 dBFS,
-from that sample), rec→play, play→overdub, overdub→play (early commit), stopped→play · **right hold** =
-undo a layer, any time (during a pass: discard it) · **left tap** = stop · **left hold** = clear, only
-while stopped/empty · **left long hold** = back to select (discards).
-Screen row 6: `ARMED/REC/PLAY/OVER/STOP L<n> <bpm>` + a position bar.
+from that sample), rec→(scheduled end)→play, play→**overdub armed**, od-armed→overdub on the first
+note, overdub→play (early commit), stopped→play · **right hold** = undo a layer, any time (during a
+pass: discard it) · **left tap** = stop · **left hold** = clear, only while stopped/empty · **left long
+hold** = back to select (discards). ⚠ Every record pass — first or overdub — starts on the **input
+threshold, never on the foot** (2026-09-14): the press says "the next thing I play is a new layer".
+Screen row 6: `ARMED/REC/PLAY/OD-AR/OVER/STOP L<n> <bpm>` + a position bar.
 
 ⚠ **A hold REVERTS the press that preceded it** (`looper_unpress()` then `looper_undo()`). The press
 fires on its edge, 0.8 s before the hold is known; without the revert, press-then-hold on PLAY
