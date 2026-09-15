@@ -311,7 +311,13 @@ The first pass uses a fixed −40 dBFS (the room is quiet). An **overdub** canno
 through the amp and a piezo hears the amp, so its bar is the greater of **−30 dBFS** and the input
 floor tracked while armed **+12 dB** — a loud amp raises it by itself. The screen shows that floor
 (`OD-AR L2 in -38dB`) so a false trigger can be diagnosed by eye.
-Screen row 6: `ARMED/REC/PLAY/OD-AR/OVER/STOP L<n> <bpm>` + a position bar.
+Screen (2026-09-15, no switch legend — the switches are labelled on the box): SELECT shows what the song
+is made of (`bk blues92` / `loop 100bpm 4 bars` / `loop free tempo`); PLAY of a looping song shows a
+state line `PLAY L2 100 2.3` (state · layers · bpm · bar.beat) and, on its own row, **bars × 4 beats**
+as cells with the current beat filling as it plays (up to 8 bars; a gap after each bar so the eye
+counts bars). 4/4 assumed for now. Playback level defaults to **0.6** — a bed sits under the live
+guitar and layers add — with an `LP level` menu row beside `BK level`. The first layer gets a 10 ms
+equal-power **crossfade at the wrap**, applied once when the pass closes.
 
 ⚠ **A hold REVERTS the press that preceded it** (`looper_unpress()` then `looper_undo()`). The press
 fires on its edge, 0.8 s before the hold is known; without the revert, press-then-hold on PLAY

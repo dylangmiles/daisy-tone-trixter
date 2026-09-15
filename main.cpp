@@ -1071,59 +1071,110 @@ static void SongGo(SongState to)
 
 // The song screen. Page-aligned like the home screen; the only row that changes on its own is the
 // play state, so a running song costs one page per refresh.
+// The song screen. Page-aligned like the home screen (y = 0, 16, 40, 48, 56).
+//
+//   SELECT 3/6            PLAY 5/6
+//   Blues Slide 92        Jam 100
+//   (9x16 name)           (9x16 name)
+//   P tanglewood-slide    P tanglewood-slide
+//   bk blues92            PLAY L2 100bpm 2.3      <- state · layers · bpm · bar.beat
+//   [status]              [====|====|====|====]    <- bars x 4 beats, head filled to the current beat
+//
+// No switch legend: the switches are labelled on the box. That buys the bottom row.
 static void OledSong(void)
 {
     if(!oled_ok)
         return;
     char buf[26];
     oled_clear();
-    const int  n    = tt_store_song_count();
-    const bool play = (g_song == SongState::Play);
+    const int  n       = tt_store_song_count();
+    const bool play    = (g_song == SongState::Play);
+    const bool looping = (n > 0) && tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
     snprintf(buf, sizeof(buf), "%s %d/%d", play ? "PLAY" : "SELECT", n ? g_song_idx + 1 : 0, n);
     oled_text(0, 0, buf);
     if(n > 0)
     {
         oled_text15x(0, 16, tt_store_song_name(g_song_idx));     // 9x16, 14 chars: readable standing
-        snprintf(buf, sizeof(buf), "P  %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
+        snprintf(buf, sizeof(buf), "P %s", g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-");
         oled_text(0, 40, buf);
-        const char* bk = tt_store_song_backing(g_song_idx);
-        const char* base = strrchr(bk, '/');
-        base = base ? base + 1 : bk;
-        const bool looping = tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
-        if(looping)
+
+        if(!play || !looping)
         {
-            // State word + layers + a position bar, so a running loop can be read at a glance.
+            // SELECT (any type) and PLAY of a backing song: what the song is made of.
+            const char* bk   = tt_store_song_backing(g_song_idx);
+            const char* base = strrchr(bk, '/');
+            base = base ? base + 1 : bk;
+            if(looping)
+            {
+                const float bpm  = tt_store_song_bpm(g_song_idx);
+                const int   bars = tt_store_song_bars(g_song_idx);
+                if(bpm > 0.f && bars > 0)  snprintf(buf, sizeof(buf), "loop %3.0fbpm %d bars", (double)bpm, bars);
+                else if(bpm > 0.f)         snprintf(buf, sizeof(buf), "loop %3.0fbpm", (double)bpm);
+                else                       snprintf(buf, sizeof(buf), "loop free tempo");
+            }
+            else if(play)
+                snprintf(buf, sizeof(buf), "%s %s", backing_playing() ? ">>" : "||", *base ? base : "(no backing)");
+            else
+                snprintf(buf, sizeof(buf), "bk %s", *base ? base : "none");
+            oled_text(0, 48, buf);
+        }
+        else
+        {
+            // PLAY of a looping song: the state line, then the bar/beat graphic on its own row.
             static const char* const kSt[] = {"EMPTY", "ARMED", "REC  ", "PLAY ", "OD-AR", "OVER ", "STOP "};
-            const looper_state_t st = looper_state();
-            const float bpm = looper_bpm();
+            const looper_state_t st  = looper_state();
+            const float          bpm = looper_bpm();
+            int bar = 0, beat = 0; float bf = 0.f;
+            looper_where(&bar, &beat, &bf);
             if(st == LOOPER_OD_ARMED)
             {
-                // What the pickup hears while armed, so a false trigger can be diagnosed by eye.
-                const float fl = looper_input_floor();
+                const float fl = looper_input_floor();          // what the pickup hears, for the eye
                 snprintf(buf, sizeof(buf), "%s L%d in%4.0fdB", kSt[st], looper_layers(),
                          (double)(fl > 1e-5f ? 20.f * log10f(fl) : -99.f));
             }
+            else if(bpm > 0.f && bar > 0)
+                snprintf(buf, sizeof(buf), "%s L%d %3.0f %d.%d", kSt[st], looper_layers(), (double)bpm, bar, beat);
             else if(bpm > 0.f)
                 snprintf(buf, sizeof(buf), "%s L%d %3.0fbpm", kSt[st], looper_layers(), (double)bpm);
             else
                 snprintf(buf, sizeof(buf), "%s L%d", kSt[st], looper_layers());
             oled_text(0, 48, buf);
-            const uint32_t len = looper_length();
-            oled_bar(80, 48, 48, 8, (st == LOOPER_RECORDING || st == LOOPER_ARMED || len == 0) ? 0.f
-                                     : (float)looper_position() / (float)len);
+
+            // Bars x beats, up to 8 bars (32 cells x 4 px). Cells up to the current beat are filled,
+            // the current beat fills with the fraction, later cells are outlined. Bar boundaries get
+            // a 1-px gap so the eye counts bars, not cells. Recording / armed: an empty rail.
+            const int bars  = looper_bars();
+            const int shown = bars > 8 ? 8 : bars;
+            const bool running = (st == LOOPER_PLAYING || st == LOOPER_OD_ARMED || st == LOOPER_OVERDUB);
+            if(shown > 0)
+            {
+                const int cells = shown * 4;
+                const int cw    = 128 / cells;                  // 32 cells -> 4 px, 4 cells -> 32 px
+                const int x0    = (128 - cw * cells) / 2;
+                const int cur   = (bar - 1) * 4 + (beat - 1); // 0-based current cell
+                for(int c = 0; c < cells; c++)
+                {
+                    const int x = x0 + c * cw;
+                    const int w = cw - ((c % 4 == 3) ? 1 : 0);  // gap after each bar
+                    if(w <= 0) continue;
+                    if(running && bar >= 1 && bar <= shown && c < cur)
+                        oled_rect(x, 56, w, 7, true);
+                    else if(running && bar >= 1 && bar <= shown && c == cur)
+                        oled_bar(x, 56, w, 7, bf);               // the current beat fills as it plays
+                    else
+                        oled_bar(x, 56, w, 7, 0.f);              // outline only
+                }
+            }
+            else if(running || st == LOOPER_RECORDING || st == LOOPER_ARMED)
+            {
+                // No tempo (free loop still being set, or a locked bpm not yet known): plain rail.
+                const uint32_t len = looper_length();
+                oled_bar(0, 56, 128, 7, (len == 0) ? 0.f : (float)looper_position() / (float)len);
+            }
         }
-        else if(play)
-            snprintf(buf, sizeof(buf), "%s %s", backing_playing() ? ">>" : "||", *base ? base : "(no backing)");
-        else
-            snprintf(buf, sizeof(buf), "bk %s", *base ? base : "none");
-        if(!looping)
-            oled_text(0, 48, buf);
     }
-    // Bottom row: the status if there is one, else the two switches' jobs in this state.
-    const bool lp = play && tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
-    oled_text(0, 56, g_song_msg[0] ? g_song_msg
-                                   : (lp   ? "L:stop  R:rec/play"
-                                    : play ? "L hold:back  R:play" : "L:prev  R:next/hold"));
+    if(g_song_msg[0])
+        oled_text(0, 56, g_song_msg);                           // a status overrides the bottom row
     oled_flush();
 }
 

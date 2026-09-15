@@ -27,6 +27,7 @@ int main(){
     CHECK(looper_length() >= 4*48000 - BLK && looper_length() <= 4*48000 + 2*BLK);
     printf("len=%u bpm=%.1f\n", looper_length(), looper_bpm());
     // playing: silent input, output should be ~0.25 (the layer)
+    looper_set_level(1.0f);                             // tests below assume unity
     float o = run(BLK*10, 0.f); CHECK(fabsf(o-0.25f) < 0.002f);
 
     // overdub: 0.5 for one full loop -> auto-commit, 2 layers, output 0.75
@@ -111,6 +112,16 @@ int main(){
     // cap: record past 60 s closes automatically
     looper_press(); run(60*48000 + 4800, 0.1f);
     CHECK(looper_state()==LOOPER_PLAYING); CHECK(looper_length()==60u*48000u);
+
+    // where() reads bar.beat on a bpm loop (120 bpm: 24000 samples/beat, 2 bars = 192000)
+    looper_reset(); run(BLK,0.f); looper_set_tempo(120.f, 2); looper_press(); run(48000, 0.25f); looper_press(); run(192000, 0.f);
+    CHECK(looper_bars()==2);
+    { int bar=0, beat=0; float bf=0;
+      // the close left the head partway into the block; position it: play to the top
+      while(looper_position() > BLK) run(BLK,0.f);
+      looper_where(&bar,&beat,&bf); CHECK(bar==1); CHECK(beat==1);
+      run(24000*5, 0.f); looper_where(&bar,&beat,&bf); CHECK(bar==2); CHECK(beat==2); }
+    looper_reset(); run(BLK,0.f); looper_set_tempo(0,0);
 
     // metronome: bpm-locked and armed -> output carries the click even with silent input
     looper_reset(); run(BLK,0.f); looper_set_tempo(120.f, 0); looper_press();

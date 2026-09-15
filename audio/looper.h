@@ -47,7 +47,9 @@ void           looper_press(void);           // the RIGHT switch's press: empty-
 void           looper_unpress(void);         // ⚠ revert the LAST press (the hold that follows a press means "undo", not "do then undo")
 void           looper_stop(void);            // stop (a record pass in progress is kept as a layer)
 void           looper_undo(void);            // drop the top layer; if that was the only one -> EMPTY
-void           looper_set_level(float g);    // playback level 0..2 (default 1.0)
+void           looper_set_level(float g);    // playback level 0..2 (default 0.6: a bed sits UNDER the live guitar,
+                                             //   and layers add -- three of the same strum are +9.5 dB)
+float          looper_level(void);
 
 // Optional tempo lock. bpm > 0 and bars > 0: the length is fixed at bars*4 beats and the first pass
 // is quantised to it. bpm > 0 alone: the first pass snaps to the nearest whole bar. Both 0: free --
@@ -71,6 +73,11 @@ int            looper_layers(void);          // layers committed (not counting a
 uint32_t       looper_length(void);          // loop length in samples, 0 while EMPTY/first pass
 uint32_t       looper_position(void);        // play head, samples
 float          looper_bpm(void);             // locked bpm, or the bpm detected from the first pass (4/4 assumed)
+// Bar / beat readout, 4/4. Bars in the loop (0 if no tempo), and the play head's bar (1-based) and
+// beat (1..4). A loop is however many bars fit its length at the bpm, rounded to the nearest.
+int            looper_bars(void);
+void           looper_where(int *bar, int *beat, float *beat_frac);
+#define LOOPER_XFADE_MS 10                   // first-layer wrap crossfade, applied once when the pass closes
 
 // Audio thread: mix the loop into buf[] (n samples, mono) and record from it if a pass is active.
 // ⚠ Call AFTER the chain and BEFORE backing_mix(): the loop is a bed, not something to be processed.

@@ -45,7 +45,7 @@ static uint32_t s_od_count = 0;                     // overdub: samples recorded
 static bool     s_od_wrapped = false;
 static volatile uint32_t       s_len    = 0;        // loop length, samples (0 until the first pass ends)
 static volatile uint32_t       s_pos    = 0;        // play / record head
-static volatile float          s_level  = 1.0f;
+static volatile float          s_level  = 0.6f;
 
 static float s_bpm  = 0.f;      // locked (set_tempo) or detected
 static int   s_bars = 0;
@@ -82,12 +82,32 @@ void looper_unpress(void) { Post(REQ_UNPRESS); }
 void looper_stop(void)    { Post(REQ_STOP); }
 void looper_undo(void)    { Post(REQ_UNDO); }
 
+float          looper_level(void)    { return s_level; }
 looper_state_t looper_state(void)    { return s_state; }
 int            looper_layers(void)   { return s_layers; }
 uint32_t       looper_length(void)   { return s_len; }
 uint32_t       looper_position(void) { return s_pos; }
 float          looper_bpm(void)      { return s_bpm; }
 float          looper_input_floor(void) { return s_floor; }
+
+int looper_bars(void)
+{
+    if(s_bpm <= 0.f || s_len == 0) return 0;
+    const float bar = 4.f * 60.f * (float)LOOPER_RATE / s_bpm;
+    int b = (int)((float)s_len / bar + 0.5f);
+    return b < 1 ? 1 : b;
+}
+
+void looper_where(int *bar, int *beat, float *beat_frac)
+{
+    if(s_bpm <= 0.f || s_len == 0) { if(bar) *bar = 0; if(beat) *beat = 0; if(beat_frac) *beat_frac = 0.f; return; }
+    const float bs  = 60.f * (float)LOOPER_RATE / s_bpm;       // samples per beat
+    const float b   = (float)s_pos / bs;                        // beats from the top
+    const int   bi  = (int)b;
+    if(bar)       *bar  = bi / 4 + 1;
+    if(beat)      *beat = bi % 4 + 1;
+    if(beat_frac) *beat_frac = b - (float)bi;
+}
 
 // Length of one bar in samples at the locked bpm, 4/4.
 static inline uint32_t BarSamples(void)
@@ -151,6 +171,26 @@ static void CloseFirstPass(uint32_t len)
         }
     }
     s_len = len;
+
+    // ⚠ Wrap crossfade on the first layer only: the last LOOPER_XFADE_MS fade out while the first
+    // fade in, so the join carries no step. Later layers were recorded against this loop already
+    // playing and line up on their own. Done once, here, at pass close -- nothing at play time.
+    const uint32_t xf = (uint32_t)LOOPER_XFADE_MS * LOOPER_RATE / 1000u;
+    if(len > 2 * xf && s_written[0] >= len)
+    {
+        for(uint32_t i = 0; i < xf; i++)
+        {
+            const float t    = (float)i / (float)xf;            // 0 -> 1 across the fade
+            const float head = (float)s_layer[0][i];
+            const float tail = (float)s_layer[0][len - xf + i];
+            // equal-power: head rises, tail falls; both audible only at the seam
+            const float hv = head * sqrtf(t) + tail * sqrtf(1.f - t);
+            s_layer[0][i] = (int16_t)(hv > 32767.f ? 32767.f : (hv < -32768.f ? -32768.f : hv));
+        }
+        // The tail region itself is now folded into the head; silence it so it isn't heard twice.
+        for(uint32_t i = 0; i < xf; i++)
+            s_layer[0][len - xf + i] = 0;
+    }
 }
 
 static void Apply(uint8_t req)
