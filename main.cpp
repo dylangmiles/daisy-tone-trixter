@@ -2630,12 +2630,18 @@ int main(void)
             g_oled_dirty = true;
         }
 
-        static uint32_t sw_down_at = 0;
-        bool            sw_held    = g_enc.Pressed();
+        static uint32_t sw_down_at  = 0;
+        static int      hold_drawn  = 0;     // 0 nothing, 1 "release for STATS", 2 DFU countdown
+        static int      hold_tenths = -1;
+        bool            sw_held     = g_enc.Pressed();
         if(sw_held)
         {
             if(sw_down_at == 0)
-                sw_down_at = t;
+            {
+                sw_down_at  = t;
+                hold_drawn  = 0;
+                hold_tenths = -1;
+            }
             uint32_t held = t - sw_down_at;
             if(held >= kDfuHoldMs)
             {
@@ -2665,26 +2671,39 @@ int main(void)
             // then told you "release to cancel" -- so a long press appeared to do nothing but
             // threaten DFU. The hold now has three labelled zones, and the panel says which one you
             // are in rather than leaving it to be guessed.
+            // ⚠ These two branches used to flush EVERY pass and then System::Delay(60) -- an 84 ms
+            // loop period for as long as the encoder was held. backing_service() runs once per pass
+            // with a 2 ms budget (~500 samples) against 4000 consumed, so the 683 ms ring drained in
+            // ~0.8 s of hold and every further 100 ms held cost ~72 underruns: a dropout in the
+            // backing track each time the stats screen was opened (found 2026-09-16, `bk under`
+            // 72 -> 142 across two stats holds, 0 during 60 s of untouched play). Now: draw once,
+            // redraw the countdown only when the tenths digit changes, never sleep.
             else if(oled_ok && held > kStatsHoldMs && held <= kStatsMaxMs)
             {
-                oled_clear();
-                OledLine(3, "  release for");
-                OledLine(4, "  STATS");
-                oled_flush();
-                System::Delay(60);
+                if(hold_drawn != 1)
+                {
+                    oled_clear();
+                    OledLine(3, "  release for");
+                    OledLine(4, "  STATS");
+                    oled_flush();
+                    hold_drawn = 1;
+                }
                 continue;
             }
             else if(oled_ok && held > kStatsMaxMs)
             {
-                char b[24];
-                snprintf(b, sizeof(b), "  DFU in %lu.%lus",
-                         (unsigned long)((kDfuHoldMs - held) / 1000),
-                         (unsigned long)(((kDfuHoldMs - held) % 1000) / 100));
-                oled_clear();
-                OledLine(3, b);
-                OledLine(5, "  release to cancel");
-                oled_flush();
-                System::Delay(60);
+                const int tenths = (int)((kDfuHoldMs - held) / 100);
+                if(hold_drawn != 2 || tenths != hold_tenths)
+                {
+                    char b[24];
+                    snprintf(b, sizeof(b), "  DFU in %d.%ds", tenths / 10, tenths % 10);
+                    oled_clear();
+                    OledLine(3, b);
+                    OledLine(5, "  release to cancel");
+                    oled_flush();
+                    hold_drawn  = 2;
+                    hold_tenths = tenths;
+                }
                 continue;                       // hold the countdown on screen
             }
         }

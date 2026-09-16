@@ -241,12 +241,17 @@ int backing_play(int i) {
     s_phase_inc = ((uint64_t)s_rate << 32) / ENGINE_RATE;
     s_data_pos = 0;
     s_cur = i;
+    // Prime an eighth of the ring (~4096 samples, 85 ms) BEFORE the flag goes up. These reads
+    // are BLOCKING in the foreground, so they stall audio exactly like an IR switch does --
+    // acceptable for a deliberate user action, but worth keeping short. backing_service()
+    // bursts 4 chunks/iteration while the ring is under a quarter, so it catches up in ms.
+    // ⚠ s_playing goes true LAST. With it true during the prime, the first callback found the
+    // ring short and counted an underrun (one per press, measured 2026-09-16). A track that has
+    // not started yet is silence, not an underrun -- the counter should only ever mean "the
+    // card fell behind".
+    for (int k = 0; k < 64 && (s_head - s_tail) < RING_SAMPLES / 8; k++)
+        if (!fill_chunk()) break;
     s_playing = true;
-    // Prime only an eighth of the ring (~8 kB). This read is BLOCKING and sits in the
-    // foreground loop, so it stalls audio exactly like an IR switch does -- acceptable
-    // for a deliberate user action, but worth keeping short. backing_service() bursts
-    // 4 chunks/iteration while the ring is under a quarter, so it catches up in a few ms.
-    for (int k = 0; k < 16 && (s_head - s_tail) < RING_SAMPLES / 8; k++) fill_chunk();
     return 0;
 }
 
