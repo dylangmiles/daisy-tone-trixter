@@ -14,9 +14,13 @@ instrument being refined.
 
 | Figure | Reading | Means |
 |---|---|---|
+| **Round-trip latency, EVERY mode** | **3.06 ms** (147 samples) | ⚠ measured 2026-09-16 on two GC-8 channels sharing one clock, 20 impulses each in bypass / comp / 2048-tap IR / song PLAY + looper: **147, 147, 148, 148 — zero jitter**. = 2 × 64-sample blocks + 19 samples codec group delay. The IR head partition and the looper both run inside the callback, so neither adds a block. V1 was 7.1 ms. Nothing hidden in the libDaisy path |
+| Response, pedal alone | **flat +0.05 / −0.63 dB 500 Hz–10 kHz, −3 dB at 39 Hz** | 2026-09-16 sweep. The "200 Hz shoulder" was the bench dongle (1 nF ∥ its own 1 MΩ), never the pedal; the K&K meters **24.5 nF → 6.5 Hz** into Rin 1 MΩ. Rin stays 1 MΩ |
 | Audio CPU, bypass | **1 %** | metering + encoder debounce + copy — the floor |
-| Audio CPU, chain + 2048-tap IR | **16 % avg, 45 % peak** | ⚠ **the H750 carries the IR inline** — the Pico's Core-1 tail offload is not needed here, which had been an assumption |
-| Backing ring | **98–99 %, 0 underruns** | `SERVICE_BUDGET_US` (2000) vs `CHUNK_BYTES` (256) verified — the Pico's silent-2 % failure does **not** occur |
+| Audio CPU, default preset (comp only) | **1 %** | the compressor is free |
+| Audio CPU, chain + 2048-tap IR | **16 % avg, 44 % peak** | ⚠ **the H750 carries the IR inline** — the Pico's Core-1 tail offload is not needed here, which had been an assumption. Unchanged 2026-09-06 → 2026-09-16 |
+| **Audio CPU, worst case** — IR + backing, or IR + **8 looper layers + metronome** | **16 / 45** and **19 % avg, 48 % peak** | ⚠ 2026-09-16: **52 % headroom** at the heaviest thing the pedal can do. Eight summed layers and the click cost 3 % avg / 4 % peak over the IR alone |
+| Backing ring | **98–99 %, 0 underruns** | `SERVICE_BUDGET_US` (2000) vs `CHUNK_BYTES` (256) verified — the Pico's silent-2 % failure does **not** occur. ⚠ 0 *after* `b793908`: the encoder-hold branches used to `System::Delay(60)` per pass, starving the ring during the hold — every stats-screen open during a track was a ~100 ms dropout. Diagnosed from `bk under` arriving in multiples of ~70 with 60 s of untouched play adding none |
 | Encoder decode | **4 transitions per count** | one full quadrature cycle per detent, exactly right |
 | Foreground `w=` | **0** | timings are wrap-clean; a non-zero `w` is now a real stall |
 
@@ -74,6 +78,11 @@ bug**.
   is enough to power it) → the card mounts on the Mac as a 31.9 GB FAT32 volume; written files
   survive a power cycle. Power-cycle to leave. The microSD panel extender is deleted (pinmap §4m).
 - **Song mode** — ✅ **working 2026-09-14** on the footswitches; set list in `sdcard_template/tonetrix/songs.txt`.
+- **Latency + CPU headroom + response** — ✅ **measured 2026-09-16** (table above; session
+  `private/docs/debugging/daisy_latency_response_2026-09-16/`). 3.06 ms every mode, 48 % worst-case
+  peak, flat. **Nothing from it goes on the PCB brief** — that stays at the I²C tick and the return
+  path / ground plane. Bench dongle needs a rev (C1 22 nF, R1 10 MΩ) before its next use.
+- **PCB design** — next.
 - Encoder diagnostics (`enc`, `encwatch`, `encdet`, the `enc:` summary field) are still compiled in.
   They cost nothing idle and would name a dry leg immediately. Keep until the enclosure closes.
 
@@ -292,7 +301,7 @@ the song or opening the menu mid-loop); the 2 s stats and 5 s DFU holds still wo
 while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
 2026-09-14 from the flat first version.
 
-### The looper — `type: looping` (2026-09-14, ⚠ host-tested, not yet played)
+### The looper — `type: looping` (2026-09-14; playing on hardware since 2026-09-15)
 
 `audio/looper.{h,cpp}`, host tests in `tools/host_tests/`. One loop per song, up to **8 layers × 60 s
 in SDRAM** (int16, 46 MB of the 64). Every record pass is a **new layer**, summed on playback — nothing
