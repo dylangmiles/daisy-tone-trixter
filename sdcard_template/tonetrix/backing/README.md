@@ -30,10 +30,15 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 
 | File | bpm | Feel | Try it with |
 |---|---|---|---|
-| `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | **"Walking Blues" — Muddy Waters** *(requested)* |
+| `stomp71`   |  71 | **Foot-stomp + handclap**: kick on all four, claps on 2 and 4, nothing else | **"Am I Wrong" — Keb' Mo'** *(requested 2026-09-18)* |
+| `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
+| `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters** *(requested)* |
+| `ballad62`  |  62 | **Slow 4/4 ballad, as sparse as it gets**: kick on 1, rim on 3, brushed 2 & 4 barely there | **"Desperado" — Eagles** *(requested)* |
 | `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | slow 12/8 ballads, gentle blues |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |
+| `delta92`   |  92 | Sparse Delta shuffle, as `delta81` | **"Cross Road Blues"** *(requested)* |
+| `delta100`  | 100 | Sparse Delta shuffle, as `delta81` | **"Sweet Home Chicago" — Robert Johnson** *(requested)* |
 | `blues100`  | 100 | Same country blues shuffle as `blues92`, a touch brisker | **"I Can't Be Satisfied" — Muddy Waters** *(requested)* |
 | `folk104`   | 104 | Light two-step with brushes, cross-stick | country folk, fingerstyle |
 | `rock120`   | 120 | Straight 8ths, backbeat, open-hat lift into the turnaround | general rock |
@@ -48,11 +53,12 @@ All are **4 bars**, seamless, and start exactly on beat 1.
 ⚠ `blues71` / `blues81` / `blues92` / `blues100` are the **same groove at four tempos** — identical pattern,
 identical swing. Rendered from one style, so a change to the feel applies to all three:
 
-    python3 tools/gen_backing_loops.py country_blues --bpm 71
+    python3 tools/gen_backing_loops.py country_blues --bpm 71     # from daisy/
 
 ## Regenerating
 
-Everything here is synthesised by `tools/gen_backing_loops.py` in the firmware repo —
+Everything here is synthesised by `daisy/tools/gen_backing_loops.py` (moved from `pico/tools/`
+on 2026-09-18 — the Pico copy is frozen with that build) —
 no samples, nothing licensed. Grooves are data (step/velocity lists in `STYLES`), so
 changing a pattern is an edit, not new code.
 
