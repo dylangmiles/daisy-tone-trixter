@@ -40,6 +40,33 @@ extern const Diskio_drvTypeDef tt_sd_driver;
 #include <strings.h>   // strcasecmp
 #include <cstdlib>
 
+// ---------------------------------------------------------------------------------------------
+// printf → USB console. dsp_chain.cpp (shared with the Pico) reports through printf; on the Pico
+// that is the UART, here newlib's default _write is a stub that drops everything -- so `dump`,
+// `eq.hi_gain 2` etc. changed the chain and printed nothing (found 2026-09-18). Route stdout to
+// the same CDC logger PrintLine() uses, a line at a time so the terminal gets CR LF.
+// ⚠ Foreground only: the logger is not interrupt-safe, and neither is anything that printf()s.
+extern "C" int _write(int fd, const char* buf, int len)
+{
+    static char line[160];
+    static int  n = 0;
+    (void)fd;
+    for(int i = 0; i < len; i++)
+    {
+        const char c = buf[i];
+        if(c == '\n' || n == (int)sizeof(line) - 1)
+        {
+            line[n] = 0;
+            daisy::Logger<daisy::LOGGER_INTERNAL>::PrintLine("%s", line);
+            n = 0;
+            if(c != '\n') line[n++] = c;
+        }
+        else if(c != '\r')
+            line[n++] = c;
+    }
+    return len;
+}
+
 using namespace daisy;
 
 static DaisySeed hw;
@@ -2049,6 +2076,7 @@ int main(void)
     // The boot report is instead REPEATED periodically in the monitor loop, so a terminal attached
     // at any time still sees the results. Better than blocking: the board always runs.
     hw.StartLog(false);
+    setvbuf(stdout, NULL, _IONBF, 0);   // printf → _write immediately, not at 1 kB (see _write above)
     hw.usb_handle.SetReceiveCallback(UsbRx, UsbHandle::FS_INTERNAL);
 
     // Heartbeat immediately, before anything that could block or fail, so the LED proves the board

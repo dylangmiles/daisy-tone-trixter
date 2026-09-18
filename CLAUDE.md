@@ -490,6 +490,12 @@ in front of it in `HandleCommand()`.
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
 `bk` · `bk <n>|off` · `bklevel <0..2>` · `dfu` — plus every `dsp_chain` command.
 
+⚠ **`printf` reaches the console only because `main.cpp` defines `_write`** (2026-09-18). `dsp_chain.cpp`
+is shared with the Pico and reports through `printf`; newlib's default `_write` on the H7 is a stub, so
+until then `dump` and every `eq.hi_gain 2`-style echo changed the chain and printed nothing. The hook
+buffers a line and hands it to the CDC logger; `setvbuf(stdout, NULL, _IONBF, 0)` after `StartLog()`
+keeps it immediate. Foreground only — never `printf` from the audio callback.
+
 ⚠ Commands beat the encoder for anything diagnostic: **the output goes to the terminal anyway**, so
 having the request there keeps question and answer together, and a keyboard beats a rotary encoder
 for typing a parameter value.
