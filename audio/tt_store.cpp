@@ -75,6 +75,10 @@ static int parse_list(const char *v, float *out, int maxn) {
 }
 
 // Read a whole small file into buf (NUL-terminated). Returns length, or -1 if absent.
+// ⚠ A file longer than the buffer is TRUNCATED, and the loss is invisible: the last preset simply
+// inherits `default` for every key past the cut. That is exactly what happened on 2026-09-18 -- a
+// commented-up presets.txt reached 9133 bytes against an 8192 buffer, and slg110s loaded with the
+// default EQ and compressor while its IR (an early key) was fine. So: say so, loudly.
 static int read_file(const char *path, char *buf, int cap) {
     FIL f;
     if (f_open(&f, path, FA_READ) != FR_OK) return -1;
@@ -85,6 +89,9 @@ static int read_file(const char *path, char *buf, int cap) {
         total += br;
     }
     buf[total] = 0;
+    if (total >= (UINT)(cap - 1) && f_size(&f) > (FSIZE_t)total)
+        printf("!! %s is %lu bytes, buffer %d: TRUNCATED -- later presets are missing keys\n",
+               path, (unsigned long)f_size(&f), cap);
     f_close(&f);
     return (int)total;
 }
@@ -272,7 +279,7 @@ const char *tt_store_song_backing(int i)   { return (i >= 0 && i < s_songs) ? s_
 bool tt_store_load(void) {
     s_n = 0; s_songs = 0; s_have_config = false; s_gr = false; s_gr_set = false; s_boot[0] = 0;
 
-    static char buf[8192];
+    static char buf[32768];   // ⚠ was 8192: presets.txt outgrew it on 2026-09-18 (comments count)
     if (read_file("/tonetrix/config.txt",  buf, sizeof buf) >= 0) parse_config(buf);
     if (read_file("/tonetrix/presets.txt", buf, sizeof buf) >= 0) parse_presets(buf);
     if (read_file("/tonetrix/songs.txt",   buf, sizeof buf) >= 0) parse_songs(buf);

@@ -427,6 +427,12 @@ hundred milliseconds and the convolver is re-initialised under a running callbac
 the same "multi-100 ms dropout". `g_ir_active` is cleared **first** so the callback stops touching
 the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from the audio callback.
 
+⚠ **The card files are read into one 32 kB buffer, and a longer file is TRUNCATED SILENTLY** — the last
+preset just inherits `default` for every key past the cut, while its early keys (name, ir) look fine.
+Bit on 2026-09-18 at 8 kB: `slg110s` loaded the garrison IR with default EQ/comp, and the console
+`dump` was the only thing that showed it. The reader now prints `!! … TRUNCATED` when it happens;
+comments count toward the size.
+
 ⚠ **Installing presets is not the same as reading them.** `tt_store_load()` reads the card;
 `dsp_chain_install_presets()` hands them to the chain. Without the second call
 `dsp_chain_find_preset()` searches the built-in table and returns −1 for every name on the card —
