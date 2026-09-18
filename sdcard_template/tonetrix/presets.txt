@@ -132,13 +132,14 @@ bk.level: 1.00
 
 # slg110s — Yamaha Silent Guitar SLG110S (steel string, 2009–2014 generation): under-saddle piezo
 # into the guitar's OWN active preamp, with onboard reverb/chorus, a tone knob and a headphone out.
-# ⚠ NOT the SRT-modelling SLG200 — that is the `silent` preset above. The 110S has no body modelling
-# to switch off, but it has EFFECTS: ⚠ set the SLG's reverb/chorus to OFF and its TONE to centre
+# ⚠ NOT the SRT-modelling SLG200 (that would want its body modelling switched OFF; no preset for it
+# yet). The 110S has no body modelling to switch off, but it has EFFECTS: ⚠ set the SLG's reverb/chorus to OFF and its TONE to centre
 # before judging this, or the IR is convolving a wet, pre-shaped signal and nothing attributes.
 #
-# Same reasoning as `silent`: no soundbox → no transfer function to capture → borrow the GARRISON IR
-# (captured through an active preamp, like this source). Starting EQ differs from `silent` because
-# the 110S's piezo sits brighter and quackier: a deeper cut around 1.2 kHz and a touch more low shelf.
+# No soundbox → no transfer function to capture → borrow the GARRISON IR (captured through an active
+# preamp, like this source; an IR embeds its source pickup as well as the target body, and the
+# tanglewood IR came through a passive K&K). The 110S's piezo sits brighter and quackier than the
+# Garrison's: a cut around 1.2 kHz and a touch more low shelf to start.
 # ⚠ ALL EAR VALUES, UNTUNED. Play it against the Garrison; move eq.mid first (frequency, then depth).
 #
 # Level: the SLG's output is active and can run hot. Start with the guitar's volume at 3/4 (the same
