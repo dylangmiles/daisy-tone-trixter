@@ -1,0 +1,8 @@
+# generated / local
+erc*.json
+*.net
+svg/
+*-backups/
+fp-info-cache
+*.kicad_prl
+*.lck
