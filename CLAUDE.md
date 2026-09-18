@@ -300,7 +300,10 @@ edge** (a foot landing is timed like a stomp; a lift is not).
 Each step in SELECT keeps the current preset (or loads a song's override), so the sound is audible before committing. Encoder turn steps
 songs in SELECT; ⚠ **in PLAY the encoder is disabled** (turn and click — a brushed knob was changing
 the song or opening the menu mid-loop); the 2 s stats and 5 s DFU holds still work. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
-while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten
+while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. **Entering SELECT engages the
+chain** (`SongPick` clears `g_dsp_bypass`): a song is a performance, and you should never be on stage in a
+song with the pedal silently in bypass. Confirmed deliberate 2026-09-18 (the top line now shows BYP/ON so
+it is visible). If it ever needs to move, the commitment point is PLAY, not SELECT. Rewritten
 2026-09-14 from the flat first version.
 
 ### The looper — `type: looping` (2026-09-14; playing on hardware since 2026-09-15)
