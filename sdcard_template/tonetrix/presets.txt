@@ -158,6 +158,10 @@ eq.hi: [3500, -2.0]
 comp: [-28, 4.0, 1, 250, 16]
 out.level: 0.45
 pga: 0
-# Same levelling as the others -- see tanglewood-slide.
-byp.level: 1.6
+# ⚠ byp.level 1.0 (UNITY), NOT the 1.6 the other presets use -- bypass was much louder than engaged
+# at 1.6 (2026-09-18). The SLG's active output runs hotter than the K&K, so the engaged path sits deeper
+# into the compressor (−28 dB threshold, 4:1) and needs less dry-side make-up to match. Trim by ear at
+# playing level from here; if bypass is still louder, go below 1.0 (0.8 ≈ −2 dB) rather than raising
+# out.level, so the preset stays level-matched with the others when switching.
+byp.level: 1.0
 bk.level: 1.00
