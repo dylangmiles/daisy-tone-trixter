@@ -516,6 +516,11 @@ stall, so a plain blocking flush is harmless.
 ⚠ **The menu redraws at 100 ms, the home screen at 500 ms.** Navigation has to feel immediate under
 the fingers; glanceable data does not.
 
+**Level rows on MAIN** (all Daisy additions, all live, none saved to the card): `BK level` (backing
+bed), `LP level` (looper playback), **`BYP level`** (bypass make-up, 2026-09-18 — the A/B trim: stomp
+the bypass switch while turning until engaged and bypassed match at *playing* level, then copy the
+number into the preset's `byp.level`). 0.05 per detent; click to leave.
+
 ### ⚠ Two hooks that are honest stubs
 
 - **`app_pga_*` — there is NO PGA on this board.** The Pico drove the ES8388's input PGA (0..+24 dB

@@ -9,19 +9,19 @@
 
 #include <stdio.h>
 
-enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING, M_BKLEVEL, M_LPLEVEL };
+enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING, M_BKLEVEL, M_LPLEVEL, M_BYPLEVEL };
 
 static int s_mode  = M_STAGES;
 // ⚠ DAISY PORT: the PGA row is REMOVED. The Pico drove the ES8388's input PGA in 3 dB steps; the
 // Seed3's TAC5242 is hardware-strapped with no software gain control at all, so the row was a
 // control that did nothing. Front-end level is set by the analogue daughter instead.
-static int s_sel   = 0;   // main-level row (0=back, 1=Preset, 2=IR, 3=BK, 4=BK level, 5=LP level, 6=Meters, 7=I2C, 8+=stage)
+static int s_sel   = 0;   // main-level row (0=back, 1=Preset, 2=IR, 3=BK, 4=BK level, 5=LP level, 6=BYP level, 7=Meters, 8=I2C, 9+=stage)
 static int s_stage = 0;   // entered stage (PARAMS / EDIT levels)
 static int s_item  = 0;   // selected item in PARAMS: 0 = "< back", 1 = enable, 2+ = param[item-2]
 static int s_pick  = 0;   // selected entry in the PRESET / IR picker
 static bool s_go_home = false;  // set when "< back" clicked at MAIN; consumed by menu_take_home()
 
-#define N_SPECIAL 8       // main-level rows before the stages: back, Preset, IR, BK, BK level, LP level, Meters, I2C
+#define N_SPECIAL 9       // main-level rows before the stages: back, Preset, IR, BK, BK level, LP level, BYP level, Meters, I2C
 #define VIS_ROWS  7       // visible list rows below the title (8 text rows total, row 0 = title)
 
 void menu_init(void) { s_mode = M_STAGES; s_sel = 0; s_stage = 0; s_item = 0; s_pick = 0; s_go_home = false; }
@@ -56,8 +56,9 @@ bool menu_event(int turn, bool click) {
             else if (s_sel == 3) { s_mode = M_BACKING; s_pick = bk_active(); }
             else if (s_sel == 4) { s_mode = M_BKLEVEL; }              // ⚠ Daisy addition: backing level
             else if (s_sel == 5) { s_mode = M_LPLEVEL; }              // ⚠ Daisy addition: looper level
-            else if (s_sel == 6) { app_gr_set(!app_gr_enabled()); }   // toggle ALL home meters in place
-            else if (s_sel == 7) { app_i2c_cycle(); }                 // ⚠ Daisy addition: cycle bus clock
+            else if (s_sel == 6) { s_mode = M_BYPLEVEL; }             // ⚠ Daisy addition: bypass make-up (A/B match)
+            else if (s_sel == 7) { app_gr_set(!app_gr_enabled()); }   // toggle ALL home meters in place
+            else if (s_sel == 8) { app_i2c_cycle(); }                 // ⚠ Daisy addition: cycle bus clock
             else                 { s_mode = M_PARAMS; s_stage = s_sel - N_SPECIAL; s_item = 0; }
         }
         return turn || click;
@@ -87,6 +88,13 @@ bool menu_event(int turn, bool click) {
     }
     if (s_mode == M_LPLEVEL) {                         // ⚠ Daisy addition: live looper level
         if (turn) looper_set_level(looper_level() + 0.05f * turn);
+        if (click) s_mode = M_STAGES;
+        return turn || click;
+    }
+    if (s_mode == M_BYPLEVEL) {                        // ⚠ Daisy addition: bypass make-up, live.
+        // Trim it with the bypass switch under foot until engaged and bypassed match at PLAYING
+        // level, then copy the number into the preset's byp.level -- it is not saved to the card.
+        if (turn) dsp_chain_set_byp_level(dsp_chain_byp_level() + 0.05f * turn);
         if (click) s_mode = M_STAGES;
         return turn || click;
     }
@@ -179,8 +187,9 @@ void menu_render(void) {
             else if (it == 3) snprintf(line, sizeof line, "BK:%s",   bk_name(bk_active()));
             else if (it == 4) snprintf(line, sizeof line, "BK level  %.2f", (double)backing_level());
             else if (it == 5) snprintf(line, sizeof line, "LP level  %.2f", (double)looper_level());
-            else if (it == 6) snprintf(line, sizeof line, "Meters    %s", app_gr_enabled() ? "on" : "off");
-            else if (it == 7) snprintf(line, sizeof line, "I2C     %4dk", app_i2c_khz());
+            else if (it == 6) snprintf(line, sizeof line, "BYP level %.2f", (double)dsp_chain_byp_level());
+            else if (it == 7) snprintf(line, sizeof line, "Meters    %s", app_gr_enabled() ? "on" : "off");
+            else if (it == 8) snprintf(line, sizeof line, "I2C     %4dk", app_i2c_khz());
             else {
                 Stage *st = dsp_chain_stage(it - N_SPECIAL);
                 // value column at char 10, aligned with the "Meters    <on/off>" row above
@@ -201,6 +210,12 @@ void menu_render(void) {
         oled_text(0, 0, "-- LOOP LEVEL --");
         snprintf(line, sizeof line, "%.2f", (double)looper_level());
         oled_text(0, 26, line);
+        oled_text(0, 50, "turn to set, click ok");
+    } else if (s_mode == M_BYPLEVEL) {
+        oled_text(0, 0, "-- BYPASS LEVEL --");
+        snprintf(line, sizeof line, "%.2f  (1.00 unity)", (double)dsp_chain_byp_level());
+        oled_text(0, 26, line);
+        oled_text(0, 42, "stomp bypass to A/B");
         oled_text(0, 50, "turn to set, click ok");
     } else if (s_mode == M_BACKING) {
         picker("-- BACKING --", bk_count(), s_pick, bk_name, bk_active());
