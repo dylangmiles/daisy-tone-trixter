@@ -273,9 +273,11 @@ The first time a Mac sees the device it asks **"Allow accessory to connect?"** �
 
 ### Song mode — a set list on the card
 
-`/tonetrix/songs.txt` (`sdcard_template/tonetrix/`): a song is a **name**, a **preset** (by name) and
-a **backing** track (a file in `/tonetrix/backing`, or none). Parsed by `tt_store_load()` alongside
-presets; count 0 with no file, and nothing else changes.
+`/tonetrix/songs.txt` (`sdcard_template/tonetrix/`): a song is a **name** and a **backing** track (a
+file in `/tonetrix/backing`, or none), optionally with a **preset** override. ⚠ The override is normally
+absent: **the preset belongs to the guitar** — set once after plugging in, and the whole set list plays
+through it (decided 2026-09-18, so there is not a set list per guitar). Parsed by `tt_store_load()`
+alongside presets; count 0 with no file, and nothing else changes.
 
 Three states, footswitches only — **tuner hold steps forward, bypass hold steps back**:
 
@@ -295,7 +297,7 @@ edge** (a foot landing is timed like a stomp; a lift is not).
 | **song select** | previous song | → normal | next song | → song play |
 | **song play** | *(looper: stop)* | *(looper: clear)* · **long** hold → select | **start / stop** (press edge) · *(looper: rec/play/overdub)* | *(looper: undo)* |
 
-Each step in SELECT loads the preset, so the sound is audible before committing. Encoder turn steps
+Each step in SELECT keeps the current preset (or loads a song's override), so the sound is audible before committing. Encoder turn steps
 songs in SELECT; ⚠ **in PLAY the encoder is disabled** (turn and click — a brushed knob was changing
 the song or opening the menu mid-loop); the 2 s stats and 5 s DFU holds still work. Hold thresholds: <0.8 s tap · 0.8–1.5 s hold · ≥1.5 s long hold, each firing
 while still pressed. ⚠ **No DSP bypass inside song mode** — bench gesture, normal mode only. Rewritten

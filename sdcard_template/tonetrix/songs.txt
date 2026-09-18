@@ -7,7 +7,11 @@
 #   type:      song (default) — a preset + optional backing track
 #              looping        — a looper session (⚠ firmware pending: until the
 #                               looper lands this loads as a plain preset song)
-#   preset:    a preset name from presets.txt; omit to keep whatever is loaded
+#   preset:    OPTIONAL OVERRIDE, normally absent. The preset belongs to the GUITAR: set it
+#              once after plugging in (encoder, or config boot_preset), and every song plays
+#              through it. Only name a preset here when a song genuinely needs a different
+#              sound from the rest of the set -- otherwise you end up with a set list per
+#              guitar. (Decided 2026-09-18.)
 #   backing:   a file in /tonetrix/backing (with or without .wav), or none
 #   bpm:       optional. looping: locks the tempo (click / count-in, first pass
 #              snaps to whole bars); absent = free, detected from the first pass
@@ -22,28 +26,23 @@
 #                 (looper: right hold = undo a layer -- any time, even mid-overdub;
 #                  left tap = stop; left hold = clear all, only while stopped)
 #   encoder turn = previous / next song, in either state
-# Picking a song loads its preset and engages the chain; nothing starts until
-# the right switch — so arm the song, then start it on the beat.
+# Picking a song keeps the current preset (or loads its override) and engages the chain;
+# nothing starts until the right switch — so arm the song, then start it on the beat.
 
 name: Blues Slide 71
-preset: tanglewood-slide
 backing: blues71
 ---
 name: Blues Slide 81
-preset: tanglewood-slide
 backing: blues81
 ---
 name: Blues Slide 92
-preset: tanglewood-slide
 backing: blues92
 ---
 name: Blues Slide 100
-preset: tanglewood-slide
 backing: blues100
 ---
 name: Jam
 type: looping
-preset: tanglewood-slide
 # no bpm: free loop. Press ARMS; recording starts on the first note. The end
 # press means "that was the last beat": the loop runs one more beat (the gap
 # between your last two attacks) and closes there, so the last note keeps
@@ -51,7 +50,6 @@ preset: tanglewood-slide
 ---
 name: Jam 100
 type: looping
-preset: tanglewood-slide
 bpm: 100
 # tempo-locked: a metronome plays from arming through the first pass; the
 # end press snaps UP to the next bar line at 100 bpm (press anywhere in the
