@@ -30,6 +30,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 
 | File | bpm | Feel | Try it with |
 |---|---|---|---|
+| `delta72`   |  72 | Sparse Delta shuffle, as `delta81`, slower | **"Come Back Baby" — Lightnin' Hopkins** *(requested)* |
 | `stomp71`   |  71 | **Foot-stomp + handclap**: kick on all four, claps on 2 and 4, nothing else | **"Am I Wrong" — Keb' Mo'** *(requested 2026-09-18)* |
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
 | `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters** *(requested)* |

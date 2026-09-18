@@ -89,3 +89,7 @@ backing: rkbly156
 name: Brown Eyed Grl
 backing: soul150
 # Van Morrison -- bright soul-pop, full kit. 150 bpm.
+---
+name: Come Back Baby
+backing: delta72
+# Lightnin' Hopkins -- slow sparse Delta bed, 72 bpm. Hopkins drifts; the bed only marks the bar.
