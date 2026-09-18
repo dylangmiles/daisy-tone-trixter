@@ -1117,8 +1117,12 @@ static void OledSong(void)
     const int  n       = tt_store_song_count();
     const bool play    = (g_song == SongState::Play);
     const bool looping = (n > 0) && tt_store_song_type(g_song_idx) == TT_SONG_LOOPING;
+    // Top line: state, position, then the same BYP/ON + cpu% the home screen shows, right-justified
+    // in the 21-column row (6x8 font, 128 px) so it reads the same wherever the eye is used to it.
     snprintf(buf, sizeof(buf), "%s %d/%d", play ? "PLAY" : "SELECT", n ? g_song_idx + 1 : 0, n);
     oled_text(0, 0, buf);
+    snprintf(buf, sizeof(buf), "%s %2d%%", g_dsp_bypass ? "BYP" : " ON", (int)(g_cpu_avg + 0.5f));
+    oled_text(128 - 6 * (int)strlen(buf), 0, buf);
     if(n > 0)
     {
         oled_text15x(0, 16, tt_store_song_name(g_song_idx));     // 9x16, 14 chars: readable standing
