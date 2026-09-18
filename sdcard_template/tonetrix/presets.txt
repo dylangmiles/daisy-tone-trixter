@@ -164,3 +164,36 @@ pga: 0
 # Same levelling as the others -- see tanglewood-slide.
 byp.level: 1.6
 bk.level: 1.00
+
+---
+
+# slg110s — Yamaha Silent Guitar SLG110S (steel string, 2009–2014 generation): under-saddle piezo
+# into the guitar's OWN active preamp, with onboard reverb/chorus, a tone knob and a headphone out.
+# ⚠ NOT the SRT-modelling SLG200 — that is the `silent` preset above. The 110S has no body modelling
+# to switch off, but it has EFFECTS: ⚠ set the SLG's reverb/chorus to OFF and its TONE to centre
+# before judging this, or the IR is convolving a wet, pre-shaped signal and nothing attributes.
+#
+# Same reasoning as `silent`: no soundbox → no transfer function to capture → borrow the GARRISON IR
+# (captured through an active preamp, like this source). Starting EQ differs from `silent` because
+# the 110S's piezo sits brighter and quackier: a deeper cut around 1.2 kHz and a touch more low shelf.
+# ⚠ ALL EAR VALUES, UNTUNED. Play it against the Garrison; move eq.mid first (frequency, then depth).
+#
+# Level: the SLG's output is active and can run hot. Start with the guitar's volume at 3/4 (the same
+# reference position the garrison preset was dialled at) and watch `clips` on the stats screen — if
+# it counts on hard strums, back the guitar's volume off before touching in.level.
+name: slg110s
+ir: garrison.wav
+in.on: 1
+eq.on: 1
+comp.on: 1
+out.on: 1
+in.level: 0.75
+eq.lo: [120, 2.5]
+eq.mid: [1200, -3.5, 1.2]
+eq.hi: [3500, -2.0]
+comp: [-28, 4.0, 1, 250, 16]
+out.level: 0.45
+pga: 0
+# Same levelling as the others -- see tanglewood-slide.
+byp.level: 1.6
+bk.level: 1.00
