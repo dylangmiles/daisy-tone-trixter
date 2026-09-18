@@ -107,6 +107,10 @@ void backing_scan(void) {
         strncpy(e->name, fno.fname, sizeof e->name - 1); e->name[sizeof e->name - 1] = 0;
         snprintf(e->path, sizeof e->path, "/tonetrix/backing/%s", fno.fname);
     }
+    // ⚠ Say so if the table filled: with 16 slots and 18 files the last two were simply not there,
+    // and songs.txt naming them failed with "backing not found" (2026-09-18).
+    if (s_count >= BACKING_MAX_FILES && f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+        printf("!! /tonetrix/backing has more than %d files -- the rest are NOT listed\n", BACKING_MAX_FILES);
     f_closedir(&dir);
 }
 

@@ -558,6 +558,12 @@ processing would be both wrong and a waste of the budget.
 ⚠ **`backing_service()` runs in the FOREGROUND, never the audio callback.** It reads the SD card,
 which blocks; `SERVICE_BUDGET_US` caps how long it may spend per pass.
 
+⚠ **The backing folder is scanned into a fixed table — `BACKING_MAX_FILES`, now 48 (was 16).** Past
+the limit the scan just stops, in directory order, and the missing loops show up only as `backing not
+found` on whichever songs name them (2026-09-18: 18 files, `soul150` and `blues71` gone). The scan
+now prints `!! … more than N files` when it fills. Same class as the `presets.txt` buffer: a silent
+cap on the card's contents.
+
 ### ⚠ The 64 KB ring lives in SDRAM
 
 `s_ring[32768]` int16 fitted in the RP2350's main RAM but **overflowed DTCMRAM by 976 bytes here and
