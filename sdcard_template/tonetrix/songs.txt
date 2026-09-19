@@ -71,8 +71,8 @@ backing: delta92
 # Robert Johnson / Cream feel at 92 -- same sparse Delta bed, brisker.
 ---
 name: Sweet Home Chi
-backing: delta100
-# Robert Johnson -- sparse Delta bed at 100 bpm. (14-char screen name.)
+backing: delta92
+# Robert Johnson -- sparse Delta bed at 92 bpm (was 100; 2026-09-19). (14-char screen name.)
 ---
 name: Cant B Satisfd
 backing: blues100
