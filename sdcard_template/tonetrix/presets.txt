@@ -170,3 +170,38 @@ pga: 0
 # out.level, so the preset stays level-matched with the others when switching.
 byp.level: 1.0
 bk.level: 1.00
+
+---
+
+# walden — Walden D2040 (dreadnought, solid cedar top, rosewood back/sides) with a K&K Pure Mini
+# fitted 2026-09-21. Same pickup as the Tanglewood, so it BORROWS THE TANGLEWOOD IR until a Walden IR
+# is captured; this preset exists so the EQ and comp can be voiced for THIS guitar without touching
+# tanglewood-slide. ⚠ EAR-GUESSED, UNPLAYED — starting points from what the two guitars are:
+#   - a dreadnought has more low end and a bigger box resonance than the Tanglewood; the K&K hears
+#     that, so the low shelf drops to +1 and the mid cut moves DOWN to ~600 Hz (dreadnought boom sits
+#     lower than the smaller body's honk) and goes slightly deeper.
+#   - cedar top = warmer, softer attack, less top-end than spruce; the high shelf is left FLAT rather
+#     than cut, so the cedar isn't dulled further.
+#   - flatpicking / strumming rather than slide: a slower comp attack (10 ms) keeps the pick transient,
+#     a lower ratio (3:1) and a longer release (400 ms) breathe with strummed chords instead of pumping.
+#     Threshold stays at -28 so the make-up and out.level line up with the other presets (level-matched).
+# Tune order: play it against tanglewood-slide on the same phrase; move eq.mid_freq first (500..800),
+# then eq.mid_gain, then comp.attack. `dump` when it lands and write the numbers here.
+# Same K&K → no pad, guitar at full volume (the K&K has no volume), watch `clips` on hard strums.
+name: walden
+ir: tanglewood.wav
+in.on: 1
+eq.on: 1
+comp.on: 1
+out.on: 1
+in.level: 0.75
+eq.lo: [120, 1.0]
+eq.mid: [600, -3.5, 1.0]
+eq.hi: [3500, 0.0]
+comp: [-28, 3.0, 10, 400, 16]
+out.level: 0.45
+pga: 0
+# Same levelling as the others -- see tanglewood-slide. 1.6 was ear-derived on the Tanglewood with the
+# same pickup, so it is the right starting point; trim on the BYP level menu row if the A/B is off.
+byp.level: 1.6
+bk.level: 1.00
