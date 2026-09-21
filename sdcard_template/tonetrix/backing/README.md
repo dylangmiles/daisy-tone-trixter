@@ -35,7 +35,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
 | `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters**, **"Sweet Home Chicago"** *(requested)* |
 | `ballad62`  |  62 | **Slow 4/4 ballad, as sparse as it gets**: kick on 1, rim on 3, brushed 2 & 4 barely there | **"Desperado" — Eagles** *(requested)* |
-| `folk92`    |  92 | Light two-step with brushes, swirl on the offbeats | **"Angel from Montgomery" — John Prine** *(requested)* |
+| `folksh92`  |  92 | Slow brushed **12/8 shuffle** (in four), swirl on the "and" | **"Angel from Montgomery" — Prine / Raitt** *(requested)* |
 | `folksh96`  |  96 | Gentle 12/8 lilt, brushed | **"Wonderful Tonight" — Eric Clapton** *(requested)* |
 | `ssoul78`   |  78 | **Slow soul pocket**: kick 1 + pickup into 3, cross-stick 2 & 4, light swung hat | **"Ain't No Sunshine" — Bill Withers** *(requested)* |
 | `rise76`    |  76 | **True 6/8**, felt in TWO — bass on 1 & 4, light hat over the six eighths | **"House of the Rising Sun" — The Animals** *(requested)* |

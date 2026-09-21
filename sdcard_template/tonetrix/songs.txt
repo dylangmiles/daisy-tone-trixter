@@ -116,8 +116,9 @@ backing: folkr128
 # Neil Young -- gentle country-folk-rock, sparse kick, soft brushed backbeat. 128 bpm.
 ---
 name: Angel Montgmry
-backing: folk92
-# John Prine, "Angel from Montgomery" -- laid-back two-step with brushes, swirl on the offbeats. 92 bpm.
+backing: folksh92
+# John Prine / Bonnie Raitt "Angel from Montgomery" -- 12/8 shuffle in four, brushed. 92 bpm
+# (was folk92, a straight two-step; moved to the shuffle 2026-09-21 for the Raitt feel).
 ---
 name: Rising Sun
 backing: rise76
