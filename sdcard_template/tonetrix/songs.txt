@@ -70,21 +70,21 @@ name: Cross Road
 backing: delta92
 # Robert Johnson / Cream feel at 92 -- same sparse Delta bed, brisker.
 ---
-name: Sweet Home Chi
-backing: delta92
-# Robert Johnson -- sparse Delta bed at 92 bpm (was 100; 2026-09-19). (14-char screen name.)
----
 name: Cant B Satisfd
 backing: blues100
 # Muddy Waters -- full country-blues shuffle at 100 (the bed the song was originally requested for).
+---
+name: Sweet Home Chi
+backing: delta81
+# Robert Johnson -- sparse Delta bed, 81 bpm (100 → 92 → 81, 2026-09-21). (14-char screen name.)
 ---
 name: Desperado
 backing: ballad62
 # Eagles -- as sparse as it gets: kick on 1, rim on 3, brushed 2 & 4 barely there. 62 bpm.
 ---
 name: Crazy Little
-backing: rkbly156
-# Queen -- rockabilly bounce, claps on the backbeat. 156 bpm.
+backing: rkbly145
+# Queen -- rockabilly bounce, claps on the backbeat. 145 bpm (was 156; 2026-09-21).
 ---
 name: Brown Eyed Grl
 backing: soul150

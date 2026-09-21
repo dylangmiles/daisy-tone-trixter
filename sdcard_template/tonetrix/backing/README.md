@@ -33,7 +33,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `delta72`   |  72 | Sparse Delta shuffle, as `delta81`, slower | **"Come Back Baby" — Lightnin' Hopkins** *(requested)* |
 | `stomp71`   |  71 | **Foot-stomp + handclap**: kick on all four, claps on 2 and 4, nothing else | **"Am I Wrong" — Keb' Mo'** *(requested 2026-09-18)* |
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
-| `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters** *(requested)* |
+| `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters**, **"Sweet Home Chicago"** *(requested)* |
 | `ballad62`  |  62 | **Slow 4/4 ballad, as sparse as it gets**: kick on 1, rim on 3, brushed 2 & 4 barely there | **"Desperado" — Eagles** *(requested)* |
 | `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | slow 12/8 ballads, gentle blues |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
@@ -47,7 +47,8 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `rkbly138`  | 138 | Rockabilly, handclaps on the backbeat, more bounce | slower take on the below |
 | `soul140`   | 140 | Soul-pop with a little pocket | slower take on the below |
 | `soul150`   | 150 | Bright uptempo soul-pop, full kit, driving 8ths | **"Brown Eyed Girl" — Van Morrison** *(requested)* |
-| `rkbly156`  | 156 | Rockabilly bounce, handclaps doubling the backbeat | **"Crazy Little Thing Called Love" — Queen** *(requested)* |
+| `rkbly145`  | 145 | Rockabilly bounce, handclaps doubling the backbeat | **"Crazy Little Thing Called Love" — Queen** *(requested; 156 was too quick)* |
+| `rkbly156`  | 156 | Rockabilly bounce, handclaps doubling the backbeat | brisker take on the above |
 
 All are **4 bars**, seamless, and start exactly on beat 1.
 
