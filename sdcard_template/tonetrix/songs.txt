@@ -102,3 +102,23 @@ backing: ssoul78
 name: Cant Find Home
 backing: folkd92
 # Blind Faith, "Can't Find My Way Home" -- driving acoustic folk-rock: kick on every beat, snare 2 & 4. 92 bpm.
+---
+name: Wonderfl Tnite
+backing: folksh96
+# Eric Clapton, "Wonderful Tonight" -- gentle 12/8 lilt, brushed. 96 bpm.
+---
+name: Father and Son
+backing: folkr128
+# Cat Stevens -- gentle country-folk-rock strum, soft brushed backbeat. 128 bpm. (shares Old Man's bed)
+---
+name: Old Man
+backing: folkr128
+# Neil Young -- gentle country-folk-rock, sparse kick, soft brushed backbeat. 128 bpm.
+---
+name: Angel Montgmry
+backing: folk92
+# John Prine, "Angel from Montgomery" -- laid-back two-step with brushes, swirl on the offbeats. 92 bpm.
+---
+name: Rising Sun
+backing: folksh76
+# The Animals, "House of the Rising Sun" -- slow 6/8 arpeggio feel on the brushed 12/8 shuffle. 76 bpm.

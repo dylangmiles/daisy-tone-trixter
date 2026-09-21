@@ -35,8 +35,10 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
 | `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters**, **"Sweet Home Chicago"** *(requested)* |
 | `ballad62`  |  62 | **Slow 4/4 ballad, as sparse as it gets**: kick on 1, rim on 3, brushed 2 & 4 barely there | **"Desperado" — Eagles** *(requested)* |
+| `folk92`    |  92 | Light two-step with brushes, swirl on the offbeats | **"Angel from Montgomery" — John Prine** *(requested)* |
+| `folksh96`  |  96 | Gentle 12/8 lilt, brushed | **"Wonderful Tonight" — Eric Clapton** *(requested)* |
 | `ssoul78`   |  78 | **Slow soul pocket**: kick 1 + pickup into 3, cross-stick 2 & 4, light swung hat | **"Ain't No Sunshine" — Bill Withers** *(requested)* |
-| `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | slow 12/8 ballads, gentle blues |
+| `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | **"House of the Rising Sun" — The Animals** *(requested)* |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
 | `folkd92`   |  92 | **Driving acoustic folk-rock**: kick on every beat, snare 2 & 4, 8th hat | **"Can't Find My Way Home" — Blind Faith** *(requested)* |
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |
@@ -45,7 +47,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `blues100`  | 100 | Same country blues shuffle as `blues92`, a touch brisker | **"I Can't Be Satisfied" — Muddy Waters** *(requested)* |
 | `folk104`   | 104 | Light two-step with brushes, cross-stick | country folk, fingerstyle |
 | `rock120`   | 120 | Straight 8ths, backbeat, open-hat lift into the turnaround | general rock |
-| `folkr128`  | 128 | Gentle country-folk-rock, soft brushed backbeat, sparse kick | **"Old Man" — Neil Young** *(requested)* |
+| `folkr128`  | 128 | Gentle country-folk-rock, soft brushed backbeat, sparse kick | **"Old Man" — Neil Young**, **"Father and Son" — Cat Stevens** *(requested)* |
 | `rkbly138`  | 138 | Rockabilly, handclaps on the backbeat, more bounce | slower take on the below |
 | `soul140`   | 140 | Soul-pop with a little pocket | slower take on the below |
 | `soull150`  | 150 | **Soul-pop, simplified**: kick 1 & 3, snare 2 & 4, straight hat, no ghosts, no fill | **"Brown Eyed Girl" — Van Morrison** *(requested; the full kit was busy under strummed acoustic)* |
