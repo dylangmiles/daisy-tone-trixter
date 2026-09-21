@@ -38,7 +38,7 @@ backing: blues81
 name: Blues Slide 92
 backing: blues92
 ---
-name: Blues Slide 100
+name: Blues Slide100
 backing: blues100
 ---
 name: Free Jam
