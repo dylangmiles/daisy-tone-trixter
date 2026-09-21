@@ -432,6 +432,11 @@ hundred milliseconds and the convolver is re-initialised under a running callbac
 the same "multi-100 ms dropout". `g_ir_active` is cleared **first** so the callback stops touching
 the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from the audio callback.
 
+⚠ **Three fixed caps on the card's contents, all now with a `!!` warning when hit** (each bit us
+silently once): `TT_MAX_SONGS` **48** (was 16 — the set list reached 22 on 2026-09-21 and songs 17+
+vanished), `BACKING_MAX_FILES` **48** (was 16), and the 32 kB read buffer below. Whenever the card can
+hold more of a thing than a fixed array, it must say when it fills.
+
 ⚠ **The card files are read into one 32 kB buffer, and a longer file is TRUNCATED SILENTLY** — the last
 preset just inherits `default` for every key past the cut, while its early keys (name, ir) look fine.
 Bit on 2026-09-18 at 8 kB: `slg110s` loaded the garrison IR with default EQ/comp, and the console

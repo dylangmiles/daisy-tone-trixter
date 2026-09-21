@@ -209,7 +209,12 @@ static void parse_presets(char *buf) {
 static void song_commit(const char *nm, const char *pr, const char *bk, uint8_t ty, float bpm, int bars, bool *active) {
     if (!*active) return;
     *active = false;
-    if (nm[0] == 0 || s_songs >= TT_MAX_SONGS) return;
+    if (nm[0] == 0) return;
+    if (s_songs >= TT_MAX_SONGS) {   // ⚠ same silent-cap class as the presets buffer / backing table
+        static bool warned = false;
+        if (!warned) { printf("!! more than %d songs in songs.txt -- the rest are NOT loaded\n", TT_MAX_SONGS); warned = true; }
+        return;
+    }
     strncpy(s_song_name[s_songs],    nm, NAME_MAX - 1); s_song_name[s_songs][NAME_MAX - 1]  = 0;
     strncpy(s_song_preset[s_songs],  pr, NAME_MAX - 1); s_song_preset[s_songs][NAME_MAX - 1] = 0;
     strncpy(s_song_backing[s_songs], bk, IR_MAX - 1);   s_song_backing[s_songs][IR_MAX - 1]  = 0;
