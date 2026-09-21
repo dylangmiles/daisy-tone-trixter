@@ -120,5 +120,6 @@ backing: folk92
 # John Prine, "Angel from Montgomery" -- laid-back two-step with brushes, swirl on the offbeats. 92 bpm.
 ---
 name: Rising Sun
-backing: folksh76
-# The Animals, "House of the Rising Sun" -- slow 6/8 arpeggio feel on the brushed 12/8 shuffle. 76 bpm.
+backing: rise76
+# The Animals, "House of the Rising Sun" -- TRUE 6/8, counted in two (1-2-3-4-5-6, pulse on 1 & 4).
+# 76 = the dotted-quarter pulse. (folksh76 was a 12/8 shuffle in FOUR -- wrong metre; fixed 2026-09-21.)

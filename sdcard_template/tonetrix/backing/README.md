@@ -38,7 +38,8 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folk92`    |  92 | Light two-step with brushes, swirl on the offbeats | **"Angel from Montgomery" — John Prine** *(requested)* |
 | `folksh96`  |  96 | Gentle 12/8 lilt, brushed | **"Wonderful Tonight" — Eric Clapton** *(requested)* |
 | `ssoul78`   |  78 | **Slow soul pocket**: kick 1 + pickup into 3, cross-stick 2 & 4, light swung hat | **"Ain't No Sunshine" — Bill Withers** *(requested)* |
-| `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | **"House of the Rising Sun" — The Animals** *(requested)* |
+| `rise76`    |  76 | **True 6/8**, felt in TWO — bass on 1 & 4, light hat over the six eighths | **"House of the Rising Sun" — The Animals** *(requested)* |
+| `folksh76`  |  76 | Slow brushed shuffle, **12/8 (counted in four)**, swirl on the shuffle "and" | slow 12/8 blues/ballads |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
 | `folkd92`   |  92 | **Driving acoustic folk-rock**: kick on every beat, snare 2 & 4, 8th hat | **"Can't Find My Way Home" — Blind Faith** *(requested)* |
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |

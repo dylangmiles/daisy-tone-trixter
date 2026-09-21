@@ -388,6 +388,20 @@ STYLES = {
         fill_from=14,
         fill={"snare": [(14, 0.70), (15, 0.80)]}),
 
+    "compound68": dict(
+        fn="rise", bpm=76, bars=4, div=6, beats=2, swing=0.0,
+        note="True 6/8, felt in TWO: bass on the two pulses (1 and 4), light hat rolling the six "
+             "eighths. bpm is the dotted-quarter pulse (76 = the House of the Rising Sun count).",
+        # House of the Rising Sun (2026-09-21): folksh76 was a 12/8 shuffle counted in FOUR -- wrong
+        # metre. This is a real 6/8 (two beats a bar), so you count 1-2-3-4-5-6, pulse on 1 and 4.
+        pattern={
+            "kick":  [(0, 0.90), (3, 0.70)],
+            "rim":   [(3, 0.40)],
+            "hat":   [(0, 0.40), (1, 0.26), (2, 0.26), (3, 0.34), (4, 0.26), (5, 0.28)],
+        },
+        fill_from=4,
+        fill={"hat": [(4, 0.26), (5, 0.32)]}),
+
     "ballad": dict(
         fn="ballad", bpm=62, bars=4, div=16, swing=0.0,
         note="Slow 4/4 ballad, as sparse as it gets: kick on 1, soft rim on 3, brushed 2 and 4 barely there.",
@@ -410,6 +424,8 @@ def _verify_backbeat(name, buf, bpm, bars, div):
     groove's anchor right before the loop point, and the loop then *sounds* like
     it loses time on the wrap even though it is sample-exact. That shipped once.
     """
+    if div % 4:            # 6/8 and other compound metres have no 2-&-4 backbeat to check
+        return
     sr, spb = SR, 60.0 / bpm * 4.0
     step, half = spb * sr / div, int(0.022 * SR)
     floor = sorted(abs(x) for x in buf)[len(buf) // 2] or 1e-9
@@ -446,7 +462,8 @@ def render(name, cfg, bpm=None, bars=None, swing=None, accent=None, ping=None):
     ping   = PING_LEVEL      if ping   is None else ping
     rng = random.Random(hash(name) & 0xffff)        # deterministic per style
 
-    spb = 60.0 / bpm * 4.0                          # seconds per bar (4/4)
+    beats = cfg.get("beats", 4)                     # beats per bar; bpm IS this beat
+    spb = 60.0 / bpm * beats                        # 4/4 -> 4; 6/8 felt in 2 -> beats=2, div=6
     loop_n = int(round(spb * bars * SR))
     tail_n = int(1.2 * SR)                          # decay that wraps around
     buf = array('f', bytes(4 * (loop_n + tail_n)))
