@@ -46,7 +46,8 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folkr128`  | 128 | Gentle country-folk-rock, soft brushed backbeat, sparse kick | **"Old Man" — Neil Young** *(requested)* |
 | `rkbly138`  | 138 | Rockabilly, handclaps on the backbeat, more bounce | slower take on the below |
 | `soul140`   | 140 | Soul-pop with a little pocket | slower take on the below |
-| `soul150`   | 150 | Bright uptempo soul-pop, full kit, driving 8ths | **"Brown Eyed Girl" — Van Morrison** *(requested)* |
+| `soull150`  | 150 | **Soul-pop, simplified**: kick 1 & 3, snare 2 & 4, straight hat, no ghosts, no fill | **"Brown Eyed Girl" — Van Morrison** *(requested; the full kit was busy under strummed acoustic)* |
+| `soul150`   | 150 | Bright uptempo soul-pop, full kit, driving 8ths | the busier take on the above |
 | `rkbly145`  | 145 | Rockabilly bounce, handclaps doubling the backbeat | **"Crazy Little Thing Called Love" — Queen** *(requested; 156 was too quick)* |
 | `rkbly156`  | 156 | Rockabilly bounce, handclaps doubling the backbeat | brisker take on the above |
 

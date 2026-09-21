@@ -87,8 +87,9 @@ backing: rkbly145
 # Queen -- rockabilly bounce, claps on the backbeat. 145 bpm (was 156; 2026-09-21).
 ---
 name: Brown Eyed Grl
-backing: soul150
-# Van Morrison -- bright soul-pop, full kit. 150 bpm.
+backing: soull150
+# Van Morrison -- soul-pop simplified: kick 1 & 3, snare 2 & 4, straight hat, no ghosts. 150 bpm.
+# (soul150 is the busier full-kit version, kept on the card.)
 ---
 name: Come Back Baby
 backing: delta72

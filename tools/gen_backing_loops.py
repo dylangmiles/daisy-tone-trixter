@@ -346,6 +346,20 @@ STYLES = {
         fill_from=9,
         fill={"rim": [(9, 0.80), (11, 0.60)]}),
 
+    "soul_light": dict(
+        fn="soull", bpm=150, bars=4, div=16, swing=0.0,
+        note="Soul-pop, simplified: kick 1 and 3, snare 2 and 4, straight closed hat, no ghosts, no fill.",
+        # Brown Eyed Girl (2026-09-21): the full soul_pop bed was busy under a strummed acoustic.
+        # Same tempo, half the notes -- the guitar carries the bounce.
+        pattern={
+            "kick":  [(0, 1.0), (8, 0.85)],
+            "snare": [(4, 0.95), (12, 0.95)],
+            "hat":   [(0, 0.55), (2, 0.38), (4, 0.50), (6, 0.38),
+                      (8, 0.55), (10, 0.38), (12, 0.50), (14, 0.40)],
+        },
+        fill_from=14,
+        fill={"snare": [(14, 0.80)]}),
+
     "ballad": dict(
         fn="ballad", bpm=62, bars=4, div=16, swing=0.0,
         note="Slow 4/4 ballad, as sparse as it gets: kick on 1, soft rim on 3, brushed 2 and 4 barely there.",
