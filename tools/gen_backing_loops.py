@@ -360,6 +360,34 @@ STYLES = {
         fill_from=14,
         fill={"snare": [(14, 0.80)]}),
 
+    "slow_soul": dict(
+        fn="ssoul", bpm=78, bars=4, div=16, swing=0.10,
+        note="Slow soul groove: kick 1, kick pickup before 3, cross-stick on 2 and 4, light swung hat.",
+        # Ain't No Sunshine (2026-09-21): a soft, held-back pocket -- the rim instead of a snare keeps
+        # it intimate under a fingerpicked or lightly strummed acoustic.
+        pattern={
+            "kick":  [(0, 0.95), (7, 0.45), (8, 0.80)],
+            "rim":   [(4, 0.75), (12, 0.80)],
+            "hat":   [(0, 0.45), (2, 0.30), (4, 0.40), (6, 0.30),
+                      (8, 0.45), (10, 0.30), (12, 0.40), (14, 0.34)],
+        },
+        fill_from=13,
+        fill={"rim": [(13, 0.45), (14, 0.60), (15, 0.50)]}),
+
+    "folk_drive": dict(
+        fn="folkd", bpm=92, bars=4, div=16, swing=0.0,
+        note="Driving acoustic folk-rock: kick on every beat, snare on 2 and 4, 8th hat -- steady, not busy.",
+        # Can't Find My Way Home (2026-09-21): the record is a strummed acoustic pulse with a light
+        # kit underneath; four-on-the-floor kick gives the drive, the snare keeps it a song.
+        pattern={
+            "kick":  [(0, 0.95), (4, 0.75), (8, 0.90), (12, 0.75)],
+            "snare": [(4, 0.85), (12, 0.90)],
+            "hat":   [(0, 0.55), (2, 0.36), (4, 0.50), (6, 0.36),
+                      (8, 0.55), (10, 0.36), (12, 0.50), (14, 0.40)],
+        },
+        fill_from=14,
+        fill={"snare": [(14, 0.70), (15, 0.80)]}),
+
     "ballad": dict(
         fn="ballad", bpm=62, bars=4, div=16, swing=0.0,
         note="Slow 4/4 ballad, as sparse as it gets: kick on 1, soft rim on 3, brushed 2 and 4 barely there.",

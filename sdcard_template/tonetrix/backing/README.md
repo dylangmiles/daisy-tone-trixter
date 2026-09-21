@@ -35,8 +35,10 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
 | `delta81`   |  81 | **Sparse Delta shuffle**: kick 1 & 3, rim 2 & 4, whisper of hat | **"Walking Blues" — Muddy Waters**, **"Sweet Home Chicago"** *(requested)* |
 | `ballad62`  |  62 | **Slow 4/4 ballad, as sparse as it gets**: kick on 1, rim on 3, brushed 2 & 4 barely there | **"Desperado" — Eagles** *(requested)* |
+| `ssoul78`   |  78 | **Slow soul pocket**: kick 1 + pickup into 3, cross-stick 2 & 4, light swung hat | **"Ain't No Sunshine" — Bill Withers** *(requested)* |
 | `folksh76`  |  76 | Slow brushed shuffle, 12/8, swirl on the shuffle "and" | slow 12/8 ballads, gentle blues |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
+| `folkd92`   |  92 | **Driving acoustic folk-rock**: kick on every beat, snare 2 & 4, 8th hat | **"Can't Find My Way Home" — Blind Faith** *(requested)* |
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |
 | `delta92`   |  92 | Sparse Delta shuffle, as `delta81` | **"Cross Road Blues"** *(requested)* |
 | `delta100`  | 100 | Sparse Delta shuffle, as `delta81` | **"Sweet Home Chicago" — Robert Johnson** *(requested)* |

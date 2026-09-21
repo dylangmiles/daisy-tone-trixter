@@ -94,3 +94,11 @@ backing: soull150
 name: Come Back Baby
 backing: delta72
 # Lightnin' Hopkins -- slow sparse Delta bed, 72 bpm. Hopkins drifts; the bed only marks the bar.
+---
+name: Aint No Sunshin
+backing: ssoul78
+# Bill Withers -- slow soul pocket: kick 1 with a pickup into 3, cross-stick 2 & 4, light swung hat. 78 bpm.
+---
+name: Cant Find Home
+backing: folkd92
+# Blind Faith, "Can't Find My Way Home" -- driving acoustic folk-rock: kick on every beat, snare 2 & 4. 92 bpm.
