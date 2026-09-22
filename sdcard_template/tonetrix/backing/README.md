@@ -38,6 +38,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folksh92`  |  92 | Slow brushed **12/8 shuffle** (in four), swirl on the "and" | **"Angel from Montgomery" — Prine / Raitt** *(requested)* |
 | `folksh96`  |  96 | Gentle 12/8 lilt, brushed | **"Wonderful Tonight" — Eric Clapton** *(requested)* |
 | `ssoul78`   |  78 | **Slow soul pocket**: kick 1 + pickup into 3, cross-stick 2 & 4, light swung hat | **"Ain't No Sunshine" — Bill Withers** *(requested)* |
+| `waltz100`  | 100 | **3/4 waltz** (in three), bass on 1, brushed 2 & 3, light hat | **"Scarborough Fair" — Simon & Garfunkel** *(requested)* |
 | `rise76`    |  76 | **True 6/8**, felt in TWO — bass on 1 & 4, light hat over the six eighths | **"House of the Rising Sun" — The Animals** *(requested)* |
 | `folksh76`  |  76 | Slow brushed shuffle, **12/8 (counted in four)**, swirl on the shuffle "and" | slow 12/8 blues/ballads |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |

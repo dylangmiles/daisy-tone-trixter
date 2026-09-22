@@ -402,6 +402,19 @@ STYLES = {
         fill_from=4,
         fill={"hat": [(4, 0.26), (5, 0.32)]}),
 
+    "waltz34": dict(
+        fn="waltz", bpm=100, bars=4, div=6, beats=3, swing=0.0,
+        note="Gentle 3/4 waltz, oom-pah-pah: bass on 1, brushed chords on 2 and 3, light hat on eighths.",
+        # Scarborough Fair (2026-09-22): S&G's is a delicate 3/4 waltz. Kept sparse -- the fingerpicking
+        # carries it; the bed only marks ONE-two-three. bpm is the quarter (100 = the felt waltz pulse).
+        pattern={
+            "kick":    [(0, 0.90)],
+            "brushit": [(2, 0.55), (4, 0.55)],
+            "hat":     [(0, 0.36), (1, 0.24), (2, 0.32), (3, 0.24), (4, 0.32), (5, 0.26)],
+        },
+        fill_from=4,
+        fill={"brushit": [(4, 0.55)], "hat": [(5, 0.30)]}),
+
     "ballad": dict(
         fn="ballad", bpm=62, bars=4, div=16, swing=0.0,
         note="Slow 4/4 ballad, as sparse as it gets: kick on 1, soft rim on 3, brushed 2 and 4 barely there.",
