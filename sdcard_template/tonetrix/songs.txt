@@ -128,3 +128,8 @@ backing: rise76
 name: Scarboro Fair
 backing: waltz100
 # Simon & Garfunkel "Scarborough Fair" -- gentle 3/4 waltz, oom-pah-pah, bass on 1. 100 bpm (the quarter).
+---
+name: Wagon Wheel
+backing: folkd150
+# Old Crow Medicine Show / Darius Rucker "Wagon Wheel" -- driving country strum, kick every beat,
+# snare 2 & 4. 150 bpm (Rucker's tempo; Old Crow runs a touch quicker).

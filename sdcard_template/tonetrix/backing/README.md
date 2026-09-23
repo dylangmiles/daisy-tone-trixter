@@ -43,6 +43,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folksh76`  |  76 | Slow brushed shuffle, **12/8 (counted in four)**, swirl on the shuffle "and" | slow 12/8 blues/ballads |
 | `blues81`   |  81 | Same country blues shuffle as `blues92`, a little slower | slow Delta blues, slide |
 | `folkd92`   |  92 | **Driving acoustic folk-rock**: kick on every beat, snare 2 & 4, 8th hat | **"Can't Find My Way Home" — Blind Faith** *(requested)* |
+| `folkd150`  | 150 | Same driving folk bed, up-tempo country strum | **"Wagon Wheel" — Old Crow / Darius Rucker** *(requested)* |
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |
 | `delta92`   |  92 | Sparse Delta shuffle, as `delta81` | **"Cross Road Blues"** *(requested)* |
 | `delta100`  | 100 | Sparse Delta shuffle, as `delta81` | **"Sweet Home Chicago" — Robert Johnson** *(requested)* |
