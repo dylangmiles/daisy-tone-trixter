@@ -18,6 +18,7 @@
 // ⚠ NO extern "C" wrapper: dsp_chain.cpp compiles as C++ here, so both sides must agree on
 // linkage. The header is C-style but the translation unit is C++.
 #include "audio/dsp_chain.h"
+#include "audio/biquad.h"
 #include "audio/tt_store.h"
 #include "audio/wav_load.h"
 #include "audio/tuner.h"
@@ -615,6 +616,13 @@ static float            g_work[kWorkMax];
 // was my error, and it only showed once an IR actually loaded and the convolver first ran.
 static float            g_conv[kWorkMax];
 
+// ⚠ DRY-BLEND on the IR (2026-09-25). The body IR is 100% wet and kills the pick-on-string CLACK
+// along with the piezo quack. g_ir_dry (0..1, from the preset's ir.dry or the menu) mixes a
+// HIGH-PASSED slice of the dry piezo back onto the wet signal: the HP corner (~2.5 kHz) lets the
+// pick attack through while keeping the nasal quack (1..3 kHz) out. Only used when an IR is active.
+static volatile float   g_ir_dry = 0.f;
+static Biquad           g_dry_hp;                 // 2.5 kHz high-pass on the dry blend
+
 // What the callback ACTUALLY receives, surfaced in the repeating summary line. ⚠ The boot report is
 // routinely lost to USB CDC enumeration, so a number that only prints at boot is a number nobody
 // reads -- which is how the block size stayed unverified while we guessed at it.
@@ -674,8 +682,13 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     if(g_ir_active && dsp_chain_ir_enabled())
     {
         g_convolver.process(g_work, g_conv, size);      // ⚠ NOT in-place -- see g_conv
-        for(size_t i = 0; i < size; i++)
-            g_work[i] = g_conv[i];
+        const float dry = g_ir_dry;                     // one volatile read; the dry piezo is still in g_work
+        if(dry > 0.f)
+            for(size_t i = 0; i < size; i++)
+                g_work[i] = g_conv[i] + dry * biquad_process(&g_dry_hp, g_work[i]);
+        else
+            for(size_t i = 0; i < size; i++)
+                g_work[i] = g_conv[i];
     }
 
     dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
@@ -1585,6 +1598,12 @@ static void SelectPreset(int idx)
     // audio when bypassed. Same reasoning as bk_level, opposite default.
     dsp_chain_set_byp_level((pl && idx < np && pl[idx].byp_level > 0.f) ? pl[idx].byp_level : 1.0f);
 
+    // ⚠ Dry blend: <0 (or absent) means "unchanged" so a preset that never opted in keeps whatever the
+    // menu last set; the built-in table zero-inits dry_mix, so 0 there just means "pure IR".
+    if(pl && idx < np && pl[idx].dry_mix >= 0.f) {
+        float d = pl[idx].dry_mix; g_ir_dry = d < 0.f ? 0.f : (d > 1.f ? 1.f : d);
+    }
+
     if(pl && idx < np && pl[idx].bk_level > 0.f)
         backing_set_level(pl[idx].bk_level);
 
@@ -1655,6 +1674,8 @@ void        app_i2c_cycle(void)         { SetI2cKhz(g_i2c_khz == 100 ? 400 : g_i
 
 bool        app_gr_enabled(void)        { return g_meters_on; }
 void        app_gr_set(bool on)         { g_meters_on = on; g_gr_on = on; g_oled_dirty = true; }
+float       app_ir_dry(void)            { return g_ir_dry; }
+void        app_ir_dry_set(float d)     { g_ir_dry = d < 0.f ? 0.f : (d > 1.f ? 1.f : d); }
 
 // ⚠ NO PGA ON THIS BOARD. These exist only because menu.cpp calls them. The Pico drove the
 // ES8388's input PGA (0..+24 dB in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no
@@ -1688,6 +1709,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  preset <n|name>   select preset (loads its IR)");
         hw.PrintLine("  bypass on|off     chain bypass");
         hw.PrintLine("  byplevel <0..8>   bypass make-up, to level-match the A/B");
+        hw.PrintLine("  irdry <0..1>      dry-piezo blend (HP 2.5 kHz) back onto the IR -- pick-attack");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
@@ -1907,6 +1929,12 @@ static void HandleCommand(const char* line)
         dsp_chain_set_byp_level((float)atof(line + 9));
         hw.PrintLine("byplevel=%.2f  (1.00 = true unity)", (double)dsp_chain_byp_level());
         hw.PrintLine("  ⚠ set 1.00 for any measurement -- this lifts the DRY path");
+        return;
+    }
+    if(strncmp(line, "irdry ", 6) == 0)
+    {
+        float d = (float)atof(line + 6); g_ir_dry = d < 0.f ? 0.f : (d > 1.f ? 1.f : d);
+        hw.PrintLine("irdry=%.2f  (0 = pure IR; HP 2.5 kHz dry for the pick attack)", (double)g_ir_dry);
         return;
     }
     if(strncmp(line, "bklevel ", 8) == 0)
@@ -2236,6 +2264,7 @@ int main(void)
 
     // ⚠ Unity output level and global bypass ON: complete passthrough at boot, by design.
     dsp_chain_init(48000.f, 1.0f);
+    biquad_highpass(&g_dry_hp, 48000.f, 2500.f, 0.707f);   // dry-blend high-pass (see g_ir_dry)
     g_dsp_bypass = true;
 
     hw.StartAudio(AudioCb);

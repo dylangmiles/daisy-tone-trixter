@@ -30,6 +30,9 @@ void        app_gr_set(bool on);
 int         app_i2c_khz(void);
 void        app_i2c_cycle(void);
 
+float       app_ir_dry(void);             // dry-piezo blend on the IR, 0..1 (pick attack)
+void        app_ir_dry_set(float d);
+
 // ES8388 input PGA (reg 0x09, both channels). Nibble 0..8 = 0..+24 dB in 3 dB steps.
 // +12 dB (nibble 4) = OPA1642 op-amp daughter; +18 dB (nibble 6) = JFET source-follower
 // daughter. State + the live codec write live in main.cpp. Driven by UART 'pga' + the menu.

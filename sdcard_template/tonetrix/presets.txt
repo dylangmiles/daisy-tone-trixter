@@ -17,6 +17,11 @@
 #   eq.hi:      [freq_Hz, gain_dB]           high shelf
 #   comp:       [thresh_dB, ratio, attack_ms, release_ms, makeup_dB]
 #   out.level:  final output level, ~0.0..1.0
+#   ir.dry:     0.0..1.0 -- blend a HIGH-PASSED slice of the dry piezo (HP ~2.5 kHz) back onto the
+#               wet IR. The body IR kills the piezo quack AND the pick-on-string CLACK with it; a
+#               little dry returns the pick attack without the nasal quack. 0 = pure IR (default).
+#               ⚠ DAISY-ONLY KEY (Pico parser ignores it). Only audible with an IR loaded. Dial it
+#               live on the "IR dry" menu row or `irdry <0..1>` over UART, then write the number here.
 #   pga:        ES8388 input PGA gain in dB (0..24, 3 dB steps), set when this preset
 #               loads. Passive K&K ~12; active Garrison ~6 (its preamp is hot — +12 clips
 #               the ADC on hard strums). Omit to inherit the default (12).

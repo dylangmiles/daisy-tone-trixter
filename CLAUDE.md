@@ -396,6 +396,32 @@ not to be noticed for a while. Refusing beats playing something subtly wrong.
 Convolver partitioning matches the Pico: head block **64** (= the audio block size, so the
 low-latency path costs exactly one block), tail block **512**, up to **4096** taps.
 
+### ⚠ IR dry-blend (`ir.dry`) — restoring the pick attack the IR eats
+
+⚠ **Daisy-only, added 2026-09-25.** The body IR is a full-wet convolution — it removes the piezo's
+nasal quack, but it removes the **percussive pick-on-string "clack"** along with it, because that
+transient lives in the same high band the IR reshapes. The player's thumb-pick *thunk* survives; the
+string *clack* did not.
+
+The fix is a **high-passed slice of the DRY piezo** summed back onto the wet IR output:
+
+```c
+// main.cpp, in the callback, immediately after g_convolver.process():
+const float dry = g_ir_dry;              // 0 = pure IR
+if(dry > 0.f)
+    for(i) g_work[i] = g_conv[i] + dry * biquad_process(&g_dry_hp, g_work[i]);
+```
+
+- `g_dry_hp` is a fixed **2.5 kHz, Q 0.707 high-pass** (`biquad_highpass`, set once at init). Only the
+  attack band passes, so the quack the IR was there to kill does **not** come back with it.
+- `g_ir_dry` is `0` by default — **pure IR, no behaviour change** unless a preset or the player asks
+  for it. It only does anything when an IR is actually loaded (otherwise `g_work` is already dry).
+- Set it live on the **"IR dry"** menu row (0.05/detent) or with **`irdry <0..1>`** over UART, dial by
+  ear, then write the number into the preset as **`ir.dry: <n>`**. Start around **0.15**.
+- Preset field: `Preset::dry_mix` (`dsp_chain.h`), parsed as `ir.dry` in `tt_store.cpp`, loaded into
+  `g_ir_dry` by `SelectPreset`. ⚠ **The Pico parser ignores the key**, so the card stays cross-readable
+  — same fork discipline as `bk.level`.
+
 ## Footswitch controls (interim, until there is a menu)
 
 | Control | Does |
@@ -504,7 +530,7 @@ stage/param language — it only ever needed a line of text delivered to it. Boa
 in front of it in `HandleCommand()`.
 
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
-`bk` · `bk <n>|off` · `bklevel <0..2>` · `dfu` — plus every `dsp_chain` command.
+`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `dfu` — plus every `dsp_chain` command.
 
 ⚠ **`printf` reaches the console only because `main.cpp` defines `_write`** (2026-09-18). `dsp_chain.cpp`
 is shared with the Pico and reports through `printf`; newlib's default `_write` on the H7 is a stub, so
@@ -541,7 +567,8 @@ the fingers; glanceable data does not.
 **Level rows on MAIN** (all Daisy additions, all live, none saved to the card): `BK level` (backing
 bed), `LP level` (looper playback), **`BYP level`** (bypass make-up, 2026-09-18 — the A/B trim: stomp
 the bypass switch while turning until engaged and bypassed match at *playing* level, then copy the
-number into the preset's `byp.level`). 0.05 per detent; click to leave.
+number into the preset's `byp.level`), **`IR dry`** (2026-09-25 — the high-passed dry-blend above;
+copy into the preset's `ir.dry`). 0.05 per detent; click to leave.
 
 ### ⚠ Two hooks that are honest stubs
 

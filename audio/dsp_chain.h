@@ -104,6 +104,12 @@ typedef struct {
                                           // SD card stays readable by both pedals -- but this struct and
                                           // tt_store.cpp have now DIVERGED from the RP2350 copies. Port
                                           // the same change back if the two are to stay identical.
+    float dry_mix;                        // ⚠ DAISY ADDITION (2026-09-25): high-passed DRY piezo blended
+                                          // back onto the wet IR, 0..1, from "ir.dry". <0 = leave unchanged.
+                                          // The body IR kills the piezo quack AND the pick-on-string clack
+                                          // with it; a little dry (HP'd ~2.5 kHz so the quack stays out)
+                                          // returns the pick attack. 0 = pure IR. Only acts when an IR is
+                                          // loaded (blended in main.cpp's callback, not a dsp_chain stage).
 } Preset;
 
 int         dsp_chain_preset_count(void);
