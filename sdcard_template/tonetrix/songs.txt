@@ -67,8 +67,8 @@ backing: delta81
 # Muddy Waters -- sparse Delta shuffle, kick 1 & 3, rim 2 & 4. 81 bpm.
 ---
 name: Cross Road
-backing: delta92
-# Robert Johnson / Cream feel at 92 -- same sparse Delta bed, brisker.
+backing: delta95
+# Robert Johnson / Cream feel -- same sparse Delta bed. 95 bpm (was 92; 2026-09-25).
 ---
 name: Cant B Satisfd
 backing: blues100
