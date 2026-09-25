@@ -47,6 +47,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `blues92`   |  92 | Country blues shuffle, 12/8, ride-style hat, ghost notes | acoustic country blues, slide |
 | `delta92`   |  92 | Sparse Delta shuffle, as `delta81` | **"Cross Road Blues"** acoustic *(requested)* |
 | `delta100`  | 100 | Sparse Delta shuffle, as `delta81` | (spare) |
+| `delta101`  | 101 | Sparse Delta shuffle, as `delta81` | **"Cross Road Blues"** *(requested)* |
 | `delta110`  | 110 | Sparse Delta shuffle, as `delta81`, brisker | **"Cross Road Blues"** faster *(requested)* |
 | `blues100`  | 100 | Same country blues shuffle as `blues92`, a touch brisker | **"I Can't Be Satisfied" — Muddy Waters** *(requested)* |
 | `folk104`   | 104 | Light two-step with brushes, cross-stick | country folk, fingerstyle |

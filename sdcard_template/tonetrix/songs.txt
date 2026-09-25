@@ -70,6 +70,10 @@ name: Cross Road 92
 backing: delta92
 # Robert Johnson -- sparse acoustic Delta bed, 92 bpm.
 ---
+name: Cross Road101
+backing: delta101
+# Cross Road -- same sparse Delta bed, 101 bpm.
+---
 name: Cross Road110
 backing: delta110
 # Cross Road faster -- same sparse Delta bed, 110 bpm.
