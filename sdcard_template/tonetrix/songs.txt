@@ -71,8 +71,8 @@ backing: delta92
 # Robert Johnson -- sparse acoustic Delta bed, 92 bpm.
 ---
 name: Cross Road110
-backing: rock110
-# Cream / Clapton "Crossroads" -- faster electric feel: straight 8ths, backbeat, full kit. 110 bpm.
+backing: delta110
+# Cross Road faster -- same sparse Delta bed, 110 bpm.
 ---
 name: Cant B Satisfd
 backing: blues100
