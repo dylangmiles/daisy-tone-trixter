@@ -87,7 +87,7 @@ in.level: 0.75
 eq.lo: [150, 3.0]
 eq.mid: [800, -3.0, 1.0]
 eq.hi: [1500, -2.0]
-comp: [-28, 4.0, 1, 300, 16]
+comp: [-28, 4.0, 10, 300, 16]
 out.level: 0.45
 pga: 0
 # ⚠ OUTPUT LEVELLED 2026-09-09. All three voiced presets now share in.level 0.75, comp make-up 16 dB
