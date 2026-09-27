@@ -1944,6 +1944,30 @@ static void HandleCommand(const char* line)
         return;
     }
 
+    // ⚠ `dump` prints the chain stages AND the board-level state the chain does not know about
+    // (IR, ir.dry, byp/bk/lp levels, preset, pga). Keys match presets.txt so the numbers are
+    // copy-ready. Without this the dump omitted the IR and everything outside dsp_chain.
+    if(strcmp(line, "dump") == 0)
+    {
+        dsp_chain_command("dump");        // in/eq/comp/out, as before
+        hw.PrintLine("--- board (not in dsp_chain) ---");
+        hw.PrintLine("    preset      = %s  [%d/%d]",
+                     g_preset_count > 0 ? dsp_chain_preset_name(g_preset_idx) : "-",
+                     g_preset_idx + 1, g_preset_count);
+        hw.PrintLine("    ir          = %s%s (%d taps)",
+                     g_ir_active ? "" : "!", g_ir_active ? g_ir_name : "none", g_ir_len);
+        hw.PrintLine("    ir.dry      = %6.2f    [0..1]  HP 2.5 kHz dry blend (0 = pure IR)",
+                     (double)g_ir_dry);
+        hw.PrintLine("    byp.level   = %6.2f    [0..8]  bypass make-up (1.00 = true unity)",
+                     (double)dsp_chain_byp_level());
+        hw.PrintLine("    bk.level    = %6.2f    [0..2]  backing bed", (double)backing_level());
+        hw.PrintLine("    lp.level    = %6.2f    [0..2]  looper playback", (double)looper_level());
+        hw.PrintLine("    pga         = %6d dB  (no HW gain on TAC5242 -- stub)", app_pga_db());
+        hw.PrintLine("    bypass=%s  tuner=%s", g_dsp_bypass ? "on" : "off",
+                     g_tuner_on ? "on" : "off");
+        return;
+    }
+
     // ⚠ Everything else goes to dsp_chain_command, which already implements the full stage/param
     // language from the Pico build -- "bypass on", "eq.low 3", "comp off" and so on. It returns
     // false for anything it does not recognise.
@@ -2120,7 +2144,15 @@ int main(void)
     }
     hw.SetLed(false);
 
-    hw.PrintLine("");
+    // ⚠ SYNC PREAMBLE for the CDC enumeration race. StartLog(false) prints before the host's USB
+    // CDC is up, so the first bytes are dropped/garbled ("===$$"). We can't wait for a connect flag
+    // (libDaisy's CDC never exposes one), so instead: a short settle, then a run of THROWAWAY
+    // newlines -- if enumeration finishes during these, the banner below lands intact. It does not
+    // block on the host, so battery/adapter boot is unaffected (2026-09-27).
+    System::Delay(400);
+    for(int i = 0; i < 6; i++)
+        hw.PrintLine("");
+
     hw.PrintLine("=============================================");
     hw.PrintLine(" Tone Trixter -- Daisy Seed3 bring-up");
     hw.PrintLine(" built " __DATE__ " " __TIME__);
@@ -2552,6 +2584,9 @@ int main(void)
             HandleCommand(g_cmd);
             g_cmd_len   = 0;
             g_cmd_ready = false;
+            // ⚠ Push the periodic summary out a full interval so it does not fire mid-command and
+            // splice the 5 s heartbeat into the `dump`/tuning output you are reading (2026-09-27).
+            last_report = System::GetNow();
         }
 
         const uint32_t loop_t0 = tt_shim_now_us();

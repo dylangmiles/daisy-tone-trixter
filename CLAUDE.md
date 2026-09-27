@@ -532,6 +532,18 @@ in front of it in `HandleCommand()`.
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
 `bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `dfu` — plus every `dsp_chain` command.
 
+⚠ **`dump` prints the chain stages AND a `--- board ---` section** (2026-09-27): IR file + taps, `ir.dry`,
+`byp.level`, `bk.level`, `lp.level`, `pga` (stub), preset, bypass/tuner. `dsp_chain`'s own dump only
+knows the in/eq/comp/out stages; the IR and everything else live in `main.cpp`, so `dump` is
+intercepted in `HandleCommand` to append them. Keys match `presets.txt` so a dumped value is copy-ready.
+
+⚠ **Console readability at boot** (2026-09-27): `StartLog(false)` prints before the host's USB CDC has
+enumerated, so early bytes drop (`===$$`) and lines merge. libDaisy's CDC exposes no connect flag, so
+the fix is best-effort, not a wait: a **400 ms settle + a run of throwaway newlines** before the banner
+(so a mid-enumeration drop lands on blanks, not the banner), and the **5 s heartbeat is deferred a full
+interval after any command** (`last_report = now` in the command branch) so it can't splice itself into
+`dump`/tuning output. Neither blocks on the host, so battery/adapter boot is unaffected.
+
 ⚠ **`printf` reaches the console only because `main.cpp` defines `_write`** (2026-09-18). `dsp_chain.cpp`
 is shared with the Pico and reports through `printf`; newlib's default `_write` on the H7 is a stub, so
 until then `dump` and every `eq.hi_gain 2`-style echo changed the chain and printed nothing. The hook
