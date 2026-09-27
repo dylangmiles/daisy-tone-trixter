@@ -444,6 +444,22 @@ STYLES = {
         fill_from=14,
         fill={"brushit": [(14, 0.72)], "hat": [(14, 0.30), (15, 0.26)]}),
 
+    "swamp_blues": dict(
+        fn="swamp", bpm=88, bars=4, div=12, swing=0.0,
+        note="Laid-back swamp-blues shuffle in 12/8: lazy fat backbeat, simple kick, greasy pocket, "
+             "light hat. Slim Harpo / Lightnin' Slim feel -- sits back so the guitar drips over it.",
+        # Swamp Dog (Dylan Miles): a lazy 12/8 swamp shuffle; the pocket leans back, the backbeat is
+        # fat, the kit stays out of the guitar's way.
+        pattern={
+            "kick":  [(0, 0.95), (6, 0.80), (10, 0.45)],
+            "snare": [(3, 0.92), (9, 0.98)],
+            "ghost": [(8, 0.30), (11, 0.35)],
+            "hat":   [(0, 0.52), (2, 0.36), (3, 0.48), (5, 0.36),
+                      (6, 0.52), (8, 0.36), (9, 0.48), (11, 0.38)],
+        },
+        fill_from=9,
+        fill={"snare": [(9, 0.95), (11, 0.75)]}),
+
     "hill_country": dict(
         fn="hill", bpm=128, bars=4, div=16, swing=0.05,
         note="Driving hill-country blues: a rolling boogie kick, hard backbeat on 2 and 4, relentless "

@@ -156,3 +156,8 @@ name: Chicken Coop
 backing: hill128
 # Dylan Miles (original) "What's That in My Chicken Coop" -- medium-to-fast hill country blues
 # (Burnside / Junior Kimbrough drive): rolling boogie kick, hard 2 & 4, hypnotic one-groove. 128 bpm.
+---
+name: Swamp Dog
+backing: swamp88
+# Dylan Miles (original) -- swamp blues, a laid-back 12/8 shuffle (Slim Harpo / Lightnin' Slim feel):
+# fat lazy backbeat, greasy pocket. 88 bpm.
