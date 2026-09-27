@@ -448,8 +448,8 @@ STYLES = {
         fn="swamp", bpm=88, bars=4, div=12, swing=0.0,
         note="Laid-back swamp-blues shuffle in 12/8: lazy fat backbeat, simple kick, greasy pocket, "
              "light hat. Slim Harpo / Lightnin' Slim feel -- sits back so the guitar drips over it.",
-        # Swamp Dog (Dylan Miles): a lazy 12/8 swamp shuffle; the pocket leans back, the backbeat is
-        # fat, the kit stays out of the guitar's way.
+        # Howling for Home (Dylan Miles): a lazy 12/8 swamp shuffle; the pocket leans back, the backbeat
+        # is fat, the kit stays out of the guitar's way. (Was briefly labelled "Swamp Dog", 2026-09-27.)
         pattern={
             "kick":  [(0, 0.95), (6, 0.80), (10, 0.45)],
             "snare": [(3, 0.92), (9, 0.98)],

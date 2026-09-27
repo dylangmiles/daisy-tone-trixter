@@ -87,9 +87,9 @@ backing: delta81
 # Robert Johnson -- sparse Delta bed, 81 bpm (100 → 92 → 81, 2026-09-21). (14-char screen name.)
 ---
 name: Howlng 4 Home
-backing: delta81
-# Dylan Miles (original) "Howling for Home" -- Delta blues slide, a cross of walking blues and Son House's
-# "Dead Letter Blues": sparse bed, kick 1 & 3, rim 2 & 4, the slide carries the groove. 81 bpm.
+backing: swamp88
+# Dylan Miles (original) "Howling for Home" -- swamp / Delta blues slide, walking blues × Son House's
+# "Dead Letter Blues": laid-back 12/8 shuffle, fat lazy backbeat, the slide drips over it. 88 bpm.
 ---
 name: Desperado
 backing: ballad62
@@ -156,8 +156,3 @@ name: Chicken Coop
 backing: hill120
 # Dylan Miles (original) "What's That in My Chicken Coop" -- hill country blues (Burnside / Junior
 # Kimbrough): SPARSE stomp -- kick 1 & 3, hard 2 & 4, whisper of hat, guitar drones over. 120 bpm.
----
-name: Swamp Dog
-backing: swamp88
-# Dylan Miles (original) -- swamp blues, a laid-back 12/8 shuffle (Slim Harpo / Lightnin' Slim feel):
-# fat lazy backbeat, greasy pocket. 88 bpm.
