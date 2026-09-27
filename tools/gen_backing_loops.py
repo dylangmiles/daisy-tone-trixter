@@ -445,7 +445,7 @@ STYLES = {
         fill={"brushit": [(14, 0.72)], "hat": [(14, 0.30), (15, 0.26)]}),
 
     "swamp_blues": dict(
-        fn="swamp", bpm=88, bars=4, div=12, swing=0.0,
+        fn="swamp", bpm=81, bars=4, div=12, swing=0.0,
         note="Laid-back swamp-blues shuffle in 12/8: lazy fat backbeat, simple kick, greasy pocket, "
              "light hat. Slim Harpo / Lightnin' Slim feel -- sits back so the guitar drips over it.",
         # Howling for Home (Dylan Miles): a lazy 12/8 swamp shuffle; the pocket leans back, the backbeat
