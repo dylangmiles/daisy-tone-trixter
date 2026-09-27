@@ -82,10 +82,16 @@ name: Cant B Satisfd
 backing: blues100
 # Muddy Waters -- full country-blues shuffle at 100 (the bed the song was originally requested for).
 ---
-name: Howlng 4 Home
+# Howling for Home (Dylan Miles) -- swamp / Delta blues slide, walking blues × Son House's "Dead Letter
+# Blues": laid-back 12/8 shuffle. Three tempos side by side to A/B; collapse to one once the feel is found.
+name: Howl Home 71
+backing: swamp71
+---
+name: Howl Home 81
+backing: swamp81
+---
+name: Howl Home 88
 backing: swamp88
-# Dylan Miles (original) "Howling for Home" -- swamp / Delta blues slide, walking blues × Son House's
-# "Dead Letter Blues": laid-back 12/8 shuffle, fat lazy backbeat, the slide drips over it. 88 bpm.
 ---
 name: Sweet Home Chi
 backing: delta81
