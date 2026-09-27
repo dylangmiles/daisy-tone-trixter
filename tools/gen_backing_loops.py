@@ -426,6 +426,40 @@ STYLES = {
         },
         fill_from=12,
         fill={"brushit": [(12, 0.40), (14, 0.35)]}),
+
+    # ---- added 2026-09-27 for Dylan Miles originals ----------------------------------------
+    "piedmont": dict(
+        fn="pied", bpm=112, bars=4, div=16, swing=0.06,
+        note="Gentle Piedmont fingerpicking blues: soft kick 1 and 3 (under the alternating bass), "
+             "brushed backbeat 2 and 4, quiet even 8th hat, a whisper of lilt. Mississippi John Hurt feel.",
+        # Strange Faces (Dylan Miles): Hurt-style even fingerpicking -- the picking hand carries the
+        # groove, so the bed stays soft and steady and never shuffles hard.
+        pattern={
+            "kick":    [(0, 0.85), (8, 0.72)],
+            "brushit": [(4, 0.72), (12, 0.80)],
+            "hat":     [(0, 0.32), (2, 0.24), (4, 0.30), (6, 0.24),
+                        (8, 0.32), (10, 0.24), (12, 0.30), (14, 0.26)],
+            "rim":     [(7, 0.24)],
+        },
+        fill_from=14,
+        fill={"brushit": [(14, 0.72)], "hat": [(14, 0.30), (15, 0.26)]}),
+
+    "hill_country": dict(
+        fn="hill", bpm=128, bars=4, div=16, swing=0.05,
+        note="Driving hill-country blues: a rolling boogie kick, hard backbeat on 2 and 4, relentless "
+             "8th hat -- hypnotic and propulsive, few changes. Burnside / Junior Kimbrough drive.",
+        # What's That in My Chicken Coop (Dylan Miles): a one-groove hill-country stomp; the kick keeps
+        # pumping and the snare cracks 2 & 4 so the guitar can drone over the top.
+        pattern={
+            "kick":  [(0, 1.0), (3, 0.50), (6, 0.80), (8, 0.90), (11, 0.50), (14, 0.60)],
+            "snare": [(4, 1.0), (12, 1.0)],
+            "ghost": [(7, 0.35), (10, 0.30)],
+            "hat":   [(0, 0.60), (2, 0.42), (4, 0.55), (6, 0.42),
+                      (8, 0.60), (10, 0.42), (12, 0.55), (14, 0.46)],
+        },
+        fill_from=12,
+        fill={"snare": [(12, 0.95), (14, 0.85), (15, 0.95)],
+              "kick":  [(12, 0.90)]}),
 }
 
 # ----------------------------------------------------------------- rendering
