@@ -193,8 +193,8 @@ bk.level: 1.00
 #     Threshold stays at -28 so the make-up and out.level line up with the other presets (level-matched).
 # Tune order: play it against tanglewood-slide on the same phrase; move eq.mid_freq first (500..800),
 # then eq.mid_gain, then comp.attack. `dump` when it lands and write the numbers here.
-# ⚠ Voiced by ear 2026-09-27: treble was too strong and rang out -> high shelf 0.0 -> -3.0; needed more
-# thunk on the bottom -> low shelf +1.0 -> +3.0. No longer purely ear-guessed.
+# ⚠ Voiced by ear 2026-09-27: treble was too strong and rang out -> high shelf 0.0 -> -4.0 (tuned live
+# from -3.0, dump confirmed); needed more thunk on the bottom -> low shelf +1.0 -> +3.0. Now PLAYED, not guessed.
 # Same K&K → no pad, guitar at full volume (the K&K has no volume), watch `clips` on hard strums.
 name: walden
 ir: tanglewood.wav
@@ -205,7 +205,7 @@ out.on: 1
 in.level: 0.75
 eq.lo: [120, 3.0]
 eq.mid: [600, -3.5, 1.0]
-eq.hi: [3500, -3.0]
+eq.hi: [3500, -4.0]
 comp: [-28, 3.0, 10, 400, 16]
 out.level: 0.45
 pga: 0
