@@ -461,21 +461,19 @@ STYLES = {
         fill={"snare": [(9, 0.95), (11, 0.75)]}),
 
     "hill_country": dict(
-        fn="hill", bpm=128, bars=4, div=16, swing=0.05,
-        note="Driving hill-country blues: a rolling boogie kick, hard backbeat on 2 and 4, relentless "
-             "8th hat -- hypnotic and propulsive, few changes. Burnside / Junior Kimbrough drive.",
-        # What's That in My Chicken Coop (Dylan Miles): a one-groove hill-country stomp; the kick keeps
-        # pumping and the snare cracks 2 & 4 so the guitar can drone over the top.
+        fn="hill", bpm=120, bars=4, div=16, swing=0.05,
+        note="Sparse hill-country stomp: kick on 1 and 3, hard backbeat on 2 and 4, a whisper of hat on "
+             "the beats -- hypnotic and bare, the guitar drones over the top. Burnside / Junior Kimbrough.",
+        # What's That in My Chicken Coop (Dylan Miles): a one-groove hill-country stomp. Simplified then
+        # made SPARSE 2026-09-27 -- just a stomping kick and a 2 & 4 crack, nothing else, so nothing
+        # competes with the droning guitar.
         pattern={
-            "kick":  [(0, 1.0), (3, 0.50), (6, 0.80), (8, 0.90), (11, 0.50), (14, 0.60)],
+            "kick":  [(0, 1.0), (8, 0.85)],
             "snare": [(4, 1.0), (12, 1.0)],
-            "ghost": [(7, 0.35), (10, 0.30)],
-            "hat":   [(0, 0.60), (2, 0.42), (4, 0.55), (6, 0.42),
-                      (8, 0.60), (10, 0.42), (12, 0.55), (14, 0.46)],
+            "hat":   [(0, 0.26), (4, 0.24), (8, 0.26), (12, 0.24)],
         },
-        fill_from=12,
-        fill={"snare": [(12, 0.95), (14, 0.85), (15, 0.95)],
-              "kick":  [(12, 0.90)]}),
+        fill_from=14,
+        fill={"snare": [(14, 0.85)]}),
 }
 
 # ----------------------------------------------------------------- rendering
