@@ -42,7 +42,13 @@ name: Blues Slide100
 backing: blues100
 ---
 # Bluegrass practice beds (boom-chuck / train beat): bass 1 & 3, chop 2 & 4, driving straight 8ths.
-# Generic pulse for flatpicking, intermediate -> fast. Added 2026-10-06.
+# Generic pulse for flatpicking, slow -> fast. Added 2026-10-06 (80/100 added same day).
+name: Bluegrass 80
+backing: grass80
+---
+name: Bluegrass 100
+backing: grass100
+---
 name: Bluegrass 120
 backing: grass120
 ---
