@@ -320,6 +320,22 @@ STYLES = {
         fill={"brushit": [(12, 0.85), (14, 0.95)],
               "brush":   [(10, 0.6)]}),
 
+    # ---- added 2026-10-06: bluegrass practice beds (generic, intermediate -> fast) ----------
+    "bluegrass": dict(
+        fn="grass", bpm=130, bars=4, div=16, swing=0.0,
+        note="Bluegrass boom-chuck / train beat: bass on 1 and 3, crisp backbeat chop on 2 and 4, "
+             "driving straight 8th hat. A practice pulse for flatpicking -- steady and relentless.",
+        # Generic practice bed, not a tune. Bluegrass is drummerless, so this is the implied pulse:
+        # the alternating bass 'boom' and the mandolin/snare 'chuck'. Generated at 120/150/180.
+        pattern={
+            "kick":  [(0, 0.95), (8, 0.90)],
+            "snare": [(4, 0.90), (12, 0.95)],
+            "hat":   [(0, 0.45), (2, 0.34), (4, 0.40), (6, 0.34),
+                      (8, 0.45), (10, 0.34), (12, 0.40), (14, 0.36)],
+        },
+        fill_from=14,
+        fill={"snare": [(14, 0.85)]}),
+
     # ---- added 2026-09-18 for the set list --------------------------------------------------
     "stomp_clap": dict(
         fn="stomp", bpm=71, bars=4, div=12, swing=0.0,

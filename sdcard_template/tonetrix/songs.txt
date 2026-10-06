@@ -41,6 +41,17 @@ backing: blues92
 name: Blues Slide100
 backing: blues100
 ---
+# Bluegrass practice beds (boom-chuck / train beat): bass 1 & 3, chop 2 & 4, driving straight 8ths.
+# Generic pulse for flatpicking, intermediate -> fast. Added 2026-10-06.
+name: Bluegrass 120
+backing: grass120
+---
+name: Bluegrass 150
+backing: grass150
+---
+name: Bluegrass 180
+backing: grass180
+---
 name: Free Jam
 type: looping
 # no bpm: free loop. Press ARMS; recording starts on the first note. The end
