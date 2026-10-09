@@ -32,6 +32,7 @@ FP = {
     "JST3":  "Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical",
     "HDR7":  "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical",
     "HDR20": "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical",
+    "DAISY": "Module:Electrosmith_Daisy_Seed",   # 2×20, 40 pads -- the real Seed footprint (not 1×20!)
     "ENC":   "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles",
     "SD":    "Connector_Card:microSD_HC_Hirose_DM3AT-SF-PEJM5",
     "TP":    "TestPoint:TestPoint_Pad_D1.5mm",
@@ -172,7 +173,7 @@ j_bond = S.add(Sym("Connector", "Conn_01x02_Pin", "J5", "Enclosure bond", g(84, 
 gnd(j_bond.pin(1), "GNDA"); gnd(j_bond.pin(2), "GNDA")
 
 # ================================================================ 2. SEED3 (centre-left)
-seed = S.add(Sym("TT", "Daisy_Seed3", "U4", "Daisy Seed3", g(30, 50), 0, footprint=FP["HDR20"],
+seed = S.add(Sym("TT", "Daisy_Seed3", "U4", "Daisy Seed3", g(30, 50), 0, footprint=FP["DAISY"],
                  fields={"Note": "2 × 20-way 0.1\" sockets (Sullins PPTC201LFBN-RC); Seed plugs in component-side up"}))
 S.text("DAISY SEED3 — pin numbers per daisy/board.h. Unused GPIO marked NC.", g(4, 24), 1.8)
 def seed_net(num, net, stub=2, rot=None, glabel=True):

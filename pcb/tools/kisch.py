@@ -1,9 +1,14 @@
 """Minimal KiCad 8-format schematic writer. Symbols come from KiCad's own libraries (kisym),
 placed on a 1.27 mm grid; nets are made with wires + labels. Verified with kicad-cli (ERC + netlist)."""
-import uuid, math
+import uuid, math, itertools
 from kisym import lib_symbol, lib_pins, parent_of
 
-def U(): return str(uuid.uuid4())
+# ⚠ DETERMINISTIC UUIDs: counter-based uuid5 so re-running produces byte-identical UUIDs. KiCad links
+# PCB footprints to schematic symbols by UUID; random uuids would break that link on every regen and
+# force a re-link-by-reference each time. The generator is deterministic, so call-order is stable.
+_UUID_NS  = uuid.UUID("5f3e9a52-7a11-4b0c-9d00-7021746f6e65")
+_uuid_ctr = itertools.count()
+def U(): return str(uuid.uuid5(_UUID_NS, str(next(_uuid_ctr))))
 def P(a): return (round(a[0], 3), round(a[1], 3))   # every coordinate goes through here
 
 def _rot(px, py, r):
