@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="185.0mm" height="234.0mm" viewBox="0 0 185.0 234.0">
+<style>text{font-family:sans-serif;fill:#111}.lbl{font-size:3.2px}.dim{font-size:2.6px;fill:#555}.ttl{font-size:4px;font-weight:bold}.note{font-size:2.6px;fill:#a00}</style>
+<rect x="0" y="0" width="185.0" height="234.0" fill="#fff"/>
+<text x="12.00" y="7.00" class="ttl" text-anchor="start">Tone Trixter 1590XX mock-up -- PRINT AT 100% (actual size). Verify the 100 mm ruler.</text>
+<text x="12.00" y="11.00" class="note" text-anchor="start">Box: ext 145x121x39, wall 2, top-face plane 138x114, corner bosses O7. All PART hole sizes are DEFAULTS -- check each vs the real part.</text>
+<rect x="8.50" y="11.00" width="121.00" height="145.00" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="2 2"/>
+<rect x="12.00" y="18.00" width="114.00" height="138.00" fill="none" stroke="#111" stroke-width="0.6"/>
+<text x="69.00" y="16.00" class="dim" text-anchor="middle">TOP FACE  (rear wall this edge)  138 deep x 114 wide</text>
+<text x="69.00" y="161.00" class="dim" text-anchor="middle">FRONT (toward player)</text>
+<circle cx="18.00" cy="150.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="18.00" cy="24.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="120.00" cy="150.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="120.00" cy="24.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<rect x="31.50" y="41.00" width="75.00" height="82.00" fill="none" stroke="#06c" stroke-width="0.4" stroke-dasharray="3 2"/>
+<text x="69.00" y="46.00" class="dim" text-anchor="middle">candidate PCB 75x82 (dashed)</text>
+<circle cx="34.50" cy="120.00" r="1.60" fill="none" stroke="#06c" stroke-width="0.3"/>
+<circle cx="34.50" cy="44.00" r="1.60" fill="none" stroke="#06c" stroke-width="0.3"/>
+<circle cx="103.50" cy="120.00" r="1.60" fill="none" stroke="#06c" stroke-width="0.3"/>
+<circle cx="103.50" cy="44.00" r="1.60" fill="none" stroke="#06c" stroke-width="0.3"/>
+<circle cx="31.00" cy="134.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="29.00" y1="134.00" x2="33.00" y2="134.00" stroke="#111" stroke-width="0.2"/>
+<line x1="31.00" y1="132.00" x2="31.00" y2="136.00" stroke="#111" stroke-width="0.2"/>
+<circle cx="107.00" cy="134.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="105.00" y1="134.00" x2="109.00" y2="134.00" stroke="#111" stroke-width="0.2"/>
+<line x1="107.00" y1="132.00" x2="107.00" y2="136.00" stroke="#111" stroke-width="0.2"/>
+<text x="69.00" y="142.00" class="dim" text-anchor="middle">footswitches O12 @ 76 ctrs</text>
+<rect x="51.50" y="58.00" width="35.00" height="32.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="69.00" y="55.00" class="dim" text-anchor="middle">OLED 35x32</text>
+<circle cx="102.00" cy="74.00" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="100.00" y1="74.00" x2="104.00" y2="74.00" stroke="#111" stroke-width="0.2"/>
+<line x1="102.00" y1="72.00" x2="102.00" y2="76.00" stroke="#111" stroke-width="0.2"/>
+<text x="102.00" y="69.00" class="dim" text-anchor="middle">enc O7</text>
+<circle cx="52.00" cy="106.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="50.00" y1="106.00" x2="54.00" y2="106.00" stroke="#111" stroke-width="0.2"/>
+<line x1="52.00" y1="104.00" x2="52.00" y2="108.00" stroke="#111" stroke-width="0.2"/>
+<circle cx="86.00" cy="106.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="84.00" y1="106.00" x2="88.00" y2="106.00" stroke="#111" stroke-width="0.2"/>
+<line x1="86.00" y1="104.00" x2="86.00" y2="108.00" stroke="#111" stroke-width="0.2"/>
+<text x="69.00" y="102.00" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
+<text x="12.00" y="174.00" class="dim" text-anchor="start">REAR WALL  (114 wide x 33 tall internal)  -- hole sizes default</text>
+<rect x="12.00" y="177.00" width="114.00" height="33.00" fill="none" stroke="#111" stroke-width="0.6"/>
+<circle cx="25.00" cy="193.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="23.00" y1="193.50" x2="27.00" y2="193.50" stroke="#111" stroke-width="0.2"/>
+<line x1="25.00" y1="191.50" x2="25.00" y2="195.50" stroke="#111" stroke-width="0.2"/>
+<text x="25.00" y="214.00" class="dim" text-anchor="middle">IN O10</text>
+<circle cx="47.00" cy="193.50" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="45.00" y1="193.50" x2="49.00" y2="193.50" stroke="#111" stroke-width="0.2"/>
+<line x1="47.00" y1="191.50" x2="47.00" y2="195.50" stroke="#111" stroke-width="0.2"/>
+<text x="47.00" y="214.00" class="dim" text-anchor="middle">DC O12</text>
+<rect x="62.50" y="189.50" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="69.00" y="214.00" class="dim" text-anchor="middle">USB 13x8</text>
+<circle cx="91.00" cy="193.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="89.00" y1="193.50" x2="93.00" y2="193.50" stroke="#111" stroke-width="0.2"/>
+<line x1="91.00" y1="191.50" x2="91.00" y2="195.50" stroke="#111" stroke-width="0.2"/>
+<text x="91.00" y="214.00" class="dim" text-anchor="middle">OUT O10</text>
+<circle cx="113.00" cy="193.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="111.00" y1="193.50" x2="115.00" y2="193.50" stroke="#111" stroke-width="0.2"/>
+<line x1="113.00" y1="191.50" x2="113.00" y2="195.50" stroke="#111" stroke-width="0.2"/>
+<text x="113.00" y="214.00" class="dim" text-anchor="middle">5th O10</text>
+<line x1="12.0" y1="222.0" x2="112.0" y2="222.0" stroke="#111" stroke-width="0.4"/>
+<line x1="12.0" y1="220.0" x2="12.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="22.0" y1="220.0" x2="22.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="32.0" y1="220.0" x2="32.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="42.0" y1="220.0" x2="42.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="52.0" y1="220.0" x2="52.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="62.0" y1="220.0" x2="62.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="72.0" y1="220.0" x2="72.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="82.0" y1="220.0" x2="82.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="92.0" y1="220.0" x2="92.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="102.0" y1="220.0" x2="102.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<line x1="112.0" y1="220.0" x2="112.0" y2="224.0" stroke="#111" stroke-width="0.3"/>
+<text x="62.00" y="228.00" class="note" text-anchor="middle">this bar MUST measure 100.0 mm -- if not, fix the print scale</text>
+</svg>
