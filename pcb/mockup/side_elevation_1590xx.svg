@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="158.0mm" height="93.0mm" viewBox="0 0 158.0 93.0">
+<style>text{font-family:sans-serif;fill:#111}.lbl{font-size:3px}.dim{font-size:2.5px;fill:#555}.ttl{font-size:3.8px;font-weight:bold}.note{font-size:2.5px;fill:#a00}</style>
+<rect x="0" y="0" width="158.0" height="93.0" fill="#fff"/>
+<text x="12.00" y="7.00" class="ttl" text-anchor="start">1590XX SIDE ELEVATION (height study, projected) -- PRINT AT 100%</text>
+<text x="12.00" y="11.00" class="note" text-anchor="start">ALL heights DEFAULT (brief's vertical budget). Front = left, back wall = right.</text>
+<text x="12.00" y="14.50" class="note" text-anchor="start">⚠ the jack-axis height and the rear-wall hole must match -- see the red note.</text>
+<rect x="34.00" y="67.00" width="114.00" height="4.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="34.00" y="32.00" width="114.00" height="2.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="148.00" y="32.00" width="2.00" height="39.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="32.00" y="32.00" width="2.00" height="39.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="34.00" y="34.00" width="114.00" height="33.00" fill="none" stroke="#bbb" stroke-width="0.3"/>
+<text x="36.00" y="30.50" class="dim" text-anchor="start">top face</text>
+<text x="36.00" y="74.50" class="dim" text-anchor="start">base plate</text>
+<text x="91.00" y="79.00" class="dim" text-anchor="middle">FRONT (toward player)   ---   BACK WALL (jacks)</text>
+<rect x="89.00" y="40.00" width="57.00" height="1.60" fill="#cde" stroke="#06c" stroke-width="0.4"/>
+<text x="90.00" y="39.00" class="dim" text-anchor="start">PCB</text>
+<rect x="91.00" y="32.00" width="3.00" height="6.00" fill="#ddd" stroke="#111" stroke-width="0.3"/>
+<text x="95.00" y="37.00" class="dim" text-anchor="start">standoff 6</text>
+<rect x="94.00" y="58.60" width="35.00" height="17.00" fill="#efe" stroke="#2a2" stroke-width="0.4"/>
+<text x="95.00" y="50.10" class="dim" text-anchor="start">Seed3 on sockets ~17</text>
+<rect x="102.00" y="35.00" width="32.00" height="5.00" fill="#fee" stroke="#c33" stroke-width="0.4"/>
+<line x1="102.00" y1="35.00" x2="134.00" y2="35.00" stroke="#c33" stroke-width="0.6"/>
+<text x="103.00" y="34.00" class="dim" text-anchor="start">OLED glass @ top-1</text>
+<rect x="115.00" y="28.00" width="6.00" height="12.00" fill="#eef" stroke="#55a" stroke-width="0.4"/>
+<rect x="117.00" y="26.00" width="2.00" height="2.00" fill="#eef" stroke="#55a" stroke-width="0.3"/>
+<text x="122.00" y="30.00" class="dim" text-anchor="start">encoder shaft (+8 over top)</text>
+<circle cx="149.00" cy="40.00" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="146.00" y1="40.00" x2="154.00" y2="40.00" stroke="#111" stroke-width="0.3" stroke-dasharray="2 1"/>
+<text x="122.00" y="38.00" class="dim" text-anchor="start">jack axis z=27</text>
+<line x1="28.00" y1="67.00" x2="28.00" y2="26.00" stroke="#999" stroke-width="0.3"/>
+<line x1="26.50" y1="67.00" x2="29.50" y2="67.00" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="67.90" class="dim" text-anchor="end">0 base</text>
+<line x1="26.50" y1="58.60" x2="29.50" y2="58.60" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="59.50" class="dim" text-anchor="end">8 Seed btm</text>
+<line x1="26.50" y1="40.00" x2="29.50" y2="40.00" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="40.90" class="dim" text-anchor="end">27 board/jack</text>
+<line x1="26.50" y1="35.00" x2="29.50" y2="35.00" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="35.90" class="dim" text-anchor="end">32 glass</text>
+<line x1="26.50" y1="34.00" x2="29.50" y2="34.00" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="34.90" class="dim" text-anchor="end">33 top inner</text>
+<text x="12.00" y="84.00" class="note" text-anchor="start">⚠ JACK AXIS (z=27, board level) is HIGH on the 33 mm wall. For a mid-wall jack:</text>
+<text x="12.00" y="87.50" class="note" text-anchor="start">   lower the board (compresses the Seed space below) OR use a jack whose axis sits</text>
+<text x="12.00" y="91.00" class="note" text-anchor="start">   below the board OR keep panel-mount jacks on flying leads (height-independent).</text>
+<text x="12.00" y="95.00" class="dim" text-anchor="start">Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.</text>
+<line x1="12.00" y1="100.00" x2="112.00" y2="100.00" stroke="#111" stroke-width="0.4"/>
+<line x1="12.00" y1="98.00" x2="12.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="22.00" y1="98.00" x2="22.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="32.00" y1="98.00" x2="32.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="42.00" y1="98.00" x2="42.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="52.00" y1="98.00" x2="52.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="62.00" y1="98.00" x2="62.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="72.00" y1="98.00" x2="72.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="82.00" y1="98.00" x2="82.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="92.00" y1="98.00" x2="92.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="102.00" y1="98.00" x2="102.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<line x1="112.00" y1="98.00" x2="112.00" y2="102.00" stroke="#111" stroke-width="0.3"/>
+<text x="62.00" y="105.00" class="note" text-anchor="middle">this bar MUST measure 100.0 mm</text>
+</svg>
