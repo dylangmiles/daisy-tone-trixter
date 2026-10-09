@@ -25,9 +25,10 @@
 <rect x="115.00" y="34.00" width="6.00" height="6.00" fill="#eef" stroke="#55a" stroke-width="0.4"/>
 <rect x="117.00" y="26.00" width="2.00" height="8.00" fill="#eef" stroke="#55a" stroke-width="0.3"/>
 <text x="122.00" y="30.00" class="dim" text-anchor="start">encoder shaft (+8 over top)</text>
-<rect x="134.00" y="35.00" width="24.00" height="10.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
-<line x1="130.00" y1="40.00" x2="159.00" y2="40.00" stroke="#111" stroke-width="0.3" stroke-dasharray="3 1"/>
-<text x="135.00" y="34.00" class="dim" text-anchor="start">jack (axis z=27, out the back wall)</text>
+<line x1="140.00" y1="41.60" x2="140.00" y2="44.00" stroke="#111" stroke-width="0.4"/>
+<rect x="134.00" y="44.00" width="24.00" height="10.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
+<line x1="130.00" y1="49.00" x2="159.00" y2="49.00" stroke="#111" stroke-width="0.3" stroke-dasharray="3 1"/>
+<text x="133.00" y="43.00" class="dim" text-anchor="start">jack z=18 (bottom-mt)</text>
 <line x1="28.00" y1="67.00" x2="28.00" y2="26.00" stroke="#999" stroke-width="0.3"/>
 <line x1="26.50" y1="67.00" x2="29.50" y2="67.00" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="67.90" class="dim" text-anchor="end">0 base</text>
@@ -39,9 +40,9 @@
 <text x="26.00" y="35.90" class="dim" text-anchor="end">32 glass</text>
 <line x1="26.50" y1="34.00" x2="29.50" y2="34.00" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="34.90" class="dim" text-anchor="end">33 top inner</text>
-<text x="12.00" y="84.00" class="note" text-anchor="start">⚠ JACK AXIS (z=27, board level) is HIGH on the 33 mm wall. For a mid-wall jack:</text>
-<text x="12.00" y="87.50" class="note" text-anchor="start">   lower the board (compresses the Seed space below) OR use a jack whose axis sits</text>
-<text x="12.00" y="91.00" class="note" text-anchor="start">   below the board OR keep panel-mount jacks on flying leads (height-independent).</text>
+<text x="12.00" y="84.00" class="note" text-anchor="start">Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=18 = mid-wall. The clean fix:</text>
+<text x="12.00" y="87.50" class="note" text-anchor="start">  board stays high (Seed hangs below, short OLED reach) AND the jacks land mid-wall.</text>
+<text x="12.00" y="91.00" class="note" text-anchor="start">  TRS + DC bottom-mount, legs up through the PCB. USB = Seed's own port, oriented to the wall.</text>
 <text x="12.00" y="95.00" class="dim" text-anchor="start">Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.</text>
 <line x1="12.00" y1="100.00" x2="112.00" y2="100.00" stroke="#111" stroke-width="0.4"/>
 <line x1="12.00" y1="98.00" x2="12.00" y2="102.00" stroke="#111" stroke-width="0.3"/>

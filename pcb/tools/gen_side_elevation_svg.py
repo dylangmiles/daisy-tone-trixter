@@ -39,8 +39,8 @@ ENC_BODY_ABOVE   = 6.0           # encoder body height above the board (fits the
 ENC_SHAFT_ABOVE_TOP = 8.0        # shaft protrusion above the OUTER top face
 ENC_Y      = 84.0
 
-JACK_AX_ABOVE_BRD = 0.0          # ⚠ jack axis relative to the board top -- THE number that must
-                                 #    equal the rear-wall hole height. 0 = axis at board level.
+JACK_AX_ABOVE_BRD = -9.0         # jacks BOTTOM-MOUNTED: barrel hangs below the board, so the axis
+                                 #    sits ~9 mm below the board top -> lands mid-wall. ⚠ verify vs part.
 Z_JACK     = Z_BRD_TOP + JACK_AX_ABOVE_BRD   # rear-wall hole centre height
 JACK_DIA   = 10.0
 
@@ -110,10 +110,11 @@ s += _rect(DX(ENC_Y-3), ZY(Z_BRD_TOP+ENC_BODY_ABOVE), 6.0, ENC_BODY_ABOVE, fill=
 s += _rect(DX(ENC_Y-1), ZY(H_INT + ENC_SHAFT_ABOVE_TOP), 2.0, (H_INT + ENC_SHAFT_ABOVE_TOP) - (Z_BRD_TOP+ENC_BODY_ABOVE), fill='#eef', stroke='#55a', sw=0.3)
 s += _txt(DX(ENC_Y+4), ZY(H_INT + ENC_SHAFT_ABOVE_TOP/2), f"encoder shaft (+{ENC_SHAFT_ABOVE_TOP:g} over top)", 'dim')
 
-# --- jack: HORIZONTAL barrel sitting on the board, pointing OUT through the back wall ---
+# --- jack: BOTTOM-MOUNTED, barrel HANGS BELOW the board, pointing OUT through the back wall ---
+s += _line(DX(BRD_Y1-6), ZY(Z_BRD_BOT), DX(BRD_Y1-6), ZY(Z_JACK + JACK_DIA/2), stroke='#111', sw=0.4)  # legs up to PCB
 s += _rect(DX(100), ZY(Z_JACK + JACK_DIA/2), (DEPTH - 100 + 10), JACK_DIA, fill='#fff', stroke='#111', sw=0.5)
 s += _line(DX(96), ZY(Z_JACK), DX(DEPTH)+11, ZY(Z_JACK), stroke='#111', dash='3 1', sw=0.3)
-s += _txt(DX(101), ZY(Z_JACK)-JACK_DIA/2-1, f"jack (axis z={Z_JACK:g}, out the back wall)", 'dim')
+s += _txt(DX(99), ZY(Z_JACK)-JACK_DIA/2-1, f"jack z={Z_JACK:g} (bottom-mt)", 'dim')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6
@@ -126,9 +127,9 @@ for z, lab in [(0, "0 base"), (Z_BRD_BOT - SEED_STACK, f"{Z_BRD_BOT-SEED_STACK:.
 
 # --- the key constraint note ---
 ny = ZY(0) + T_BASE + 13
-s += _txt(LM-22, ny, "⚠ JACK AXIS (z=27, board level) is HIGH on the 33 mm wall. For a mid-wall jack:", 'note')
-s += _txt(LM-22, ny+3.5, "   lower the board (compresses the Seed space below) OR use a jack whose axis sits", 'note')
-s += _txt(LM-22, ny+7.0, "   below the board OR keep panel-mount jacks on flying leads (height-independent).", 'note')
+s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z={Z_JACK:g} = mid-wall. The clean fix:", 'note')
+s += _txt(LM-22, ny+3.5, "  board stays high (Seed hangs below, short OLED reach) AND the jacks land mid-wall.", 'note')
+s += _txt(LM-22, ny+7.0, "  TRS + DC bottom-mount, legs up through the PCB. USB = Seed's own port, oriented to the wall.", 'note')
 s += _txt(LM-22, ny+11.0, "Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.", 'dim')
 
 # --- 100 mm ruler ---
