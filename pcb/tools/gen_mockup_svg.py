@@ -39,15 +39,16 @@ ENC_DIA  = 7.0    # PEC11R bushing  (⚠ nylon shoulder washer: bushing is a GPI
 OLED_W, OLED_H = 35.0, 20.0   # SH1106 1.3" VISIBLE display window (glass/module is larger)
 LED_DIA  = 3.0
 
-LED_Y    = 44.0
-LED_X    = (55.0, 83.0)
-OLED_CY  = 66.0   # OLED window centre, depth
-ENC_CY   = 66.0
-ENC_X    = 108.0  # encoder to the right of the OLED
-
 # ---- full-width board hugging the back wall, rear corners notched for the bosses -------------
+# Depth ~= half the enclosure (114/2 = 57): front edge well behind the switches, rear edge on the wall.
 BRD_X0, BRD_X1 = 3.0, 135.0     # ~132 wide: 3 mm clearance each side (wall taper + fab tol + edge rule)
-BRD_Y0, BRD_Y1 = 36.0, 112.0    # front edge (behind switches) .. rear edge (2 mm off back wall)
+BRD_Y0, BRD_Y1 = 55.0, 112.0    # 57 mm deep: front edge .. rear edge (2 mm off back wall)
+
+OLED_CY  = (BRD_Y0 + BRD_Y1) / 2.0   # screen centred vertically on the PCB -> sits toward the rear
+ENC_CY   = OLED_CY
+ENC_X    = 108.0  # encoder to the right of the OLED
+LED_Y    = BRD_Y0 + 8.0              # on the board, just in front of the screen
+LED_X    = (55.0, 83.0)
 NOTCH          = 12.0           # rear-corner cut to clear the O7 bosses
 M3_DIA         = 3.2
 

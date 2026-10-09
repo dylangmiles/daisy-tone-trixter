@@ -12,8 +12,8 @@
 <circle cx="18.00" cy="27.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
 <circle cx="144.00" cy="129.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
 <circle cx="144.00" cy="27.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
-<polygon points="15.00,99.00 147.00,99.00 147.00,35.00 135.00,23.00 27.00,23.00 15.00,35.00" fill="none" stroke="#06c" stroke-width="0.4" stroke-dasharray="3 2"/>
-<text x="81.00" y="94.00" class="dim" text-anchor="middle">full-width board (dashed) -- rear corners notched for bosses</text>
+<polygon points="15.00,80.00 147.00,80.00 147.00,35.00 135.00,23.00 27.00,23.00 15.00,35.00" fill="none" stroke="#06c" stroke-width="0.4" stroke-dasharray="3 2"/>
+<text x="81.00" y="75.00" class="dim" text-anchor="middle">full-width board (dashed) -- rear corners notched for bosses</text>
 <circle cx="36.00" cy="113.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="34.00" y1="113.00" x2="38.00" y2="113.00" stroke="#111" stroke-width="0.2"/>
 <line x1="36.00" y1="111.00" x2="36.00" y2="115.00" stroke="#111" stroke-width="0.2"/>
@@ -21,19 +21,19 @@
 <line x1="124.00" y1="113.00" x2="128.00" y2="113.00" stroke="#111" stroke-width="0.2"/>
 <line x1="126.00" y1="111.00" x2="126.00" y2="115.00" stroke="#111" stroke-width="0.2"/>
 <text x="81.00" y="120.00" class="dim" text-anchor="middle">footswitches O12 @ 90 ctrs</text>
-<circle cx="67.00" cy="91.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="65.00" y1="91.00" x2="69.00" y2="91.00" stroke="#111" stroke-width="0.2"/>
-<line x1="67.00" y1="89.00" x2="67.00" y2="93.00" stroke="#111" stroke-width="0.2"/>
-<circle cx="95.00" cy="91.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="93.00" y1="91.00" x2="97.00" y2="91.00" stroke="#111" stroke-width="0.2"/>
-<line x1="95.00" y1="89.00" x2="95.00" y2="93.00" stroke="#111" stroke-width="0.2"/>
-<text x="81.00" y="87.00" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
-<rect x="63.50" y="59.00" width="35.00" height="20.00" fill="none" stroke="#111" stroke-width="0.4"/>
-<text x="81.00" y="56.00" class="dim" text-anchor="middle">OLED 35x20</text>
-<circle cx="120.00" cy="69.00" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="118.00" y1="69.00" x2="122.00" y2="69.00" stroke="#111" stroke-width="0.2"/>
-<line x1="120.00" y1="67.00" x2="120.00" y2="71.00" stroke="#111" stroke-width="0.2"/>
-<text x="120.00" y="64.00" class="dim" text-anchor="middle">enc O7</text>
+<circle cx="67.00" cy="72.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="65.00" y1="72.00" x2="69.00" y2="72.00" stroke="#111" stroke-width="0.2"/>
+<line x1="67.00" y1="70.00" x2="67.00" y2="74.00" stroke="#111" stroke-width="0.2"/>
+<circle cx="95.00" cy="72.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="93.00" y1="72.00" x2="97.00" y2="72.00" stroke="#111" stroke-width="0.2"/>
+<line x1="95.00" y1="70.00" x2="95.00" y2="74.00" stroke="#111" stroke-width="0.2"/>
+<text x="81.00" y="68.00" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
+<rect x="63.50" y="41.50" width="35.00" height="20.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="81.00" y="38.50" class="dim" text-anchor="middle">OLED 35x20</text>
+<circle cx="120.00" cy="51.50" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="118.00" y1="51.50" x2="122.00" y2="51.50" stroke="#111" stroke-width="0.2"/>
+<line x1="120.00" y1="49.50" x2="120.00" y2="53.50" stroke="#111" stroke-width="0.2"/>
+<text x="120.00" y="46.50" class="dim" text-anchor="middle">enc O7</text>
 <circle cx="38.00" cy="27.00" r="12.00" fill="none" stroke="#a00" stroke-width="0.3" stroke-dasharray="2 2"/>
 <text x="38.00" y="29.00" class="dim" text-anchor="middle">v2</text>
 <text x="38.00" y="22.00" class="dim" text-anchor="middle">XLR</text>
