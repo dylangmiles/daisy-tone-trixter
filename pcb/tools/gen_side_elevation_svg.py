@@ -35,7 +35,7 @@ OLED_GLASS_UNDER = 1.0           # glass sits this far under the top-face inner
 Z_GLASS    = H_INT - OLED_GLASS_UNDER     # = 32
 OLED_Y0, OLED_Y1 = 68.0, 100.0   # OLED module depth span
 
-ENC_BODY_ABOVE   = 12.0          # encoder body height above the board
+ENC_BODY_ABOVE   = 6.0           # encoder body height above the board (fits the standoff gap)
 ENC_SHAFT_ABOVE_TOP = 8.0        # shaft protrusion above the OUTER top face
 ENC_Y      = 84.0
 
@@ -92,12 +92,13 @@ s += _txt(DX(DEPTH/2), ZY(0)+T_BASE+8, "FRONT (toward player)   ---   BACK WALL 
 s += _rect(DX(BRD_Y0), ZY(Z_BRD_TOP), (BRD_Y1-BRD_Y0), PCB_T, fill='#cde', stroke='#06c', sw=0.4)
 s += _txt(DX(BRD_Y0)+1, ZY(Z_BRD_TOP)-1, "PCB", 'dim')
 # standoff to the top face (front edge of the board)
-s += _rect(DX(BRD_Y0+2), ZY(H_INT)-T_TOP, 3.0, STANDOFF, fill='#ddd', sw=0.3)
+s += _rect(DX(BRD_Y0+2), ZY(H_INT), 3.0, STANDOFF, fill='#ddd', sw=0.3)
 s += _txt(DX(BRD_Y0+6), ZY(Z_BRD_TOP+STANDOFF/2), f"standoff {STANDOFF:g}", 'dim')
 
-# --- Seed hanging below the board ---
-s += _rect(DX(SEED_Y0), ZY(Z_BRD_BOT - SEED_STACK), (SEED_Y1-SEED_Y0), SEED_STACK, fill='#efe', stroke='#2a2', sw=0.4)
-s += _txt(DX(SEED_Y0)+1, ZY(Z_BRD_BOT - SEED_STACK/2), f"Seed3 on sockets ~{SEED_STACK:g}", 'dim')
+# --- Seed3 HANGING BELOW the board (from the PCB underside, down toward the base) ---
+s += _rect(DX(SEED_Y0), ZY(Z_BRD_BOT), (SEED_Y1-SEED_Y0), SEED_STACK, fill='#dfd', stroke='#2a2', sw=0.5)
+s += _txt(DX(SEED_Y0)+1.5, ZY(Z_BRD_BOT - SEED_STACK/2), f"Seed3 + sockets ~{SEED_STACK:g}", 'dim')
+s += _txt(DX(SEED_Y0)+1.5, ZY(Z_BRD_BOT - SEED_STACK/2)+3, "(hangs below the PCB)", 'dim')
 
 # --- OLED module reaching up to the glass (under the top face) ---
 s += _rect(DX(OLED_Y0), ZY(Z_GLASS), (OLED_Y1-OLED_Y0), (Z_GLASS - Z_BRD_TOP), fill='#fee', stroke='#c33', sw=0.4)
@@ -109,10 +110,10 @@ s += _rect(DX(ENC_Y-3), ZY(Z_BRD_TOP+ENC_BODY_ABOVE), 6.0, ENC_BODY_ABOVE, fill=
 s += _rect(DX(ENC_Y-1), ZY(H_INT + ENC_SHAFT_ABOVE_TOP), 2.0, (H_INT + ENC_SHAFT_ABOVE_TOP) - (Z_BRD_TOP+ENC_BODY_ABOVE), fill='#eef', stroke='#55a', sw=0.3)
 s += _txt(DX(ENC_Y+4), ZY(H_INT + ENC_SHAFT_ABOVE_TOP/2), f"encoder shaft (+{ENC_SHAFT_ABOVE_TOP:g} over top)", 'dim')
 
-# --- jack through the back wall ---
-s += _circ(DX(DEPTH)+1, ZY(Z_JACK), JACK_DIA, stroke='#111')
-s += _line(DX(BRD_Y1), ZY(Z_JACK), DX(DEPTH)+6, ZY(Z_JACK), stroke='#111', dash='2 1', sw=0.3)
-s += _txt(DX(DEPTH)-26, ZY(Z_JACK)-2, f"jack axis z={Z_JACK:g}", 'dim')
+# --- jack: HORIZONTAL barrel sitting on the board, pointing OUT through the back wall ---
+s += _rect(DX(100), ZY(Z_JACK + JACK_DIA/2), (DEPTH - 100 + 10), JACK_DIA, fill='#fff', stroke='#111', sw=0.5)
+s += _line(DX(96), ZY(Z_JACK), DX(DEPTH)+11, ZY(Z_JACK), stroke='#111', dash='3 1', sw=0.3)
+s += _txt(DX(101), ZY(Z_JACK)-JACK_DIA/2-1, f"jack (axis z={Z_JACK:g}, out the back wall)", 'dim')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6

@@ -14,19 +14,20 @@
 <text x="91.00" y="79.00" class="dim" text-anchor="middle">FRONT (toward player)   ---   BACK WALL (jacks)</text>
 <rect x="89.00" y="40.00" width="57.00" height="1.60" fill="#cde" stroke="#06c" stroke-width="0.4"/>
 <text x="90.00" y="39.00" class="dim" text-anchor="start">PCB</text>
-<rect x="91.00" y="32.00" width="3.00" height="6.00" fill="#ddd" stroke="#111" stroke-width="0.3"/>
+<rect x="91.00" y="34.00" width="3.00" height="6.00" fill="#ddd" stroke="#111" stroke-width="0.3"/>
 <text x="95.00" y="37.00" class="dim" text-anchor="start">standoff 6</text>
-<rect x="94.00" y="58.60" width="35.00" height="17.00" fill="#efe" stroke="#2a2" stroke-width="0.4"/>
-<text x="95.00" y="50.10" class="dim" text-anchor="start">Seed3 on sockets ~17</text>
+<rect x="94.00" y="41.60" width="35.00" height="17.00" fill="#dfd" stroke="#2a2" stroke-width="0.5"/>
+<text x="95.50" y="50.10" class="dim" text-anchor="start">Seed3 + sockets ~17</text>
+<text x="95.50" y="53.10" class="dim" text-anchor="start">(hangs below the PCB)</text>
 <rect x="102.00" y="35.00" width="32.00" height="5.00" fill="#fee" stroke="#c33" stroke-width="0.4"/>
 <line x1="102.00" y1="35.00" x2="134.00" y2="35.00" stroke="#c33" stroke-width="0.6"/>
 <text x="103.00" y="34.00" class="dim" text-anchor="start">OLED glass @ top-1</text>
-<rect x="115.00" y="28.00" width="6.00" height="12.00" fill="#eef" stroke="#55a" stroke-width="0.4"/>
-<rect x="117.00" y="26.00" width="2.00" height="2.00" fill="#eef" stroke="#55a" stroke-width="0.3"/>
+<rect x="115.00" y="34.00" width="6.00" height="6.00" fill="#eef" stroke="#55a" stroke-width="0.4"/>
+<rect x="117.00" y="26.00" width="2.00" height="8.00" fill="#eef" stroke="#55a" stroke-width="0.3"/>
 <text x="122.00" y="30.00" class="dim" text-anchor="start">encoder shaft (+8 over top)</text>
-<circle cx="149.00" cy="40.00" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="146.00" y1="40.00" x2="154.00" y2="40.00" stroke="#111" stroke-width="0.3" stroke-dasharray="2 1"/>
-<text x="122.00" y="38.00" class="dim" text-anchor="start">jack axis z=27</text>
+<rect x="134.00" y="35.00" width="24.00" height="10.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
+<line x1="130.00" y1="40.00" x2="159.00" y2="40.00" stroke="#111" stroke-width="0.3" stroke-dasharray="3 1"/>
+<text x="135.00" y="34.00" class="dim" text-anchor="start">jack (axis z=27, out the back wall)</text>
 <line x1="28.00" y1="67.00" x2="28.00" y2="26.00" stroke="#999" stroke-width="0.3"/>
 <line x1="26.50" y1="67.00" x2="29.50" y2="67.00" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="67.90" class="dim" text-anchor="end">0 base</text>
