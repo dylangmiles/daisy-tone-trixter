@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "TT")(type "KiCad")(uri "${KIPRJMOD}/TT.pretty")(options "")(descr "Tone Trixter custom footprints"))
+)

@@ -30,6 +30,7 @@ FP = {
     "LED":   "LED_THT:LED_D3.0mm",
     "JST2":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "JST3":  "Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical",
+    "K3599": "TT:K3599_TRS_6leg",   # ⚠ FIRST-PASS board-mount TRS jack (bottom-mounted); dims to VERIFY
     "HDR7":  "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical",
     "HDR20": "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical",
     "DAISY": "Module:Electrosmith_Daisy_Seed",   # 2×20, 40 pads -- the real Seed footprint (not 1×20!)
@@ -202,11 +203,12 @@ q = seed.pin(40); S.wire(q, (q[0] + G, q[1])); S.wire((q[0] + G, q[1]), (q[0] + 
 S.text("USB: the Seed's own USB-C port via the panel extender — no board connection (D29/D30 NC).", g(4, 76), 1.4)
 
 # ================================================================ 3. FRONT END — Fig 3.3 with rev D Vref
-def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net):
+def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None):
     """One channel of the Seed3 Fig 3.3 instrument input. y0 in grid units. Returns nothing; draws."""
     x = 4
+    jack_fp = jack_fp or FP["JST3"]
     S.text(f"FRONT END CH {chan} — Seed3 Fig 3.3 (RF stopper · unity follower · pole+pad · inverting unity · 100R+33n), Vref = rev D 2.7 V. Rin 1 M (K&K 24.5 nF → 6.5 Hz).", g(x, y0 - 3), 1.8)
-    j = S.add(Sym("Connector", "Conn_01x03_Pin", jack_ref, f"IN{chan} jack lead", g(x + 2, y0 + 2), 0, footprint=FP["JST3"], fields={"Note": jack_note}))
+    j = S.add(Sym("Connector", "Conn_01x03_Pin", jack_ref, f"IN{chan} jack lead", g(x + 2, y0 + 2), 0, footprint=jack_fp, fields={"Note": jack_note}))
     # pins: 1 tip, 2 ring, 3 sleeve
     tip = j.pin(1); ring = j.pin(2); slv = j.pin(3)
     S.wire(slv, (slv[0] + G, slv[1])); gnd((slv[0] + G, slv[1]), "GNDA")
@@ -275,7 +277,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net):
     tp(ain_net, (c33.pin(1)[0] + 2*G, node_e[1] - 2*G)); S.wire((c33.pin(1)[0] + 2*G, node_e[1]), (c33.pin(1)[0] + 2*G, node_e[1] - 2*G)); S.junction((c33.pin(1)[0] + 2*G, node_e[1]))
     S.text("Second stage inverts → firmware flips the sign (brief §3.1).", g(x + 62, y0 + 2), 1.2)
 
-front_end("A", 86, "U1", "J1", "IN jack, TRS switched, plastic body. pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN1_TIP", "AIN1")
+front_end("A", 86, "U1", "J1", "IN jack, K3599 board-mount TRS switched, bottom-mounted. pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN1_TIP", "AIN1", jack_fp=FP["K3599"])
 front_end("B", 112, "U2", "J8", "SECOND HIGH-Z CHANNEL — on the board only, NOT drilled in v1 (brief §3.2)", "IN2_TIP", "AIN2")
 
 # ================================================================ 4. VREF + OUTPUT (Fig 3.6)
@@ -324,8 +326,8 @@ ne = max(co2.pin(1), co2.pin(2))
 r10k = R("10k", (ne[0] + 2*G, ne[1] + 4*G), 0)
 S.wire(ne, (r10k.pin(1)[0], ne[1])); S.wire((r10k.pin(1)[0], ne[1]), r10k.pin(1)); S.junction((r10k.pin(1)[0], ne[1])); gnd(r10k.pin(2), "GNDA")
 tp("OUT_TIP", (r10k.pin(1)[0] + 2*G, ne[1] - 2*G)); S.wire((r10k.pin(1)[0], ne[1]), (r10k.pin(1)[0] + 2*G, ne[1])); S.wire((r10k.pin(1)[0] + 2*G, ne[1]), (r10k.pin(1)[0] + 2*G, ne[1] - 2*G)); S.junction((r10k.pin(1)[0] + 2*G, ne[1]))
-jo = S.add(Sym("Connector", "Conn_01x03_Pin", "J2", "OUT jack lead", (r10k.pin(1)[0] + 9*G, ne[1] - G), 180, footprint=FP["JST3"],
-               fields={"Note": "OUT jack, TRS SWITCHED, plastic body: pin1 tip · pin2 ring = BATTERY − (switches the pedal on) · pin3 sleeve"}))
+jo = S.add(Sym("Connector", "Conn_01x03_Pin", "J2", "OUT jack lead", (r10k.pin(1)[0] + 9*G, ne[1] - G), 180, footprint=FP["K3599"],
+               fields={"Note": "OUT jack, K3599 board-mount TRS switched, bottom-mounted: pin1 tip · pin2 ring = BATTERY − (switches the pedal on) · pin3 sleeve"}))
 # rot 180: pins on the left side; pin1 at at.y+2.54? compute
 S.wire((r10k.pin(1)[0] + 2*G, ne[1]), jo.pin(1))
 S.wire(jo.pin(2), (jo.pin(2)[0] - 2*G, jo.pin(2)[1])); S.glabel("BATT-", (jo.pin(2)[0] - 2*G, jo.pin(2)[1]), 180)
