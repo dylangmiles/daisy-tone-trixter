@@ -53,12 +53,13 @@ M3_DIA         = 3.2
 
 # ---- jacks: board-mounted at the rear edge, through the back wall (X = width) ----------------
 WALL_H   = 33.0
-REAR = [  # (label, shape, size, x_centre)   across the 138 wide back wall
-    ("IN",  "circ", 10.0, 21.0),
-    ("DC",  "circ", 12.0, 45.0),
-    ("USB", "rect", (13.0, 8.0), 69.0),
-    ("OUT", "circ", 10.0, 93.0),
-    ("5th", "circ", 10.0, 117.0),   # reserved -- marked, not drilled; unassigned
+XLR_SCREW = 9.5   # vertical screw-hole offset from barrel centre (verify vs chosen XLR/combo part)
+REAR = [  # (label, shape, size, x_centre)   across the 138 wide back wall, XLR grouped with IN
+    ("XLR", "xlr",  24.0, 26.0),    # v2 mic input -- RESERVED area, NOT drilled now (barrel ~Ø24 + 2 screws)
+    ("IN",  "circ", 10.0, 52.0),
+    ("DC",  "circ", 12.0, 74.0),
+    ("USB", "rect", (13.0, 8.0), 96.0),
+    ("OUT", "circ", 10.0, 118.0),
 ]
 JACK_Y = BRD_Y1 - 4.0   # where the jack bodies sit on the board (rear edge)
 
@@ -94,7 +95,7 @@ PAGE_H = MARGIN*3 + EXT_D + WALL_H + 20
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7, "1590XX mock-up (landscape) -- PRINT AT 100%, verify the 100 mm ruler", 'ttl', 'start')
 s += _txt(MARGIN, 11.0, "Box: ext 145x121x39, wall 2, top-face plane 138x114, O7 corner bosses.", 'note', 'start')
-s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. ALL hole sizes DEFAULT -- verify each.", 'note', 'start')
+s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. XLR = v2 mic RESERVE (red, not drilled). Sizes DEFAULT.", 'note', 'start')
 
 ox, oy = MARGIN, MARGIN + 9
 def TX(x): return ox + x
@@ -142,6 +143,9 @@ s += _txt(TX(ENC_X), TY(ENC_CY)-5, f"enc O{ENC_DIA:g}", 'dim')
 for label, shape, size, xc in REAR:
     if shape == "circ":
         s += _circ(TX(xc), TY(JACK_Y), size)
+    elif shape == "xlr":
+        s += _circ(TX(xc), TY(JACK_Y), size, stroke='#a00', dash='2 2')
+        s += _txt(TX(xc), TY(JACK_Y)+2, "v2", 'dim')
     else:
         w, h = size
         s += _rect(TX(xc-w/2), TY(JACK_Y+h/2), w, h, sw=0.3)
@@ -156,6 +160,11 @@ for label, shape, size, xc in REAR:
     if shape == "circ":
         s += _circ(ox+xc, cy, size) + _cross(ox+xc, cy)
         s += _txt(ox+xc, ry+WALL_H+4, f"{label} O{size:g}", 'dim')
+    elif shape == "xlr":
+        s += _circ(ox+xc, cy, size, stroke='#a00', dash='2 2')
+        for dy in (-XLR_SCREW, XLR_SCREW):
+            s += _cross(ox+xc, cy+dy)
+        s += _txt(ox+xc, ry+WALL_H+4, f"{label} O{size:g} (v2 reserve)", 'dim')
     else:
         w, h = size
         s += _rect(ox+xc-w/2, cy-h/2, w, h, sw=0.4)
