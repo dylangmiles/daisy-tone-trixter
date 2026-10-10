@@ -1,17 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="158.0mm" height="100.94mm" viewBox="0 0 158.0 100.94">
+<svg xmlns="http://www.w3.org/2000/svg" width="158.0mm" height="101.94mm" viewBox="0 0 158.0 101.94">
 <style>text{font-family:sans-serif;fill:#111}.lbl{font-size:3px}.dim{font-size:2.5px;fill:#555}.ttl{font-size:3.8px;font-weight:bold}.note{font-size:2.5px;fill:#a00}</style>
-<rect x="0" y="0" width="158.0" height="100.94" fill="#fff"/>
+<rect x="0" y="0" width="158.0" height="101.94" fill="#fff"/>
 <text x="12.00" y="7.00" class="ttl" text-anchor="start">1590XX SIDE ELEVATION (height study, projected) -- PRINT AT 100%</text>
 <text x="12.00" y="11.00" class="note" text-anchor="start">Heights MEASURED off the prototype 2026-10-10 (recalib). Front=left, back wall=right. Seed ~17 still est.</text>
-<text x="12.00" y="14.50" class="note" text-anchor="start">Cavity 32 mm, walls 2.33 mm. Gap 8.24 (OLED glass flush, encoder clears). Jack axis 12.4 below the board.</text>
-<rect x="34.00" y="74.94" width="114.00" height="4.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<text x="12.00" y="14.50" class="note" text-anchor="start">Cavity 33 mm (35.30 box - 2.3 top), walls 2.33 mm. Gap 8.24 (OLED glass flush, encoder clears). Jack axis 12.4 below the board.</text>
+<rect x="34.00" y="75.94" width="114.00" height="4.00" fill="#eee" stroke="#111" stroke-width="0.5"/>
 <rect x="34.00" y="40.61" width="114.00" height="2.33" fill="#eee" stroke="#111" stroke-width="0.5"/>
-<rect x="148.00" y="40.61" width="2.00" height="38.33" fill="#eee" stroke="#111" stroke-width="0.5"/>
-<rect x="32.00" y="40.61" width="2.00" height="38.33" fill="#eee" stroke="#111" stroke-width="0.5"/>
-<rect x="34.00" y="42.94" width="114.00" height="32.00" fill="none" stroke="#bbb" stroke-width="0.3"/>
+<rect x="148.00" y="40.61" width="2.00" height="39.33" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="32.00" y="40.61" width="2.00" height="39.33" fill="#eee" stroke="#111" stroke-width="0.5"/>
+<rect x="34.00" y="42.94" width="114.00" height="33.00" fill="none" stroke="#bbb" stroke-width="0.3"/>
 <text x="36.00" y="39.11" class="dim" text-anchor="start">top face</text>
-<text x="36.00" y="82.44" class="dim" text-anchor="start">base plate</text>
-<text x="91.00" y="86.94" class="dim" text-anchor="middle">FRONT (toward player)   ---   BACK WALL (jacks)</text>
+<text x="36.00" y="83.44" class="dim" text-anchor="start">base plate</text>
+<text x="91.00" y="87.94" class="dim" text-anchor="middle">FRONT (toward player)   ---   BACK WALL (jacks)</text>
 <rect x="89.00" y="51.18" width="57.00" height="1.60" fill="#cde" stroke="#06c" stroke-width="0.4"/>
 <text x="90.00" y="50.18" class="dim" text-anchor="start">PCB</text>
 <rect x="91.00" y="42.94" width="3.00" height="8.24" fill="#ddd" stroke="#111" stroke-width="0.3"/>
@@ -28,33 +28,33 @@
 <line x1="140.00" y1="52.78" x2="140.00" y2="60.17" stroke="#111" stroke-width="0.4"/>
 <rect x="134.00" y="60.17" width="24.00" height="10.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
 <line x1="130.00" y1="65.17" x2="159.00" y2="65.17" stroke="#111" stroke-width="0.3" stroke-dasharray="3 1"/>
-<text x="133.00" y="59.17" class="dim" text-anchor="start">jack z=9.77 (bottom-mt)</text>
-<line x1="28.00" y1="74.94" x2="28.00" y2="26.33" stroke="#999" stroke-width="0.3"/>
-<line x1="26.50" y1="74.94" x2="29.50" y2="74.94" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="75.84" class="dim" text-anchor="end">0 base</text>
+<text x="133.00" y="59.17" class="dim" text-anchor="start">jack z=10.77 (bottom-mt)</text>
+<line x1="28.00" y1="75.94" x2="28.00" y2="26.33" stroke="#999" stroke-width="0.3"/>
+<line x1="26.50" y1="75.94" x2="29.50" y2="75.94" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="76.84" class="dim" text-anchor="end">0 base</text>
 <line x1="26.50" y1="69.78" x2="29.50" y2="69.78" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="70.68" class="dim" text-anchor="end">5 Seed btm</text>
+<text x="26.00" y="70.68" class="dim" text-anchor="end">6 Seed btm</text>
 <line x1="26.50" y1="51.18" x2="29.50" y2="51.18" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="52.08" class="dim" text-anchor="end">24 board/jack</text>
+<text x="26.00" y="52.08" class="dim" text-anchor="end">25 board/jack</text>
 <line x1="26.50" y1="42.94" x2="29.50" y2="42.94" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="43.84" class="dim" text-anchor="end">32 glass</text>
+<text x="26.00" y="43.84" class="dim" text-anchor="end">33 glass</text>
 <line x1="26.50" y1="42.94" x2="29.50" y2="42.94" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="43.84" class="dim" text-anchor="end">32 top inner</text>
-<text x="12.00" y="91.94" class="note" text-anchor="start">Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~31% up the 32 mm wall (LOWER THIRD) -- barrel drop 12.4 + the 8.2 gap the</text>
-<text x="12.00" y="95.44" class="note" text-anchor="start">  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.</text>
-<text x="12.00" y="98.94" class="note" text-anchor="start">  Seed hangs to ~5 mm over the base (if 17 tall). TRS/DC bottom-mount, legs up; USB = Seed's own port.</text>
-<text x="12.00" y="102.94" class="dim" text-anchor="start">Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.</text>
-<line x1="12.00" y1="107.94" x2="112.00" y2="107.94" stroke="#111" stroke-width="0.4"/>
-<line x1="12.00" y1="105.94" x2="12.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="22.00" y1="105.94" x2="22.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="32.00" y1="105.94" x2="32.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="42.00" y1="105.94" x2="42.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="52.00" y1="105.94" x2="52.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="62.00" y1="105.94" x2="62.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="72.00" y1="105.94" x2="72.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="82.00" y1="105.94" x2="82.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="92.00" y1="105.94" x2="92.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="102.00" y1="105.94" x2="102.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<line x1="112.00" y1="105.94" x2="112.00" y2="109.94" stroke="#111" stroke-width="0.3"/>
-<text x="62.00" y="112.94" class="note" text-anchor="middle">this bar MUST measure 100.0 mm</text>
+<text x="26.00" y="43.84" class="dim" text-anchor="end">33 top inner</text>
+<text x="12.00" y="92.94" class="note" text-anchor="start">Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~33% up the 33 mm wall (lower third) -- barrel drop 12.4 + the 8.2 gap the</text>
+<text x="12.00" y="96.44" class="note" text-anchor="start">  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.</text>
+<text x="12.00" y="99.94" class="note" text-anchor="start">  Seed hangs to ~5 mm over the base (if 17 tall). TRS/DC bottom-mount, legs up; USB = Seed's own port.</text>
+<text x="12.00" y="103.94" class="dim" text-anchor="start">Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.</text>
+<line x1="12.00" y1="108.94" x2="112.00" y2="108.94" stroke="#111" stroke-width="0.4"/>
+<line x1="12.00" y1="106.94" x2="12.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="22.00" y1="106.94" x2="22.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="32.00" y1="106.94" x2="32.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="42.00" y1="106.94" x2="42.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="52.00" y1="106.94" x2="52.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="62.00" y1="106.94" x2="62.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="72.00" y1="106.94" x2="72.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="82.00" y1="106.94" x2="82.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="92.00" y1="106.94" x2="92.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="102.00" y1="106.94" x2="102.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<line x1="112.00" y1="106.94" x2="112.00" y2="110.94" stroke="#111" stroke-width="0.3"/>
+<text x="62.00" y="113.94" class="note" text-anchor="middle">this bar MUST measure 100.0 mm</text>
 </svg>
