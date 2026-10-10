@@ -16,9 +16,9 @@
 <text x="90.00" y="50.18" class="dim" text-anchor="start">PCB</text>
 <rect x="91.00" y="42.94" width="3.00" height="8.24" fill="#ddd" stroke="#111" stroke-width="0.3"/>
 <text x="95.00" y="47.06" class="dim" text-anchor="start">standoff 8.24</text>
-<rect x="94.00" y="52.78" width="35.00" height="17.00" fill="#dfd" stroke="#2a2" stroke-width="0.5"/>
-<text x="95.50" y="61.28" class="dim" text-anchor="start">Seed3 + sockets ~17</text>
-<text x="95.50" y="64.28" class="dim" text-anchor="start">(hangs below the PCB)</text>
+<rect x="94.00" y="52.78" width="35.00" height="16.50" fill="#dfd" stroke="#2a2" stroke-width="0.5"/>
+<text x="95.50" y="61.03" class="dim" text-anchor="start">Seed3 + sockets ~16.5</text>
+<text x="95.50" y="64.03" class="dim" text-anchor="start">(hangs below the PCB)</text>
 <rect x="102.00" y="42.94" width="32.00" height="8.24" fill="#fee" stroke="#c33" stroke-width="0.4"/>
 <line x1="102.00" y1="42.94" x2="134.00" y2="42.94" stroke="#c33" stroke-width="0.6"/>
 <text x="103.00" y="41.94" class="dim" text-anchor="start">OLED glass @ top-0</text>
@@ -32,8 +32,8 @@
 <line x1="28.00" y1="75.94" x2="28.00" y2="26.33" stroke="#999" stroke-width="0.3"/>
 <line x1="26.50" y1="75.94" x2="29.50" y2="75.94" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="76.84" class="dim" text-anchor="end">0 base</text>
-<line x1="26.50" y1="69.78" x2="29.50" y2="69.78" stroke="#999" stroke-width="0.3"/>
-<text x="26.00" y="70.68" class="dim" text-anchor="end">6 Seed btm</text>
+<line x1="26.50" y1="69.28" x2="29.50" y2="69.28" stroke="#999" stroke-width="0.3"/>
+<text x="26.00" y="70.18" class="dim" text-anchor="end">7 Seed btm</text>
 <line x1="26.50" y1="51.18" x2="29.50" y2="51.18" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="52.08" class="dim" text-anchor="end">25 board/jack</text>
 <line x1="26.50" y1="42.94" x2="29.50" y2="42.94" stroke="#999" stroke-width="0.3"/>
@@ -42,7 +42,7 @@
 <text x="26.00" y="43.84" class="dim" text-anchor="end">33 top inner</text>
 <text x="12.00" y="92.94" class="note" text-anchor="start">Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~33% up the 33 mm wall (lower third) -- barrel drop 12.4 + the 8.2 gap the</text>
 <text x="12.00" y="96.44" class="note" text-anchor="start">  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.</text>
-<text x="12.00" y="99.94" class="note" text-anchor="start">  Seed hangs to ~5 mm over the base (if 17 tall). TRS/DC bottom-mount, legs up; USB = Seed's own port.</text>
+<text x="12.00" y="99.94" class="note" text-anchor="start">  Seed hangs to ~6.7 mm over the base (16.5 stack). TRS/DC bottom-mount, legs up; USB = Seed's own port.</text>
 <text x="12.00" y="103.94" class="dim" text-anchor="start">Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.</text>
 <line x1="12.00" y1="108.94" x2="112.00" y2="108.94" stroke="#111" stroke-width="0.4"/>
 <line x1="12.00" y1="106.94" x2="12.00" y2="110.94" stroke="#111" stroke-width="0.3"/>

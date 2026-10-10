@@ -2,7 +2,7 @@
 	(version 20240108)
 	(generator "tt_measured")
 	(layer "F.Cu")
-	(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin leg 1.34mm (through the board), along-row pitch 6.36mm c-c (3 legs/row), row spacing 16.55mm c-c (17.89 outside-to-outside - 1.34 leg; legs FLEX in this direction so holes are generous), lug width 20mm, jack length 34.12mm, barrel axis 12.39mm below the board (bottom-mount drop). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve (match the Conn_01x03 symbol); the 3 unnumbered pads are the switch lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board. @@ VERIFY the T/R/S lug assignment with a meter, and the leg-row->barrel-face along-length distance (barrel Y here is approximate), before fab. @@")
+	(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin leg 1.34mm (through the board), along-row pitch 6.36mm c-c (3 legs/row), row spacing 16.55mm c-c (17.89 outside-to-outside - 1.34 leg; legs FLEX in this direction so holes are generous), lug width 20mm, jack length 34.12mm, barrel axis 12.39mm below the board (bottom-mount drop). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
 	(tags "jack TRS 6.35mm phone K3599 open-frame switched measured")
 	(attr through_hole)
 	(property "Reference" "REF**"
@@ -31,7 +31,8 @@
 	(pad "" thru_hole circle (at 8.275 6.36)  (size 2.6 2.6) (drill 1.5) (layers "*.Cu" "*.Mask"))
 
 	(fp_text user "1=TIP(deep)" (at -11 -6.36 90) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.1))))
-	(fp_text user "3=SLV(near)" (at -11 6.36 90) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.1))))
+	(fp_text user "2=RING" (at -11 0 90) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.1))))
+	(fp_text user "3=SLV/GND(near)" (at -11 6.36 90) (layer "F.Fab") (effects (font (size 0.5 0.5) (thickness 0.1))))
 
 	(fp_text user "panel hole (back wall)" (at 0 21 0) (layer "F.Fab") (effects (font (size 0.7 0.7) (thickness 0.1))))
 	(fp_line (start -10 -13.36) (end 10 -13.36) (stroke (width 0.12) (type default)) (layer "F.SilkS"))

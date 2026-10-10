@@ -30,7 +30,7 @@ Z_BRD_TOP  = H_INT - STANDOFF    # board top surface height
 Z_BRD_BOT  = Z_BRD_TOP - PCB_T
 BRD_Y0, BRD_Y1 = 55.0, 112.0     # board depth span (from the top-face mock-up)
 
-SEED_STACK = 17.0                # ⚠ DEFAULT: sockets + Seed + parts hanging BELOW -- measure it
+SEED_STACK = 16.5                # ✅ MEASURED (proto): mounting surface -> USB top = 16.5 (conservative)
 SEED_Y0, SEED_Y1 = 60.0, 95.0    # where the Seed sits (depth)
 
 OLED_GLASS_UNDER = 0.0           # ✅ glass at 7.9 above board (2x1.9 spacers) vs 8.0 gap -> 0.1 under inner
@@ -131,7 +131,7 @@ for z, lab in [(0, "0 base"), (Z_BRD_BOT - SEED_STACK, f"{Z_BRD_BOT-SEED_STACK:.
 ny = ZY(0) + T_BASE + 13
 s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~33% up the 33 mm wall (lower third) -- barrel drop 12.4 + the 8.2 gap the", 'note')
 s += _txt(LM-22, ny+3.5, "  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.", 'note')
-s += _txt(LM-22, ny+7.0, "  Seed hangs to ~5 mm over the base (if 17 tall). TRS/DC bottom-mount, legs up; USB = Seed's own port.", 'note')
+s += _txt(LM-22, ny+7.0, "  Seed hangs to ~6.7 mm over the base (16.5 stack). TRS/DC bottom-mount, legs up; USB = Seed's own port.", 'note')
 s += _txt(LM-22, ny+11.0, "Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.", 'dim')
 
 # --- 100 mm ruler ---
