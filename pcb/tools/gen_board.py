@@ -19,11 +19,11 @@ import os, sys
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT  = os.path.join(HERE, "..", "tone_trixter.kicad_pcb")
+OUT  = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "tone_trixter.kicad_pcb")
 
 # ---- board outline (board-local mm) ----------------------------------------------------------
 W, D   = 132.0, 57.0      # width (X), depth (Y)
-NW, ND = 12.0, 12.0       # rear-corner notch (clears the O7 bosses)
+NW, ND = 10.0, 10.0       # rear-corner notch: O7 screw post -> 3 mm play; smaller notch = more rear-wall edge
 ORIGIN = (30.0, 30.0)     # offset on the sheet so the board sits in the positive quadrant
 
 # notched rectangle, Y=0 front .. Y=D rear; two rear corners bitten out
@@ -32,19 +32,13 @@ OUTLINE = [
     (W, D-ND), (W-NW, D-ND), (W-NW, D),
     (NW, D), (NW, D-ND), (0, D-ND),
 ]
-M3 = [(6, 6), (W-6, 6), (26, D-6), (W-26, D-6)]   # front corners + rear-inboard (clear of notches)
-M3_DRILL = 3.2
+# No mounting holes for now -- the board is registered by the bottom-mounted jacks.
 
 def mm(x): return pcbnew.FromMM(x)
 def V(x, y): return pcbnew.VECTOR2I(mm(ORIGIN[0]+x), mm(ORIGIN[1]+y))
 
-def main():
-    board = pcbnew.CreateEmptyBoard()
-
-    # 1.6 mm, 2 layers (one plane = a bottom pour; refine later)
-    board.GetDesignSettings().SetBoardThickness(mm(1.6))
-
-    # --- Edge.Cuts outline ---
+def add_outline(board):
+    """Draw the Edge.Cuts outline. Caller has already cleared any existing Edge.Cuts shapes."""
     pts = OUTLINE + [OUTLINE[0]]
     for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
         seg = pcbnew.PCB_SHAPE(board)
@@ -55,29 +49,32 @@ def main():
         seg.SetWidth(mm(0.1))
         board.Add(seg)
 
-    # --- M3 mounting holes as Edge.Cuts circles (non-plated cutouts for now; plane-bonded
-    #     MountingHole footprints come later once the enclosure bond is finalised) ---
-    for (x, y) in M3:
-        c = pcbnew.PCB_SHAPE(board)
-        c.SetShape(pcbnew.SHAPE_T_CIRCLE)
-        c.SetLayer(pcbnew.Edge_Cuts)
-        c.SetCenter(V(x, y))
-        c.SetEnd(V(x + M3_DRILL/2.0, y))   # radius point
-        c.SetWidth(mm(0.1))
-        board.Add(c)
-
-    # --- a couple of labels on the User.Comments layer for orientation ---
-    for (x, y, txt) in [(W/2, -4, "FRONT (footswitches, toward player)"),
-                        (W/2, D+5, "REAR WALL -- bottom-mounted jacks (XLR/IN/DC/USB/OUT)")]:
-        t = pcbnew.PCB_TEXT(board)
-        t.SetLayer(pcbnew.Cmts_User)
-        t.SetText(txt)
-        t.SetPosition(V(x, y))
-        t.SetTextSize(pcbnew.VECTOR2I(mm(2.0), mm(2.0)))
-        board.Add(t)
-
-    pcbnew.SaveBoard(OUT, board)
-    print(f"wrote {os.path.relpath(OUT)}  ({W:g} x {D:g} mm outline, {len(M3)} M3 holes)")
+def main():
+    if os.path.exists(OUT):
+        # UPDATE IN PLACE: replace only the Edge.Cuts outline, keep footprints/tracks/zones/text.
+        board = pcbnew.LoadBoard(OUT)
+        removed = 0
+        for d in list(board.GetDrawings()):
+            if d.GetLayer() == pcbnew.Edge_Cuts:
+                board.Remove(d); removed += 1
+        add_outline(board)
+        pcbnew.SaveBoard(OUT, board)
+        print(f"updated outline in {os.path.relpath(OUT)}  ({W:g} x {D:g}, notch {NW:g}x{ND:g}, no mounting holes); "
+              f"removed {removed} old Edge.Cuts shapes, footprints preserved")
+    else:
+        board = pcbnew.CreateEmptyBoard()
+        board.GetDesignSettings().SetBoardThickness(mm(1.6))
+        add_outline(board)
+        for (x, y, txt) in [(W/2, -4, "FRONT (footswitches, toward player)"),
+                            (W/2, D+5, "REAR WALL -- bottom-mounted jacks (XLR/IN/DC/OUT)")]:
+            t = pcbnew.PCB_TEXT(board)
+            t.SetLayer(pcbnew.Cmts_User)
+            t.SetText(txt)
+            t.SetPosition(V(x, y))
+            t.SetTextSize(pcbnew.VECTOR2I(mm(2.0), mm(2.0)))
+            board.Add(t)
+        pcbnew.SaveBoard(OUT, board)
+        print(f"wrote fresh {os.path.relpath(OUT)}  ({W:g} x {D:g} outline, notch {NW:g}x{ND:g}, no mounting holes)")
 
 if __name__ == "__main__":
     try:
