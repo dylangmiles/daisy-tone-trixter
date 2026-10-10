@@ -24,7 +24,7 @@ OUT  = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "tone_trix
 # ---- board outline (board-local mm) ----------------------------------------------------------
 W, D   = 132.0, 57.0      # width (X), depth (Y)
 NW, ND = 10.0, 10.0       # rear-corner notch: O7 screw post -> 3 mm play; smaller notch = more rear-wall edge
-THICK  = 1.5              # PCB thickness (mm) -- builder spec 2026-10-10
+THICK  = 1.6              # PCB thickness (mm) -- standard/JLCPCB default (the 1.5 earlier was the prototype)
 ORIGIN = (30.0, 30.0)     # offset on the sheet so the board sits in the positive quadrant
 
 # notched rectangle, Y=0 front .. Y=D rear; two rear corners bitten out
