@@ -55,9 +55,9 @@ M3_DIA         = 3.2
 # ---- jacks: board-mounted at the rear edge, through the back wall (X = width) ----------------
 WALL_H   = 33.0
 XLR_SCREW = 9.5   # vertical screw-hole offset from barrel centre (verify vs chosen XLR/combo part)
-REAR = [  # (label, shape, size, x_centre)   across the 138 wide back wall, XLR grouped with IN
-    ("XLR", "xlr",  24.0, 26.0),    # v2 mic input -- RESERVED area, NOT drilled now (barrel ~Ø24 + 2 screws)
-    ("IN",  "circ", 10.0, 52.0),
+REAR = [  # (label, shape, size, x_centre)   across the 138 wide back wall; the two inputs grouped left
+    ("IN B", "circ", 10.0, 26.0),   # second high-Z instrument input (K3599 TRS, DRILLED in v1 -- was the XLR reserve)
+    ("IN A", "circ", 10.0, 52.0),
     ("DC",  "circ", 12.0, 74.0),
     ("USB", "rect", (13.0, 8.0), 96.0),
     ("OUT", "circ", 10.0, 118.0),
@@ -96,7 +96,7 @@ PAGE_H = MARGIN*3 + EXT_D + WALL_H + 20
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7, "1590XX mock-up (landscape) -- PRINT AT 100%, verify the 100 mm ruler", 'ttl', 'start')
 s += _txt(MARGIN, 11.0, "Box: ext 145x121x39, wall 2, top-face plane 138x114, O7 corner bosses.", 'note', 'start')
-s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. XLR = v2 mic RESERVE (red, not drilled). Sizes DEFAULT.", 'note', 'start')
+s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. IN A + IN B = two high-Z TRS inputs (both drilled v1). Sizes DEFAULT.", 'note', 'start')
 
 ox, oy = MARGIN, MARGIN + 9
 def TX(x): return ox + x

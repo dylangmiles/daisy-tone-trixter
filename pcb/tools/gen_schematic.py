@@ -278,7 +278,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     S.text("Second stage inverts → firmware flips the sign (brief §3.1).", g(x + 62, y0 + 2), 1.2)
 
 front_end("A", 86, "U1", "J1", "IN jack, K3599 board-mount TRS switched, bottom-mounted. pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN1_TIP", "AIN1", jack_fp=FP["K3599"])
-front_end("B", 112, "U2", "J8", "SECOND HIGH-Z CHANNEL — on the board only, NOT drilled in v1 (brief §3.2)", "IN2_TIP", "AIN2")
+front_end("B", 112, "U2", "J8", "IN B jack, K3599 board-mount TRS switched, bottom-mounted (DRILLED in v1 — second high-Z instrument input, brief §3.2). pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN2_TIP", "AIN2", jack_fp=FP["K3599"])
 
 # ================================================================ 4. VREF + OUTPUT (Fig 3.6)
 y0 = 138; x = 4

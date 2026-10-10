@@ -36,6 +36,7 @@ ANCHORS = {
     "D5":  (125.0, 39.0,  0, "F"),   # LED             (builder)
     "J1":  (20.0, 43.5, 180, "B"),   # IN  jack K3599  (builder)
     "J2":  (112.0, 43.5, 180, "B"),  # OUT jack K3599  (builder)
+    "J8":  (46.0, 43.5, 180, "B"),   # IN B jack K3599 (second high-Z input, drilled v1 -- beside IN A)
     "J3":  (127.5, 27.0, 180, "B"),  # DC  lead        (builder)
     "J7":  (50.5, 3.0,  180, "B"),   # bypass sw lead  (builder)
     "J9":  (93.5, 3.0,  180, "B"),   # tuner sw lead   (builder)
@@ -44,7 +45,6 @@ ANCHORS = {
     "U4":  (95.0, 26.5,  90, "B"),   # Daisy Seed3     (builder)
     "J10": (111.7, 8.9,   0, "B"),   # microSD         (builder)
     # --- active devices placed by us (near their function; drag as needed) ---
-    "J8":  (52.0, 44.0,   0, "F"),   # Ch-B input (internal, analogue centre)
     "U1":  (66.0, 11.0,   0, "F"),   # OPA front-end A
     "U2":  (66.0, 20.0,   0, "F"),   # OPA front-end B
     "U3":  (66.0, 29.0,   0, "F"),   # OPA output stage
