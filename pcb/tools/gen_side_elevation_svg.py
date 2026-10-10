@@ -17,8 +17,8 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "
 
 # ---- box cross-section (depth x height), all DEFAULT -----------------------------------------
 DEPTH    = 114.0   # internal depth (front 0 .. back wall)
-H_INT    = 33.0    # internal cavity height  (= ext 39 - base 4 - top 2)  ⚠ verify
-T_TOP    = 2.0     # top-face thickness
+H_INT    = 32.0    # internal cavity height  (= ext 39 - base 4 - top 2)  ⚠ verify
+T_TOP    = 2.33     # top-face thickness
 T_BASE   = 4.0     # base-plate thickness
 
 # ---- board + stack (Z measured UP from the base inner surface) -------------------------------
@@ -75,8 +75,8 @@ def ZY(z): return TM + (Z_TOP_DRAW + H_INT) - z   # z=0 (base inner) low, up inc
 
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(LM-22, 7, "1590XX SIDE ELEVATION (height study, projected) -- PRINT AT 100%", 'ttl')
-s += _txt(LM-22, 11, "ALL heights DEFAULT (brief's vertical budget). Front = left, back wall = right.", 'note')
-s += _txt(LM-22, 14.5, "⚠ the jack-axis height and the rear-wall hole must match -- see the red note.", 'note')
+s += _txt(LM-22, 11, "Heights MEASURED off the prototype 2026-10-10 (recalib). Front=left, back wall=right. Seed ~17 still est.", 'note')
+s += _txt(LM-22, 14.5, "Cavity 32 mm, walls 2.33 mm. Gap 8.24 (OLED glass flush, encoder clears). Jack axis 12.4 below the board.", 'note')
 
 # --- casting: base plate, top face, back wall (with jack hole), front wall ---
 s += _rect(DX(0), ZY(0), DEPTH, T_BASE, fill='#eee', sw=0.5)                 # base plate (below z=0)
@@ -129,9 +129,9 @@ for z, lab in [(0, "0 base"), (Z_BRD_BOT - SEED_STACK, f"{Z_BRD_BOT-SEED_STACK:.
 
 # --- the key constraint note ---
 ny = ZY(0) + T_BASE + 13
-s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z={Z_JACK:g} = mid-wall. The clean fix:", 'note')
-s += _txt(LM-22, ny+3.5, "  board stays high (Seed hangs below, short OLED reach) AND the jacks land mid-wall.", 'note')
-s += _txt(LM-22, ny+7.0, "  TRS + DC bottom-mount, legs up through the PCB. USB = Seed's own port, oriented to the wall.", 'note')
+s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~31% up the 32 mm wall (LOWER THIRD) -- barrel drop 12.4 + the 8.2 gap the", 'note')
+s += _txt(LM-22, ny+3.5, "  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.", 'note')
+s += _txt(LM-22, ny+7.0, "  Seed hangs to ~5 mm over the base (if 17 tall). TRS/DC bottom-mount, legs up; USB = Seed's own port.", 'note')
 s += _txt(LM-22, ny+11.0, "Budget: Seed-on-sockets (~17) + standoff (6) nearly fills the 33 mm; ~8 mm spare over base.", 'dim')
 
 # --- 100 mm ruler ---
