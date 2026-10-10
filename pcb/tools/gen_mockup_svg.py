@@ -5,8 +5,9 @@ Brief §1/§7: "mock the face up 1:1 on paper, then draw the board." This writes
 1:1 (mm units). Print at 100% / "actual size", confirm the 100 mm ruler measures 100.0 mm, cut it
 out, tape it to the casting, and mark any corrections.
 
-Measured box (2026-10-09, box in hand):
-  external 145 x 121 x 39 mm, wall 2 mm, internal TOP-FACE PLANE 138 x 114, four O7 corner bosses.
+Measured box (2026-10-10, box in hand, recalibrated caliper):
+  external ~145 x 121 x 39 mm (catalog), wall 2.33 mm, internal TOP-FACE PLANE 138 x 114 (measured),
+  internal cavity 33 mm tall, four O7 corner bosses.
 
 Orientation (revised 2026-10-09): LONG SIDE HORIZONTAL -> 138 wide (left-right) x 114 deep
 (front-back). Wider back wall for the jacks, wider footswitch spacing.
@@ -15,7 +16,8 @@ Board strategy (revised 2026-10-09): FULL-WIDTH board hugging the BACK WALL, rea
 for the O7 bosses, registered by board-mounted TS jacks along the rear edge (sidesteps tapping M3
 into the 2 mm top face). ⚠ jacks stay the ISOLATED-bushing plastic type (shielding logic).
 
-⚠ Every PART HOLE SIZE is a DEFAULT to verify against the real part. Stdlib only.
+Jack/encoder/OLED-window sizes are from the real parts; footswitch + DC/USB cutouts still to confirm.
+Rear-wall jack HEIGHT is now the measured bottom-mount axis (~33% up the wall), not centred. Stdlib only.
   python3 tools/gen_mockup_svg.py              # -> mockup/mockup_1590xx.svg
 """
 import os
@@ -53,14 +55,15 @@ NOTCH          = 12.0           # rear-corner cut to clear the O7 bosses
 M3_DIA         = 3.2
 
 # ---- jacks: board-mounted at the rear edge, through the back wall (X = width) ----------------
-WALL_H   = 33.0
-XLR_SCREW = 9.5   # vertical screw-hole offset from barrel centre (verify vs chosen XLR/combo part)
-REAR = [  # (label, shape, size, x_centre)   across the 138 wide back wall; the two inputs grouped left
-    ("IN B", "circ", 10.0, 26.0),   # second high-Z instrument input (K3599 TRS, DRILLED in v1 -- was the XLR reserve)
-    ("IN A", "circ", 10.0, 52.0),
-    ("DC",  "circ", 12.0, 74.0),
-    ("USB", "rect", (13.0, 8.0), 96.0),
-    ("OUT", "circ", 10.0, 118.0),
+WALL_H   = 33.0   # ✅ internal cavity height (measured)
+JACK_Z   = 10.8   # ✅ bottom-mount TRS barrel axis above the base (12.39 drop + 1.6 PCB -> ~33% up the 33 wall)
+# (label, shape, size, x_centre, z_axis_up_from_base).  z measured up from the base-plate inner.
+REAR = [  # the two high-Z inputs grouped on the left; one drill height (JACK_Z) for all three TRS
+    ("IN B", "circ", 10.0, 26.0,  JACK_Z),  # second high-Z instrument input (K3599 TRS, DRILLED v1)
+    ("IN A", "circ", 10.0, 52.0,  JACK_Z),  # guitar
+    ("DC",  "circ", 12.0, 74.0,  JACK_Z),   # ⚠ z assumes the DC jack bottom-mounts like the TRS -- verify its drop
+    ("USB", "rect", (13.0, 8.0), 96.0, 16.0),# ⚠ flexible panel extender -> height is a free layout choice, not fixed
+    ("OUT", "circ", 10.0, 118.0, JACK_Z),
 ]
 JACK_Y = BRD_Y1 - 4.0   # where the jack bodies sit on the board (rear edge)
 
@@ -95,8 +98,8 @@ PAGE_H = MARGIN*3 + EXT_D + WALL_H + 20
 
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7, "1590XX mock-up (landscape) -- PRINT AT 100%, verify the 100 mm ruler", 'ttl', 'start')
-s += _txt(MARGIN, 11.0, "Box: ext 145x121x39, wall 2, top-face plane 138x114, O7 corner bosses.", 'note', 'start')
-s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. IN A + IN B = two high-Z TRS inputs (both drilled v1). Sizes DEFAULT.", 'note', 'start')
+s += _txt(MARGIN, 11.0, "Box: ext ~145x121x39 (catalog), wall 2.33, top-face plane 138x114, cavity 33 tall, O7 corner bosses.", 'note', 'start')
+s += _txt(MARGIN, 14.5, "Full-width notched board; jacks board-mounted. IN A + IN B = two high-Z TRS inputs (both drilled v1).", 'note', 'start')
 
 ox, oy = MARGIN, MARGIN + 9
 def TX(x): return ox + x
@@ -141,12 +144,9 @@ s += _circ(TX(ENC_X), TY(ENC_CY), ENC_DIA) + _cross(TX(ENC_X), TY(ENC_CY))
 s += _txt(TX(ENC_X), TY(ENC_CY)-5, f"enc O{ENC_DIA:g}", 'dim')
 
 # jacks board-mounted at the rear edge (shown on the top view where they sit on the board)
-for label, shape, size, xc in REAR:
+for label, shape, size, xc, z in REAR:
     if shape == "circ":
         s += _circ(TX(xc), TY(JACK_Y), size)
-    elif shape == "xlr":
-        s += _circ(TX(xc), TY(JACK_Y), size, stroke='#a00', dash='2 2')
-        s += _txt(TX(xc), TY(JACK_Y)+2, "v2", 'dim')
     else:
         w, h = size
         s += _rect(TX(xc-w/2), TY(JACK_Y+h/2), w, h, sw=0.3)
@@ -154,22 +154,21 @@ for label, shape, size, xc in REAR:
 
 # ---- REAR WALL drilling strip (138 wide) ----
 ry = oy + EXT_D + 14
-s += _txt(ox, ry - 3, "REAR WALL drilling strip (138 wide x 33 tall internal) -- same X as the jacks above", 'dim', 'start')
+s += _txt(ox, ry - 3, "REAR WALL drilling strip (138 wide x 33 tall, base at BOTTOM) -- same X as above; hole at its axis height", 'dim', 'start')
 s += _rect(ox, ry, BOX_W, WALL_H, sw=0.6)
-for label, shape, size, xc in REAR:
-    cy = ry + WALL_H/2
+# datum lines: base (z=0) at the bottom edge, top-face inner (z=33) at the top edge
+s += _txt(ox+2, ry+WALL_H-1.5, "base (z=0)", 'dim', 'start')
+s += _txt(ox+2, ry+3, f"top inner (z={WALL_H:g})", 'dim', 'start')
+for label, shape, size, xc, z in REAR:
+    cy = ry + WALL_H - z           # z measured UP from the base (strip base is the bottom edge)
     if shape == "circ":
         s += _circ(ox+xc, cy, size) + _cross(ox+xc, cy)
         s += _txt(ox+xc, ry+WALL_H+4, f"{label} O{size:g}", 'dim')
-    elif shape == "xlr":
-        s += _circ(ox+xc, cy, size, stroke='#a00', dash='2 2')
-        for dy in (-XLR_SCREW, XLR_SCREW):
-            s += _cross(ox+xc, cy+dy)
-        s += _txt(ox+xc, ry+WALL_H+4, f"{label} O{size:g} (v2 reserve)", 'dim')
     else:
         w, h = size
         s += _rect(ox+xc-w/2, cy-h/2, w, h, sw=0.4)
         s += _txt(ox+xc, ry+WALL_H+4, f"{label} {w:g}x{h:g}", 'dim')
+    s += _txt(ox+xc, ry+WALL_H+7, f"axis {z:g} up", 'dim')
 
 # ---- 100 mm scale ruler (print check) ----
 ruy = ry + WALL_H + 12

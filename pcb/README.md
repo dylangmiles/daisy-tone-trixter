@@ -22,14 +22,17 @@ also runs a wire-through-pin check and prints `CHECK:` lines if any wire crosses
 The enclosure mock-up revised the brief's board envelope. **Current geometry** (see
 `tools/gen_mockup_svg.py` + `tools/gen_side_elevation_svg.py`, rendered in `mockup/`):
 
-- 1590XX **landscape** (internal top-face plane 138 × 114, 2 mm walls, Ø7 corner bosses).
-- **Full-width board ~132 × 57 mm**, hugging the **back wall**, rear corners notched 12 × 12 for the
-  bosses. Mounted high under the top face; **Seed hangs below**; OLED + encoder reach up (screen
-  centred on the board, toward the rear); footswitches panel-mounted up front at 90 mm centres.
-- **TRS + DC jacks bottom-mounted** (barrel below the board → axis mid-wall), legs up through the PCB,
-  isolated plastic bushings. **USB = Seed's own port** oriented to the back wall. **XLR mic input
-  reserved** next to IN (v2, not drilled).
-- ⚠ heights (OLED/encoder/Seed/jack) still DEFAULT pending the paper test-fit + real part measurements.
+- 1590XX **landscape** (internal top-face plane 138 × 114, **2.33 mm walls**, internal cavity **33 mm**
+  tall, Ø7 corner bosses). All measured off the box 2026-10-10.
+- **Full-width board ~132 × 57 mm**, hugging the **back wall**, rear corners notched **10 × 10** for the
+  bosses (Ø7 post → 3 mm play). Mounted high under the top face (**gap 8.24 mm**, set by the OLED glass
+  flush + encoder body clearing); **Seed hangs ~16.5 below**; OLED + encoder reach up (screen centred on
+  the board, toward the rear); footswitches panel-mounted up front at 90 mm centres.
+- **TRS + DC jacks bottom-mounted** (barrel 12.4 below the board → axis **~33 % up the wall, lower
+  third**, z ≈ 10.8), legs up through the PCB, isolated plastic bushings. **USB = Seed's own port** on a
+  flexible extender. **Two high-Z inputs drilled in v1** — IN A (AIN1) + IN B (AIN2), both K3599 TRS;
+  the XLR mic reserve is dropped (a v2 board).
+- ✅ All Z-stack heights (OLED/encoder/Seed/jack/cavity) **measured** 2026-10-10; see the side-elevation.
 
 **The outline is GENERATED** — `tools/gen_board.py` (run with KiCad's bundled python; has `pcbnew`):
 

@@ -30,7 +30,7 @@ FP = {
     "LED":   "LED_THT:LED_D3.0mm",
     "JST2":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "JST3":  "Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical",
-    "K3599": "TT:K3599_TRS_6leg",   # ⚠ FIRST-PASS board-mount TRS jack (bottom-mounted); dims to VERIFY
+    "K3599": "TT:K3599_TRS_6leg",   # ✅ board-mount TRS jack, measured off the part 2026-10-10 (IN A, IN B, OUT)
     "HDR7":  "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical",
     "HDR20": "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical",
     "DAISY": "Module:Electrosmith_Daisy_Seed",   # 2×20, 40 pads -- the real Seed footprint (not 1×20!)

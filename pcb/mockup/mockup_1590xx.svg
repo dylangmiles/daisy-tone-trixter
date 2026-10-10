@@ -2,8 +2,8 @@
 <style>text{font-family:sans-serif;fill:#111}.lbl{font-size:3.2px}.dim{font-size:2.6px;fill:#555}.ttl{font-size:4px;font-weight:bold}.note{font-size:2.6px;fill:#a00}</style>
 <rect x="0" y="0" width="175.0" height="210.0" fill="#fff"/>
 <text x="12.00" y="7.00" class="ttl" text-anchor="start">1590XX mock-up (landscape) -- PRINT AT 100%, verify the 100 mm ruler</text>
-<text x="12.00" y="11.00" class="note" text-anchor="start">Box: ext 145x121x39, wall 2, top-face plane 138x114, O7 corner bosses.</text>
-<text x="12.00" y="14.50" class="note" text-anchor="start">Full-width notched board; jacks board-mounted. IN A + IN B = two high-Z TRS inputs (both drilled v1). Sizes DEFAULT.</text>
+<text x="12.00" y="11.00" class="note" text-anchor="start">Box: ext ~145x121x39 (catalog), wall 2.33, top-face plane 138x114, cavity 33 tall, O7 corner bosses.</text>
+<text x="12.00" y="14.50" class="note" text-anchor="start">Full-width notched board; jacks board-mounted. IN A + IN B = two high-Z TRS inputs (both drilled v1).</text>
 <rect x="8.50" y="14.00" width="145.00" height="121.00" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="2 2"/>
 <rect x="12.00" y="21.00" width="138.00" height="114.00" fill="none" stroke="#111" stroke-width="0.6"/>
 <text x="81.00" y="19.00" class="dim" text-anchor="middle">TOP FACE  (back wall this edge)  138 wide x 114 deep</text>
@@ -44,26 +44,33 @@
 <text x="108.00" y="22.00" class="dim" text-anchor="middle">USB</text>
 <circle cx="130.00" cy="27.00" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <text x="130.00" y="22.00" class="dim" text-anchor="middle">OUT</text>
-<text x="12.00" y="153.00" class="dim" text-anchor="start">REAR WALL drilling strip (138 wide x 33 tall internal) -- same X as the jacks above</text>
+<text x="12.00" y="153.00" class="dim" text-anchor="start">REAR WALL drilling strip (138 wide x 33 tall, base at BOTTOM) -- same X as above; hole at its axis height</text>
 <rect x="12.00" y="156.00" width="138.00" height="33.00" fill="none" stroke="#111" stroke-width="0.6"/>
-<circle cx="38.00" cy="172.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="36.00" y1="172.50" x2="40.00" y2="172.50" stroke="#111" stroke-width="0.2"/>
-<line x1="38.00" y1="170.50" x2="38.00" y2="174.50" stroke="#111" stroke-width="0.2"/>
+<text x="14.00" y="187.50" class="dim" text-anchor="start">base (z=0)</text>
+<text x="14.00" y="159.00" class="dim" text-anchor="start">top inner (z=33)</text>
+<circle cx="38.00" cy="178.20" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="36.00" y1="178.20" x2="40.00" y2="178.20" stroke="#111" stroke-width="0.2"/>
+<line x1="38.00" y1="176.20" x2="38.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <text x="38.00" y="193.00" class="dim" text-anchor="middle">IN B O10</text>
-<circle cx="64.00" cy="172.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="62.00" y1="172.50" x2="66.00" y2="172.50" stroke="#111" stroke-width="0.2"/>
-<line x1="64.00" y1="170.50" x2="64.00" y2="174.50" stroke="#111" stroke-width="0.2"/>
+<text x="38.00" y="196.00" class="dim" text-anchor="middle">axis 10.8 up</text>
+<circle cx="64.00" cy="178.20" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="62.00" y1="178.20" x2="66.00" y2="178.20" stroke="#111" stroke-width="0.2"/>
+<line x1="64.00" y1="176.20" x2="64.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <text x="64.00" y="193.00" class="dim" text-anchor="middle">IN A O10</text>
-<circle cx="86.00" cy="172.50" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="84.00" y1="172.50" x2="88.00" y2="172.50" stroke="#111" stroke-width="0.2"/>
-<line x1="86.00" y1="170.50" x2="86.00" y2="174.50" stroke="#111" stroke-width="0.2"/>
+<text x="64.00" y="196.00" class="dim" text-anchor="middle">axis 10.8 up</text>
+<circle cx="86.00" cy="178.20" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="84.00" y1="178.20" x2="88.00" y2="178.20" stroke="#111" stroke-width="0.2"/>
+<line x1="86.00" y1="176.20" x2="86.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <text x="86.00" y="193.00" class="dim" text-anchor="middle">DC O12</text>
-<rect x="101.50" y="168.50" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="86.00" y="196.00" class="dim" text-anchor="middle">axis 10.8 up</text>
+<rect x="101.50" y="169.00" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
 <text x="108.00" y="193.00" class="dim" text-anchor="middle">USB 13x8</text>
-<circle cx="130.00" cy="172.50" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="128.00" y1="172.50" x2="132.00" y2="172.50" stroke="#111" stroke-width="0.2"/>
-<line x1="130.00" y1="170.50" x2="130.00" y2="174.50" stroke="#111" stroke-width="0.2"/>
+<text x="108.00" y="196.00" class="dim" text-anchor="middle">axis 16 up</text>
+<circle cx="130.00" cy="178.20" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="128.00" y1="178.20" x2="132.00" y2="178.20" stroke="#111" stroke-width="0.2"/>
+<line x1="130.00" y1="176.20" x2="130.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <text x="130.00" y="193.00" class="dim" text-anchor="middle">OUT O10</text>
+<text x="130.00" y="196.00" class="dim" text-anchor="middle">axis 10.8 up</text>
 <line x1="12.0" y1="201.0" x2="112.0" y2="201.0" stroke="#111" stroke-width="0.4"/>
 <line x1="12.0" y1="199.0" x2="12.0" y2="203.0" stroke="#111" stroke-width="0.3"/>
 <line x1="22.0" y1="199.0" x2="22.0" y2="203.0" stroke="#111" stroke-width="0.3"/>
