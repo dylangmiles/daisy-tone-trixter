@@ -6,3 +6,5 @@ svg/
 fp-info-cache
 *.kicad_prl
 *.lck
+*-erc.rpt
+*-drc.rpt

@@ -7,3 +7,8 @@ cmake-build-debug/
 # Local validation outputs — not part of the repo
 tools/output/
 tools/.venv/
+
+# Editor / tooling caches (any directory)
+.history/
+__pycache__/
+*.pyc
