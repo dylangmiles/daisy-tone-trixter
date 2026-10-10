@@ -113,6 +113,11 @@ name: Desperado
 backing: ballad62
 # Eagles -- as sparse as it gets: kick on 1, rim on 3, brushed 2 & 4 barely there. 62 bpm.
 ---
+name: Brothers Arms
+backing: slow12860
+# Dire Straits "Brothers in Arms" -- slow, spacious 12/8 ballad, ~60 bpm (quarter), triplet lilt.
+# The guitar and voice breathe; the bed only marks the slow pulse. (14-char screen name.)
+---
 name: Crazy Little
 backing: rkbly145
 # Queen -- rockabilly bounce, claps on the backbeat. 145 bpm (was 156; 2026-09-21).

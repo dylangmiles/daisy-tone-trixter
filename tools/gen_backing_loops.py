@@ -443,6 +443,22 @@ STYLES = {
         fill_from=12,
         fill={"brushit": [(12, 0.40), (14, 0.35)]}),
 
+    # ---- added 2026-10-10 ---------------------------------------------------------------------
+    "slow_12_8": dict(
+        fn="slow128", bpm=60, bars=4, div=12, swing=0.0,
+        note="Slow, spacious 12/8 ballad: kick on 1 with a soft pickup to 3, gentle rim backbeat on "
+             "2 and 4, light triplet hat. Very sparse -- the song breathes. Brothers in Arms feel.",
+        # div=12 = triplet 8ths in a slow 4/4. bpm is the quarter (60). The guitar and voice carry it;
+        # the bed only marks the slow pulse and the triplet lilt.
+        pattern={
+            "kick": [(0, 0.90), (6, 0.50)],
+            "rim":  [(3, 0.45), (9, 0.55)],
+            "hat":  [(0, 0.30), (2, 0.18), (3, 0.26), (5, 0.18),
+                     (6, 0.30), (8, 0.18), (9, 0.26), (11, 0.20)],
+        },
+        fill_from=9,
+        fill={"rim": [(9, 0.55), (11, 0.40)]}),
+
     # ---- added 2026-09-27 for Dylan Miles originals ----------------------------------------
     "piedmont": dict(
         fn="pied", bpm=112, bars=4, div=16, swing=0.06,
