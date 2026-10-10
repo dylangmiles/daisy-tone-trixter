@@ -24,6 +24,7 @@ OUT  = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "tone_trix
 # ---- board outline (board-local mm) ----------------------------------------------------------
 W, D   = 132.0, 57.0      # width (X), depth (Y)
 NW, ND = 10.0, 10.0       # rear-corner notch: O7 screw post -> 3 mm play; smaller notch = more rear-wall edge
+THICK  = 1.5              # PCB thickness (mm) -- builder spec 2026-10-10
 ORIGIN = (30.0, 30.0)     # offset on the sheet so the board sits in the positive quadrant
 
 # notched rectangle, Y=0 front .. Y=D rear; two rear corners bitten out
@@ -53,6 +54,7 @@ def main():
     if os.path.exists(OUT):
         # UPDATE IN PLACE: replace only the Edge.Cuts outline, keep footprints/tracks/zones/text.
         board = pcbnew.LoadBoard(OUT)
+        board.GetDesignSettings().SetBoardThickness(mm(THICK))
         removed = 0
         for d in list(board.GetDrawings()):
             if d.GetLayer() == pcbnew.Edge_Cuts:
@@ -63,7 +65,7 @@ def main():
               f"removed {removed} old Edge.Cuts shapes, footprints preserved")
     else:
         board = pcbnew.CreateEmptyBoard()
-        board.GetDesignSettings().SetBoardThickness(mm(1.6))
+        board.GetDesignSettings().SetBoardThickness(mm(THICK))
         add_outline(board)
         for (x, y, txt) in [(W/2, -4, "FRONT (footswitches, toward player)"),
                             (W/2, D+5, "REAR WALL -- bottom-mounted jacks (XLR/IN/DC/OUT)")]:
