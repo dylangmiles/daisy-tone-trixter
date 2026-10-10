@@ -21,26 +21,28 @@ H_INT    = 33.0    # internal cavity height  (= ext 39 - base 4 - top 2)  ⚠ ve
 T_TOP    = 2.0     # top-face thickness
 T_BASE   = 4.0     # base-plate thickness
 
-# ---- board + stack (Z measured UP from the base inner surface), all DEFAULT ------------------
+# ---- board + stack (Z measured UP from the base inner surface) -------------------------------
+# ✅ MEASURED 2026-10-10 off the prototype (encoder, OLED, K3599) -- see each line. ⚠ still DEFAULT:
+# H_INT (internal enclosure height) and SEED_STACK -- measure the box + Seed to finalise.
 PCB_T      = 1.6
-STANDOFF   = 6.0                 # board sits this far below the top-face inner surface
-Z_BRD_TOP  = H_INT - STANDOFF    # = 27: board top surface height
+STANDOFF   = 8.24                 # ✅ board-to-top-face GAP set by encoder body (7.19) + OLED glass (7.9)
+Z_BRD_TOP  = H_INT - STANDOFF    # board top surface height
 Z_BRD_BOT  = Z_BRD_TOP - PCB_T
 BRD_Y0, BRD_Y1 = 55.0, 112.0     # board depth span (from the top-face mock-up)
 
-SEED_STACK = 17.0                # sockets 8.5 + Seed PCB 1.6 + tallest parts ~7, hanging BELOW
+SEED_STACK = 17.0                # ⚠ DEFAULT: sockets + Seed + parts hanging BELOW -- measure it
 SEED_Y0, SEED_Y1 = 60.0, 95.0    # where the Seed sits (depth)
 
-OLED_GLASS_UNDER = 1.0           # glass sits this far under the top-face inner
-Z_GLASS    = H_INT - OLED_GLASS_UNDER     # = 32
+OLED_GLASS_UNDER = 0.0           # ✅ glass at 7.9 above board (2x1.9 spacers) vs 8.0 gap -> 0.1 under inner
+Z_GLASS    = H_INT - OLED_GLASS_UNDER
 OLED_Y0, OLED_Y1 = 68.0, 100.0   # OLED module depth span
 
-ENC_BODY_ABOVE   = 6.0           # encoder body height above the board (fits the standoff gap)
-ENC_SHAFT_ABOVE_TOP = 8.0        # shaft protrusion above the OUTER top face
+ENC_BODY_ABOVE   = 7.23          # ✅ encoder body (flat top) above the board -- measured
+ENC_SHAFT_ABOVE_TOP = 16.61       # ✅ shaft top 27.0 above board, outer top face ~10 -> ~17 proud (knob)
 ENC_Y      = 84.0
 
-JACK_AX_ABOVE_BRD = -9.0         # jacks BOTTOM-MOUNTED: barrel hangs below the board, so the axis
-                                 #    sits ~9 mm below the board top -> lands mid-wall. ⚠ verify vs part.
+JACK_AX_ABOVE_BRD = -13.99        # ✅ K3599 barrel axis 10 mm below the board BOTTOM (+1.6 PCB) = 11.6
+                                 #    below the board top, pushed through. Bottom-mounted, hangs below.
 Z_JACK     = Z_BRD_TOP + JACK_AX_ABOVE_BRD   # rear-wall hole centre height
 JACK_DIA   = 10.0
 
