@@ -19,8 +19,13 @@ also runs a wire-through-pin check and prints `CHECK:` lines if any wire crosses
 
 ## Layout (started 2026-10-09)
 
+⚠ **`tools/enclosure.py` is the SINGLE SOURCE OF TRUTH for panel-part positions** (2026-10-12).
+Both the paper template (`gen_mockup_svg.py`) and the PCB placement (`gen_place.py`) import it, so the
+template and the board **cannot drift** — change a position once, both follow. Convention locked there:
+**INPUT on the RIGHT, OUTPUT on the LEFT** (signal R→L), encoder right of the centred screen.
+
 The enclosure mock-up revised the brief's board envelope. **Current geometry** (see
-`tools/gen_mockup_svg.py` + `tools/gen_side_elevation_svg.py`, rendered in `mockup/`):
+`tools/enclosure.py`, `tools/gen_mockup_svg.py` + `tools/gen_side_elevation_svg.py`, rendered in `mockup/`):
 
 - 1590XX **landscape** (internal top-face plane 138 × 114, **2.33 mm walls**, internal cavity **33 mm**
   tall, Ø7 corner bosses). All measured off the box 2026-10-10.
@@ -33,6 +38,9 @@ The enclosure mock-up revised the brief's board envelope. **Current geometry** (
   flexible extender. **Two high-Z inputs drilled in v1** — IN A (AIN1) + IN B (AIN2), both K3599 TRS;
   the XLR mic reserve is dropped (a v2 board).
 - ✅ All Z-stack heights (OLED/encoder/Seed/jack/cavity) **measured** 2026-10-10; see the side-elevation.
+- The mock-up is an **OUTSIDE drilling template** (tape outside, ink up, drill from outside; register by
+  the box **centre** — mark the diagonals). The rear-wall strip is **mirrored** (drawn as seen from
+  behind the pedal). For board-mounted jacks the most accurate method is to drill through the finished board.
 
 **The outline is GENERATED** — `tools/gen_board.py` (run with KiCad's bundled python; has `pcbnew`):
 

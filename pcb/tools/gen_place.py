@@ -21,30 +21,28 @@ from collections import defaultdict
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import enclosure as enc          # SINGLE SOURCE OF TRUTH for enclosure-coupled positions
 BOARD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "tone_trixter.kicad_pcb")
 
 OX, OY = 30.0, 30.0        # board origin on the sheet (matches gen_board.py)
 BW, BD = 132.0, 57.0
 
 # anchor: ref -> (x, y, rot, side)  board-local mm; side F=top, B=bottom(hangs below).
-# ⚠ The enclosure anchors are CAPTURED FROM THE BOARD (the builder's hand-placement, 2026-10-10) so
-# re-running preserves it. The OPAs + Ch-B are placed by us (they were still in staging).
+# ENCLOSURE-COUPLED parts (OLED, encoder, LEDs, the TRS/DC jacks) come from enclosure.py so the board
+# tracks the paper template exactly -- IN on the RIGHT, OUT on the LEFT, encoder right of the screen
+# (locked 2026-10-12). The rest keep the builder's hand-placement (not panel-critical).
 ANCHORS = {
-    "J6":  (58.9, 48.0,  90, "F"),   # OLED header     (builder)
-    "SW1": (36.5, 36.5,   0, "F"),   # encoder         (builder)
-    "D4":  (4.7, 39.5,    0, "F"),   # LED             (builder)
-    "D5":  (125.0, 39.0,  0, "F"),   # LED             (builder)
-    "J1":  (20.0, 43.5, 180, "B"),   # IN  jack K3599  (builder)
-    "J2":  (112.0, 43.5, 180, "B"),  # OUT jack K3599  (builder)
-    "J8":  (46.0, 43.5, 180, "B"),   # IN B jack K3599 (second high-Z input, drilled v1 -- beside IN A)
-    "J3":  (127.5, 27.0, 180, "B"),  # DC  lead        (builder)
-    "J7":  (50.5, 3.0,  180, "B"),   # bypass sw lead  (builder)
-    "J9":  (93.5, 3.0,  180, "B"),   # tuner sw lead   (builder)
-    "J4":  (127.5, 17.5,180, "B"),   # battery lead    (builder)
-    "J5":  (7.0, 12.5,  180, "B"),   # enclosure bond  (builder)
-    "U4":  (95.0, 26.5,  90, "B"),   # Daisy Seed3     (builder)
-    "J10": (111.7, 8.9,   0, "B"),   # microSD         (builder)
-    # --- active devices placed by us (near their function; drag as needed) ---
+    **enc.panel_anchors_board(),     # J6, SW1, D4, D5, J1(IN A), J2(OUT), J8(IN B), J3(DC)
+    # --- NOT enclosure-coupled: builder's board-local placement (flying leads / internal / bottom) ---
+    "J7":  (50.5, 3.0,  180, "B"),   # bypass sw lead  (footswitch is panel-mounted; lead not critical)
+    "J9":  (93.5, 3.0,  180, "B"),   # tuner sw lead
+    "J4":  (127.5, 17.5,180, "B"),   # battery lead
+    "J5":  (7.0, 12.5,  180, "B"),   # enclosure bond
+    "U4":  (95.0, 26.5,  90, "B"),   # Daisy Seed3 (USB on a flexible extender -- not pinned to the panel)
+    "J10": (111.7, 8.9,   0, "B"),   # microSD
+    # --- OPAs: near centre for now. ⚠ with IN now on the RIGHT, drag front-end U1/U2 toward the right
+    #     (near IN A/IN B) and output U3 toward the left (near OUT) when you optimise routing. ---
     "U1":  (66.0, 11.0,   0, "F"),   # OPA front-end A
     "U2":  (66.0, 20.0,   0, "F"),   # OPA front-end B
     "U3":  (66.0, 29.0,   0, "F"),   # OPA output stage
