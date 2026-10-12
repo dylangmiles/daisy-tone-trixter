@@ -68,12 +68,12 @@
 <circle cx="64.00" cy="180.20" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="62.00" y1="180.20" x2="66.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <line x1="64.00" y1="178.20" x2="64.00" y2="182.20" stroke="#111" stroke-width="0.2"/>
-<text x="64.00" y="195.00" class="dim" text-anchor="middle">IN A O10</text>
+<text x="64.00" y="195.00" class="dim" text-anchor="middle">IN B O10</text>
 <text x="64.00" y="197.50" class="dim" text-anchor="middle">axis 10.8 up</text>
 <circle cx="38.00" cy="180.20" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="36.00" y1="180.20" x2="40.00" y2="180.20" stroke="#111" stroke-width="0.2"/>
 <line x1="38.00" y1="178.20" x2="38.00" y2="182.20" stroke="#111" stroke-width="0.2"/>
-<text x="38.00" y="195.00" class="dim" text-anchor="middle">IN B O10</text>
+<text x="38.00" y="195.00" class="dim" text-anchor="middle">IN A O10</text>
 <text x="38.00" y="197.50" class="dim" text-anchor="middle">axis 10.8 up</text>
 <line x1="12.00" y1="207.00" x2="112.00" y2="207.00" stroke="#111" stroke-width="0.4"/>
 <line x1="12.00" y1="205.00" x2="12.00" y2="209.00" stroke="#111" stroke-width="0.3"/>

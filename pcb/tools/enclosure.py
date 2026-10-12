@@ -54,8 +54,8 @@ REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
     ("J2",  "OUT",  20.0,  10.0,        "trs", JACK_Z),
     (None,  "USB",  42.0,  (13.0, 8.0), "usb", USB_Z),   # Seed's own port, flexible extender (ref=None)
     ("J3",  "DC",   64.0,  12.0,        "dc",  JACK_Z),
-    ("J1",  "IN A", 86.0,  10.0,        "trs", JACK_Z),
-    ("J8",  "IN B", 112.0, 10.0,        "trs", JACK_Z),
+    ("J8",  "IN B", 86.0,  10.0,        "trs", JACK_Z),   # IN B inner (swapped 2026-10-12)
+    ("J1",  "IN A", 112.0, 10.0,        "trs", JACK_Z),   # IN A outermost-right (primary guitar input)
 ]
 
 def panel_anchors_board():
