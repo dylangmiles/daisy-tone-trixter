@@ -168,7 +168,15 @@ backing: waltz100
 name: Wagon Wheel
 backing: folkd140
 # Old Crow Medicine Show / Darius Rucker "Wagon Wheel" -- driving country strum, kick every beat,
-# snare 2 & 4. 140 bpm (was 150; eased 2026-09-23).
+# snare 2 & 4. 140 bpm (was 150; eased 2026-09-23). A slow+fast practice pair sits below.
+---
+name: Wagon Whl 120
+backing: folkd120
+# Same folk-driving feel, 120 bpm -- the easy practice tempo (2026-10-12).
+---
+name: Wagon Whl 150
+backing: folkd150
+# Same folk-driving feel, 150 bpm -- the original up-tempo (140 is the eased main; 2026-10-12).
 ---
 name: Strange Faces
 backing: pied112
