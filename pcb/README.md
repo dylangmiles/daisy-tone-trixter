@@ -42,6 +42,12 @@ The enclosure mock-up revised the brief's board envelope. **Current geometry** (
   the box **centre** — mark the diagonals). The rear-wall strip is **mirrored** (drawn as seen from
   behind the pedal). For board-mounted jacks the most accurate method is to drill through the finished board.
 
+**Assembly plan (decided 2026-10-15):** **0805** passives (kept over 0603 for hand-reworkability).
+**JLC assembles the SMD** — keep it **single-side (F.Cu)** if it fits, prefer JLC Basic parts (small
+Extended fee for the OPA1642 etc.); parts are LCSC-coded in `gen_schematic.py`. **Hand-solder the
+through-hole** — jacks, encoder, Seed, footswitch/battery/DC connectors, test points. For the order,
+export Gerbers + BOM + CPL from KiCad. Finish = **ENIG** (flatter pads for assembly). See brief §4.
+
 **The outline is GENERATED** — `tools/gen_board.py` (run with KiCad's bundled python; has `pcbnew`):
 
 ```
