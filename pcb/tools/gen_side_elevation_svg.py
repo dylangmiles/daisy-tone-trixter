@@ -11,15 +11,20 @@ Edit the dict and re-run. Stdlib only.
 
   python3 tools/gen_side_elevation_svg.py       # -> mockup/side_elevation_1590xx.svg
 """
-import os
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import enclosure as e
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "side_elevation_1590xx.svg")
 
-# ---- box cross-section (depth x height), MEASURED 2026-10-10 --------------------------------
-DEPTH    = 114.0   # internal depth (front 0 .. back wall)
-H_INT    = 33.0    # ✅ internal cavity (35.30 box bottom->top of wall - 2.3 top face; base plate ~flush)
-T_TOP    = 2.33     # top-face thickness
-T_BASE   = 4.0     # base-plate thickness
+# ---- box cross-section (depth x height) -- SHARED dims from enclosure.py (cannot drift) ------
+# Same Z datum as the rear-wall fold-up flap (gen_mockup_svg.py): z=0 = base (pedal bottom),
+# z=H_INT = top inner = the top-rear FOLD edge. This elevation keeps base-at-bottom (reads the
+# natural way up); the flap only draws z inverted because it physically folds over the back.
+DEPTH    = e.BOX_D    # internal depth (front 0 .. back wall) = enclosure BOX_D
+H_INT    = e.CAVITY_H # ✅ internal cavity (35.30 box - 2.3 top) = enclosure CAVITY_H
+T_TOP    = e.WALL     # top-face / wall thickness = enclosure WALL
+T_BASE   = 4.0        # base-plate thickness (measured 2026-10-10; not in enclosure.py)
 
 # ---- board + stack (Z measured UP from the base inner surface) -------------------------------
 # ✅ ALL MEASURED 2026-10-10 off the prototype (encoder, OLED, K3599, Seed) and the box -- see each line.
@@ -27,7 +32,7 @@ PCB_T      = 1.6
 STANDOFF   = 8.24                 # ✅ board-to-top-face GAP: OLED glass (8.24, 2x2.54 spacers) flush; encoder body 7.23 clears
 Z_BRD_TOP  = H_INT - STANDOFF    # board top surface height
 Z_BRD_BOT  = Z_BRD_TOP - PCB_T
-BRD_Y0, BRD_Y1 = 55.0, 112.0     # board depth span (from the top-face mock-up)
+BRD_Y0, BRD_Y1 = e.BRD_Y0, e.BRD_Y1   # board depth span (shared with enclosure.py)
 
 SEED_STACK = 16.5                # ✅ MEASURED (proto): mounting surface -> USB top = 16.5 (conservative)
 SEED_Y0, SEED_Y1 = 60.0, 95.0    # where the Seed sits (depth)
@@ -42,8 +47,11 @@ ENC_Y      = 84.0
 
 JACK_AX_ABOVE_BRD = -13.99        # ✅ K3599 barrel axis 12.39 below the board BOTTOM (+1.6 PCB) = 13.99
                                  #    below the board top, pushed through. Bottom-mounted, hangs below.
-Z_JACK     = Z_BRD_TOP + JACK_AX_ABOVE_BRD   # rear-wall hole centre height
-JACK_DIA   = 10.0
+_Z_JACK_MEASURED = Z_BRD_TOP + JACK_AX_ABOVE_BRD      # measured stack chain -> ~10.77
+Z_JACK     = e.JACK_Z             # AUTHORITATIVE rear-wall hole centre = fold-up template + PCB (10.8)
+assert abs(_Z_JACK_MEASURED - Z_JACK) < 0.2, \
+    f"jack-z DRIFT: measured stack {_Z_JACK_MEASURED:.2f} vs enclosure.JACK_Z {Z_JACK:.2f} -- reconcile before trusting the drawing"
+JACK_DIA   = 10.0                 # TRS barrel, = enclosure.REAR trs size
 
 # ---- SVG helpers -----------------------------------------------------------------------------
 def _hdr(w, h):
@@ -75,7 +83,8 @@ def ZY(z): return TM + (Z_TOP_DRAW + H_INT) - z   # z=0 (base inner) low, up inc
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(LM-22, 7, "1590XX SIDE ELEVATION (height study, projected) -- PRINT AT 100%", 'ttl')
 s += _txt(LM-22, 11, "ALL heights MEASURED off the prototype + box 2026-10-10 (recalibrated caliper). Front=left, back wall=right.", 'note')
-s += _txt(LM-22, 14.5, "Cavity 33 mm (35.30 box - 2.3 top), walls 2.33 mm. Gap 8.24 (OLED glass flush, encoder clears). Jack axis 12.4 below the board.", 'note')
+s += _txt(LM-22, 14.5, f"Cavity {H_INT:g} mm (35.30 box - {T_TOP:g} top), walls {T_TOP:g} mm. Gap {STANDOFF:g} (OLED glass flush, encoder clears). Jack axis {-JACK_AX_ABOVE_BRD:g} below the board.", 'note')
+s += _txt(LM-22, 18, f"Z datum shared with the fold-up flap: z=0 = base (pedal bottom), z={H_INT:g} = top inner (the fold edge), jack z={Z_JACK:g}.", 'note')
 
 # --- casting: base plate, top face, back wall (with jack hole), front wall ---
 s += _rect(DX(0), ZY(0), DEPTH, T_BASE, fill='#eee', sw=0.5)                 # base plate (below z=0)
@@ -115,24 +124,24 @@ s += _txt(DX(ENC_Y+4), ZY(H_INT + ENC_SHAFT_ABOVE_TOP/2), f"encoder shaft (+{ENC
 s += _line(DX(BRD_Y1-6), ZY(Z_BRD_BOT), DX(BRD_Y1-6), ZY(Z_JACK + JACK_DIA/2), stroke='#111', sw=0.4)  # legs up to PCB
 s += _rect(DX(100), ZY(Z_JACK + JACK_DIA/2), (DEPTH - 100 + 10), JACK_DIA, fill='#fff', stroke='#111', sw=0.5)
 s += _line(DX(96), ZY(Z_JACK), DX(DEPTH)+11, ZY(Z_JACK), stroke='#111', dash='3 1', sw=0.3)
-s += _txt(DX(99), ZY(Z_JACK)-JACK_DIA/2-1, f"jack z={Z_JACK:g} (bottom-mt)", 'dim')
+s += _txt(DX(99), ZY(Z_JACK)-JACK_DIA/2-1, f"jack z={Z_JACK:g}", 'dim')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6
 s += _line(xs, ZY(0), xs, ZY(H_INT + ENC_SHAFT_ABOVE_TOP), sw=0.3, stroke='#999')
-for z, lab in [(0, "0 base"), (Z_BRD_BOT - SEED_STACK, f"{Z_BRD_BOT-SEED_STACK:.0f} Seed btm"),
-               (Z_JACK, f"{Z_JACK:.0f} jack axis"),
-               (Z_BRD_TOP, f"{Z_BRD_TOP:.0f} board/jack"),
-               (H_INT, f"{H_INT:.0f} top inner")]:
+for z, lab in [(0, "0 base (btm)"), (Z_BRD_BOT - SEED_STACK, f"{Z_BRD_BOT-SEED_STACK:.0f} Seed btm"),
+               (Z_JACK, f"{Z_JACK:g} jack axis"),
+               (Z_BRD_TOP, f"{Z_BRD_TOP:.0f} board top"),
+               (H_INT, f"{H_INT:g} top inner (fold)")]:
     s += _line(xs-1.5, ZY(z), xs+1.5, ZY(z), sw=0.3, stroke='#999')
     s += _txt(xs-2.0, ZY(z)+0.9, lab, 'dim', 'end')
 
 # --- the key constraint note ---
 ny = ZY(0) + T_BASE + 13
-s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED (barrel below the board) -> axis z=9.8 = ~33% up the 33 mm wall (lower third) -- barrel drop 12.4 + the 8.2 gap the", 'note')
-s += _txt(LM-22, ny+3.5, "  gap the controls force. Check the plug + base-plate battery box do not crowd down there on the casting.", 'note')
-s += _txt(LM-22, ny+7.0, "  Seed hangs to ~6.7 mm over the base (16.5 stack). TRS/DC bottom-mount, legs up; USB = Seed's own port.", 'note')
-s += _txt(LM-22, ny+11.0, "Budget: Seed (16.5) + PCB (1.6) + gap (8.24) = 26.3 of the 33 mm cavity; ~6.7 mm spare over the base.", 'dim')
+_stack = SEED_STACK + PCB_T + STANDOFF
+s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED: barrel hangs below the board -> axis z={Z_JACK:g} (~{Z_JACK/H_INT*100:.0f}% up the {H_INT:g} mm wall, lower third).", 'note')
+s += _txt(LM-22, ny+3.5, f"Budget: Seed {SEED_STACK:g} + PCB {PCB_T:g} + gap {STANDOFF:g} = {_stack:.1f} of {H_INT:g} mm cavity -> ~{H_INT-_stack:.1f} mm spare over the base.", 'note')
+s += _txt(LM-22, ny+7.0, "Check the plug + base-plate battery box don't crowd down there. TRS/DC bottom-mount (legs up); USB = Seed's own port.", 'dim')
 
 # --- 100 mm ruler ---
 ruy = ny + 16

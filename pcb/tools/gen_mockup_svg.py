@@ -4,9 +4,15 @@
 Positions come from enclosure.py (SHARED with gen_place.py), so the template and the board cannot
 drift. TAPE TO THE OUTSIDE of the box, ink up, drill from the outside (clean entry on the show face).
 
+LAYOUT = a box NET. The TOP FACE is drawn player-natural (FRONT/footswitches at the bottom, encoder
+on your right). The REAR WALL is a FOLD-UP FLAP hinged at the back-rear edge, drawn ABOVE the top
+view: fold it down over the back of the box and the jack columns line up straight down into the top
+view. Because the flap folds (print ends up facing outward), X is NOT mirrored -- it reads the same
+left/right as the top view, so the jacks project vertically across both.
+
 REGISTER BY THE CENTRE: mark the box's two diagonals -- where they cross is the centre -- and line it
-up with the template's centre crosshair. That is immune to the wall-thickness / 145-vs-138 guesswork,
-and no mirroring is needed because ink-up + drill-from-outside shows the layout exactly as it ends up.
+up with the template's centre crosshair (one continuous blue line runs through the flap and the top
+view). That is immune to the wall-thickness / 145-vs-138 guesswork.
 
 Convention (locked 2026-10-12): INPUT on the RIGHT, OUTPUT on the LEFT; encoder right of the screen.
 
@@ -32,7 +38,7 @@ def _hdr(w, h):
             f'viewBox="0 0 {w} {h}">\n'
             '<style>text{font-family:sans-serif;fill:#111}'
             '.lbl{font-size:3.2px}.dim{font-size:2.6px;fill:#555}.ttl{font-size:4px;font-weight:bold}'
-            '.note{font-size:2.6px;fill:#a00}.ctr{font-size:2.6px;fill:#09c}</style>\n'
+            '.note{font-size:2.6px;fill:#a00}.ctr{font-size:2.6px;fill:#09c}.fold{font-size:2.8px;fill:#06c;font-weight:bold}</style>\n'
             f'<rect x="0" y="0" width="{w}" height="{h}" fill="#fff"/>\n')
 def _dash(d): return f' stroke-dasharray="{d}"' if d else ''
 def _circ(cx, cy, d, stroke='#111', dash=''):
@@ -52,30 +58,36 @@ def _poly(pts, stroke='#06c', dash='3 2', sw=0.4):
 def _txt(x, y, s, cls='lbl', anchor='middle'):
     return f'<text x="{x:.2f}" y="{y:.2f}" class="{cls}" text-anchor="{anchor}">{s}</text>\n'
 
-# ---- page ------------------------------------------------------------------------------------
-MARGIN = 12.0
+# ---- vertical layout (mm, top of page downward) ----------------------------------------------
+MARGIN   = 12.0
+EXT_OVER = (EXT_D - BOX_D)              # external outline overhang above the inner plane
+# REAR WALL fold-up flap sits ABOVE the top view; its base (z=0, pedal bottom) is the top edge,
+# its hinge (z=CAVITY_H, top-rear fold edge) is the bottom edge -- i.e. the strip is flipped so the
+# "top edge is the bottom", ready to flop down over the back.
+FY_BASE  = 34.0                        # flap TOP edge  = pedal base (z=0)
+FY_HINGE = FY_BASE + CAVITY_H          # flap BOTTOM edge = top-rear fold edge (z=CAVITY_H)
+ox       = MARGIN
+oy       = FY_HINGE + EXT_OVER         # top-face inner-plane top; external outline top == the fold
+def TX(x): return ox + x                                 # SAME X as the flap -> columns align
+def TY(y): return oy + (BOX_D - y)                       # flip so FRONT (Y=0) is at the bottom
+
 PAGE_W = MARGIN*2 + max(EXT_W, BOX_W) + 6
-PAGE_H = MARGIN*3 + EXT_D + CAVITY_H + 26
+PAGE_H = TY(0) + 24
 
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7,  "1590XX template -- OUTSIDE, ink up, drill from outside -- PRINT AT 100%", 'ttl', 'start')
-s += _txt(MARGIN, 11, "Register by CENTRE: mark the box's diagonals, cross = centre, align the blue crosshair. Box ext ~145x121x39.", 'note', 'start')
-s += _txt(MARGIN, 14.5,"IN on the RIGHT, OUT on the LEFT (convention); encoder right of the centred screen. Positions shared with the PCB.", 'note', 'start')
+s += _txt(MARGIN, 11, "Box NET: TOP FACE below (FRONT toward player); REAR WALL = fold-up flap above, hinged at the back edge.", 'note', 'start')
+s += _txt(MARGIN, 14.5,"Fold the flap down over the back; jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.", 'note', 'start')
 
-ox, oy = MARGIN, MARGIN + 9
-def TX(x): return ox + x
-def TY(y): return oy + (BOX_D - y)        # flip so FRONT (Y=0) is at the bottom
-
-# external outline (dashed) + internal top-face plane (thin) -- reference only; centre is the datum
+# ============================================================ TOP FACE (player-natural) =========
 ext_off = (EXT_W - BOX_W) / 2.0
-s += _rect(ox - ext_off, oy - (EXT_D - BOX_D), EXT_W, EXT_D, stroke='#999', dash='2 2', sw=0.3)
+s += _rect(ox - ext_off, oy - EXT_OVER, EXT_W, EXT_D, stroke='#999', dash='2 2', sw=0.3)
 s += _rect(ox, oy, BOX_W, BOX_D, stroke='#bbb', sw=0.3)
-s += _txt(TX(BOX_W/2), oy - 2, "TOP FACE  (BACK WALL this edge)  -- ext dashed, inner plane thin", 'dim')
 s += _txt(TX(BOX_W/2), TY(0)+5, "FRONT (toward player)", 'dim')
 
-# CENTRE crosshair -- the primary registration datum
+# ONE continuous centre line: through the flap AND the top view (registration datum)
 cx, cy = BOX_W/2, BOX_D/2
-s += _line(TX(cx), oy - (EXT_D - BOX_D) - 3, TX(cx), TY(0)+3, stroke='#09c', dash='5 2', sw=0.35)
+s += _line(TX(cx), FY_BASE, TX(cx), TY(0)+3, stroke='#09c', dash='5 2', sw=0.35)
 s += _line(ox - ext_off - 3, TY(cy), ox + BOX_W + ext_off + 3, TY(cy), stroke='#09c', dash='5 2', sw=0.35)
 s += _txt(ox + BOX_W + ext_off + 2, TY(cy)-1, "BOX CENTRE (align to the diagonals)", 'ctr', 'end')
 
@@ -111,39 +123,35 @@ s += _txt(TX(oc_x), TY(oc_y + e.OLED_H/2 + 3), f"OLED {e.OLED_W:g}x{e.OLED_H:g}"
 s += _circ(TX(e.ENCODER[0]), TY(e.ENCODER[1]), e.ENC_DIA) + _cross(TX(e.ENCODER[0]), TY(e.ENCODER[1]))
 s += _txt(TX(e.ENCODER[0]), TY(e.ENCODER[1])-5, f"enc O{e.ENC_DIA:g}", 'dim')
 
-# rear jacks: small ticks at the rear edge to show X alignment -- full detail is on the strip below
+# rear jacks: ticks where they exit the BACK WALL edge (top of the top view) -- align with the flap
 for ref, label, xc, size, kind, z in e.REAR:
-    s += _line(TX(xc), TY(BRD_Y1)-1.5, TX(xc), TY(BRD_Y1)+1.5, stroke='#111', sw=0.4)
-s += _txt(TX(BOX_W/2), TY(BRD_Y1)-2.5, "rear jacks exit the BACK WALL here (X ticks) -- drill them from the REAR WALL strip below", 'dim')
+    s += _line(TX(xc), oy - 1.5, TX(xc), oy + 1.5, stroke='#111', sw=0.4)
 
-# ---- REAR WALL strip -- OUTSIDE view (you standing BEHIND the pedal), so X is MIRRORED ----
-ry = oy + EXT_D + 16
-def SX(x): return ox + (BOX_W - x)        # mirror: box LEFT wall -> your RIGHT when behind
-s += _txt(ox, ry - 4, "REAR WALL -- tape OUTSIDE, you are BEHIND the pedal (so this is MIRRORED from the top view).", 'note', 'start')
-s += _txt(ox, ry - 1.5, "Centre-register (mark the back-wall centre + base). Best accuracy for board jacks: drill through the finished board.", 'dim', 'start')
-s += _rect(ox, ry, BOX_W, CAVITY_H, sw=0.6)
-# datums
-s += _txt(ox+2, ry+CAVITY_H-1.5, "base (z=0)", 'dim', 'start')
-s += _txt(ox+2, ry+3, f"top inner (z={CAVITY_H:g})", 'dim', 'start')
-s += _line(ox + BOX_W/2, ry, ox + BOX_W/2, ry+CAVITY_H, stroke='#09c', dash='5 2', sw=0.35)
-s += _txt(ox + BOX_W/2, ry-4, "centre", 'ctr')
-# end labels (which physical wall is which, since mirrored)
-s += _txt(ox+1, ry+CAVITY_H+10.5, "← box RIGHT wall (player's R)", 'dim', 'start')
-s += _txt(ox+BOX_W-1, ry+CAVITY_H+10.5, "box LEFT wall (player's L) →", 'dim', 'end')
-# holes at mirrored X, true height z
+# ============================================================ REAR WALL flap (fold-up, above) ===
+# Hinge (bottom edge, z=CAVITY_H) sits on the fold; base (top edge, z=0) is the pedal bottom.
+def RY(z): return FY_BASE + z          # z measured up from base, base at the TOP of the flap
+s += _rect(ox, FY_BASE, BOX_W, CAVITY_H, sw=0.6)
+# fold emphasis on the bottom edge
+s += _txt(TX(BOX_W/2), FY_HINGE + 3, "FOLD DOWN HERE -- top-rear edge (z=%g) -- flap flops over the back wall" % CAVITY_H, 'fold')
+# datum + end-wall labels (above the flap, UN-mirrored: player's left on the left, right on the right)
+s += _txt(ox + 1, FY_BASE - 7, "← box LEFT wall (player's L)", 'dim', 'start')
+s += _txt(ox + BOX_W - 1, FY_BASE - 7, "box RIGHT wall (player's R) →", 'dim', 'end')
+s += _txt(ox + BOX_W/2, FY_BASE - 7, "jack axes: TRS %g mm / USB %g mm up from base" % (e.JACK_Z, e.USB_Z), 'dim')
+s += _txt(ox + 1, FY_BASE - 2.5, "base z=0 = pedal bottom (this top edge)", 'dim', 'start')
+# holes at TRUE X (TX, same as top view) and true height z; projection line DOWN into the top view
 for ref, label, xc, size, kind, z in e.REAR:
-    hy = ry + CAVITY_H - z
+    hy = RY(z)
+    s += _line(TX(xc), hy, TX(xc), oy, stroke='#bbb', dash='2 2', sw=0.2)   # vertical projection
     if kind == "usb":
         w, h = size
-        s += _rect(SX(xc) - w/2, hy - h/2, w, h, sw=0.4)
-        s += _txt(SX(xc), ry+CAVITY_H+4, f"{label} {w:g}x{h:g}", 'dim')
+        s += _rect(TX(xc) - w/2, hy - h/2, w, h, sw=0.4)
+        s += _txt(TX(xc), hy - h/2 - 1.5, f"{label} {w:g}x{h:g}", 'dim')
     else:
-        s += _circ(SX(xc), hy, size) + _cross(SX(xc), hy)
-        s += _txt(SX(xc), ry+CAVITY_H+4, f"{label} O{size:g}", 'dim')
-    s += _txt(SX(xc), ry+CAVITY_H+6.5, f"axis {z:g} up", 'dim')
+        s += _circ(TX(xc), hy, size) + _cross(TX(xc), hy)
+        s += _txt(TX(xc), hy - size/2 - 1.5, f"{label} O{size:g}", 'dim')
 
 # ---- 100 mm scale ruler (print check) ----
-ruy = ry + CAVITY_H + 16
+ruy = TY(0) + 13
 s += _line(ox, ruy, ox+100, ruy, sw=0.4)
 for i in range(0, 101, 10):
     s += _line(ox+i, ruy-2, ox+i, ruy+2, sw=0.3)
