@@ -203,6 +203,7 @@ q = seed.pin(40); S.wire(q, (q[0] + G, q[1])); S.wire((q[0] + G, q[1]), (q[0] + 
 S.text("USB: the Seed's own USB-C port via the panel extender — no board connection (D29/D30 NC).", g(4, 76), 1.4)
 
 # ================================================================ 3. FRONT END — Fig 3.3 with rev D Vref
+VREF_BIAS_TAPS = []   # 1 M VREF bias tap per channel → local VREF bypass cap, placed at the END (2026-10-21)
 def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None):
     """One channel of the Seed3 Fig 3.3 instrument input. y0 in grid units. Returns nothing; draws."""
     x = 4
@@ -214,7 +215,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     S.wire(slv, (slv[0] + G, slv[1])); gnd((slv[0] + G, slv[1]), "GNDA")
     S.wire(ring, (ring[0] + G, ring[1])); S.noconnect((ring[0] + G, ring[1]))    # ring link is AT THE JACK (pinmap §4e)
     S.glabel(in_net, tip, 0)
-    tp(in_net, (tip[0] + 2*G, tip[1] - 2*G)); S.wire(tip, (tip[0] + 2*G, tip[1])); S.wire((tip[0] + 2*G, tip[1]), (tip[0] + 2*G, tip[1] - 2*G))
+    tp(in_net, (tip[0] + 2*G, tip[1] - 2*G)); S.wire(tip, (tip[0] + 2*G, tip[1])); S.wire((tip[0] + 2*G, tip[1]), (tip[0] + 2*G, tip[1] - 2*G)); S.junction((tip[0] + 2*G, tip[1]))   # T: tip→cap passes through here, so the TP stub needs a junction
     # chain along y = yc
     yc = tip[1]
     cin = C("10u film", (tip[0] + 5*G, yc), 90, fp="Cfilm")          # rot 90 → horizontal, pin1 left
@@ -222,7 +223,8 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     node_a = cin.pin(2) if cin.pin(1)[0] < cin.pin(2)[0] else cin.pin(1)
     rin = R("1M", (node_a[0] + 2*G, yc + 4*G), 0)                     # vertical, to VREF
     S.wire(node_a, (rin.pin(1)[0], yc)); S.wire((rin.pin(1)[0], yc), rin.pin(1)); S.junction((rin.pin(1)[0], yc))
-    S.wire(rin.pin(2), (rin.pin(2)[0], rin.pin(2)[1] + G)); rail("VREF", (rin.pin(2)[0], rin.pin(2)[1] + G))
+    vbias = (rin.pin(2)[0], rin.pin(2)[1] + G); VREF_BIAS_TAPS.append(vbias)   # for the local VREF bypass, below
+    S.wire(rin.pin(2), vbias); rail("VREF", vbias)
     rstop = R("100R", (rin.pin(1)[0] + 4*G, yc), 90)
     S.wire((rin.pin(1)[0], yc), min(rstop.pin(1), rstop.pin(2)))
     node_b = max(rstop.pin(1), rstop.pin(2))
@@ -431,6 +433,19 @@ for i, net in enumerate(("VIN", "+9VA", "+3V3D", "+3V3A")):
     t = tp(net, g(X + 4 + i * 8, y + 4)); rail(net, t.pin(1))
 for i, net in enumerate(("GNDA", "GNDD")):
     t = tp(net, g(X + 40 + i * 8, y + 4)); gnd(t.pin(1), net)
+
+# ---------------------------------------------------------------- local VREF bypass (2026-10-21)
+# One 100 n per input channel, right at its 1 M VREF bias tap. The VREF buffer U3B and reservoir C18
+# sit ~80–110 mm away at the output, so this shunts I²C-edge pickup LOCALLY at the high-Z node
+# (brief §3.6; the radiated-tick mechanism is project_home_gr_meter_crosstalk). Created LAST so the
+# existing cap refs (C17/C18/C20…, already placed on the PCB) do NOT renumber — these become C32/C33.
+for ch, tap in zip("AB", VREF_BIAS_TAPS):
+    cby = C("100n", (tap[0] + 3 * G, tap[1] + 3 * G), 0,
+            Note=f"ch {ch} local VREF bypass — place beside the 1M VREF tap at the input (added 2026-10-21)")
+    top = cby.pin(1) if cby.pin(1)[1] < cby.pin(2)[1] else cby.pin(2)
+    bot = cby.pin(1) if cby.pin(1)[1] > cby.pin(2)[1] else cby.pin(2)
+    S.wire(top, (top[0], top[1] - G)); rail("VREF", (top[0], top[1] - G))
+    gnd(bot, "GNDA")
 
 # ---------------------------------------------------------------- write
 # --- project files: TT symbol library, sym-lib-table, .kicad_pro (created once, never overwritten)
