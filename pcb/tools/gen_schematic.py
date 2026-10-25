@@ -22,6 +22,7 @@ CSV  = HERE / "../../../private/docs/reference/Seed3_pinout.csv"
 FP = {
     "R":     "Resistor_SMD:R_0805_2012Metric",
     "C":     "Capacitor_SMD:C_0805_2012Metric",
+    "C1210": "Capacitor_SMD:C_1210_3225Metric",   # 1u C0G (low-permittivity dielectric needs the bigger case)
     "Cfilm": "Capacitor_THT:C_Rect_L7.2mm_W7.2mm_P5.00mm_FKS2_FKP2_MKS2_MKP2",   # Wima MKS2 10u/50V
     "Cel":   "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm",
     "OPA":   "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
@@ -218,7 +219,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     tp(in_net, (tip[0] + 2*G, tip[1] - 2*G)); S.wire(tip, (tip[0] + 2*G, tip[1])); S.wire((tip[0] + 2*G, tip[1]), (tip[0] + 2*G, tip[1] - 2*G)); S.junction((tip[0] + 2*G, tip[1]))   # T: tip→cap passes through here, so the TP stub needs a junction
     # chain along y = yc
     yc = tip[1]
-    cin = C("10u film", (tip[0] + 5*G, yc), 90, fp="Cfilm")          # rot 90 → horizontal, pin1 left
+    cin = C("330n", (tip[0] + 5*G, yc), 90, fp="C", Note="C0G/NP0 0805 (was 10u film); LF corner is set by the piezo 24.5n into 1M, so this value is ~irrelevant down to ~100n; small/low-profile fits under the TRS jack")          # rot 90 → horizontal, pin1 left
     S.wire(tip, cin.pin(1)) if cin.pin(1)[0] < cin.pin(2)[0] else S.wire(tip, cin.pin(2))
     node_a = cin.pin(2) if cin.pin(1)[0] < cin.pin(2)[0] else cin.pin(1)
     rin = R("1M", (node_a[0] + 2*G, yc + 4*G), 0)                     # vertical, to VREF
@@ -249,7 +250,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     S.wire((c1n.pin(1)[0], yc2), (rpad.pin(1)[0], yc2)); S.wire((rpad.pin(1)[0], yc2), rpad.pin(1)); S.junction((rpad.pin(1)[0], yc2))
     S.wire(rpad.pin(2), (rpad.pin(2)[0], rpad.pin(2)[1] + G)); rail("VREF", (rpad.pin(2)[0], rpad.pin(2)[1] + G))
     # 10u film → 10k → inverting stage
-    c2 = C("10u film", (rpad.pin(1)[0] + 4*G, yc2), 90, fp="Cfilm")
+    c2 = C("1u", (rpad.pin(1)[0] + 4*G, yc2), 90, fp="C1210", Note="C0G/NP0 1210 (was 10u film); inter-stage coupling into the 10k inverting input, corner 1/(2pi*10k*1u)=16Hz -- keep >=1u")
     S.wire((rpad.pin(1)[0], yc2), min(c2.pin(1), c2.pin(2)))
     r10 = R("10k", (max(c2.pin(1), c2.pin(2))[0] + 4*G, yc2), 90)
     S.wire(max(c2.pin(1), c2.pin(2)), min(r10.pin(1), r10.pin(2)))
@@ -302,7 +303,7 @@ x = 44
 S.text("OUTPUT — Seed3 Fig 3.6 instrument-level stage, UNITY (Rin = Rf1 15k, Rf2 0R link; fit 18k for +7 dB). 100R source, 10u/10k out. OUT ring = battery −.", g(x, y0 - 6), 1.8)
 yo = g(0, y0 + 2)[1]
 S.glabel("AOUT1", g(x + 2, y0 + 2), 180)
-co = C("10u film", g(x + 5, y0 + 2), 90, fp="Cfilm")
+co = C("1u", g(x + 5, y0 + 2), 90, fp="C1210", Note="C0G/NP0 1210 (was 10u film); output-stage input coupling, AOUT1 into 15k -> corner 1/(2pi*15k*1u)=10.6Hz; small/low-profile fits under the OUT jack")
 S.wire(g(x + 2, y0 + 2), min(co.pin(1), co.pin(2)))
 ri = R("15k", (max(co.pin(1), co.pin(2))[0] + 4*G, yo), 90)
 S.wire(max(co.pin(1), co.pin(2)), min(ri.pin(1), ri.pin(2)))
@@ -322,7 +323,7 @@ S.wire(max(rf2.pin(1), rf2.pin(2)), (o[0] + G, yo - 5*G)); S.wire(max(cfo.pin(1)
 S.wire((o[0] + G, yo - 8*G), (o[0] + G, o[1])); S.wire(o, (o[0] + G, o[1])); S.junction((o[0] + G, yo - 5*G)); S.junction((o[0] + G, o[1]))
 ro = R("100R", (o[0] + 4*G, o[1]), 90)
 S.wire((o[0] + G, o[1]), min(ro.pin(1), ro.pin(2)))
-co2 = C("10u film", (max(ro.pin(1), ro.pin(2))[0] + 4*G, o[1]), 90, fp="Cfilm")
+co2 = C("1u", (max(ro.pin(1), ro.pin(2))[0] + 4*G, o[1]), 90, fp="C1210", Note="C0G/NP0 1210 (was 10u film); output coupling to the OUT jack, drives amp input (>=470k) -> corner <1Hz; small/low-profile fits under J2")
 S.wire(max(ro.pin(1), ro.pin(2)), min(co2.pin(1), co2.pin(2)))
 ne = max(co2.pin(1), co2.pin(2))
 r10k = R("10k", (ne[0] + 2*G, ne[1] + 4*G), 0)
