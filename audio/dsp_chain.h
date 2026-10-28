@@ -110,6 +110,14 @@ typedef struct {
                                           // with it; a little dry (HP'd ~2.5 kHz so the quack stays out)
                                           // returns the pick attack. 0 = pure IR. Only acts when an IR is
                                           // loaded (blended in main.cpp's callback, not a dsp_chain stage).
+    // ⚠ DAISY ADDITION (2026-10-17): Neve-style transformer saturation stage (xfmr), post-EQ/pre-comp.
+    // Adds low-order harmonics weighted to the low/low-mids for "1073 thickness" -- body and warmth,
+    // not top-end. Default OFF (xfmr_on=false) and mix 0 (neutral), so every existing preset is
+    // unchanged. Parsed from "xfmr.on" and "xfmr: [drive_dB, tilt_dB, bias, hf_freq, hf_gain_dB, mix]".
+    // Built-in literals zero-init these (off/neutral). ⚠ Pico parser ignores the keys -- same fork
+    // discipline as dry_mix/bk.level; the card stays cross-readable.
+    bool  xfmr_on;
+    float xf_drive, xf_tilt, xf_bias, xf_hf_f, xf_hf_g, xf_mix;
 } Preset;
 
 int         dsp_chain_preset_count(void);

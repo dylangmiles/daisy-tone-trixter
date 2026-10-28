@@ -133,6 +133,98 @@ static void comp_process(Stage *s, float *buf, int n) {
 }
 
 // ---------------------------------------------------------------------------
+// Stage 2.5: Neve-style transformer saturation (xfmr) — thickness and warmth
+//   Added 2026-10-17 (brief: private/docs/daisy_slide_high_e_brief_2026-10-17.md, Tier 3).
+//   A frequency-dependent asymmetric soft-clipper: a real transformer saturates more
+//   at low frequencies, so a low-shelf PRE-emphasis pushes the lows/low-mids harder
+//   into the nonlinearity, and a matching DE-emphasis undoes the shelf afterwards so
+//   the static EQ balance is unchanged at low drive. The asymmetric bias adds EVEN
+//   harmonics (transformer + class-A feel) on top of the tanh's odd ones.
+//
+//   Signal, per sample:
+//     lo = lowshelf(x, 200 Hz, +tilt)           // push lows into the nonlinearity
+//     s  = lo * drive
+//     y  = tanh(s + bias) - tanh(bias)           // asym soft clip; -tanh(bias) kills static DC
+//     y  = lowshelf(y, 200 Hz, -tilt) / gcomp    // undo the shelf; gcomp = small-signal gain
+//     y  = highshelf(y, hf_freq, hf_gain)        // transformer HF softening (a gentle cut)
+//     y  = dcblock(y, ~10 Hz)                    // mop up the dynamic DC the asymmetry leaves
+//     out = mix * y + (1 - mix) * x              // level-matched wet/dry
+//
+//   gcomp = drive * (1 - tanh(bias)^2) is the clean small-signal gain of drive*tanh(.+bias),
+//   so dividing by it keeps unity at low level for ANY drive/bias -- A/B tests judge tone, not
+//   loudness. The +tilt/-tilt low shelves are magnitude-inverse, so a clean path is flat except
+//   for the deliberate HF shelf.
+//
+//   ⚠ NO oversampling here. tanh harmonics fold back above Nyquist; at 48 kHz with drive <= ~6 dB
+//   it is mostly inaudible (brief). drive is capped at 12 dB for that reason -- past ~10 dB add a
+//   half-band 2x up/down around the nonlinearity and re-check CPU. ⚠ Default mix 0 = neutral.
+// ---------------------------------------------------------------------------
+enum { XF_DRIVE, XF_TILT, XF_BIAS, XF_HF_F, XF_HF_G, XF_MIX, XF_N };
+
+static Param s_xf_params[XF_N] = {   // seeds = brief's tanglewood-slide-thick starting point
+    { "drive",      6.0f,    0.0f,    12.0f,   0.5f, "dB" },   // into the nonlinearity (gain-compensated out)
+    { "tilt",       4.0f,    0.0f,    12.0f,   0.5f, "dB" },   // low-shelf pre-emphasis: 0 = flat saturation
+    { "bias",       0.1f,    0.0f,     0.5f,  0.02f, "x"  },   // asymmetry -> even harmonics; 0 = symmetric
+    { "hf_freq",10000.0f, 2000.0f, 16000.0f, 100.0f, "Hz" },   // transformer HF softening corner
+    { "hf_gain",   -1.5f,   -6.0f,     0.0f,   0.5f, "dB" },   // soft top (a cut)
+    { "mix",        0.0f,    0.0f,     1.0f,  0.05f, "x"  },   // ⚠ 0 = neutral (stage does nothing)
+};
+
+typedef struct {
+    Biquad pre, de, hf;     // pre-emphasis / de-emphasis low shelves + HF shelf
+    float  drive_lin;       // 10^(drive_dB/20)
+    float  bias, tanh_bias; // asymmetry and its static offset
+    float  inv_gcomp;       // 1 / small-signal gain, for level compensation
+    float  mix;
+    float  dc_r;            // DC-blocker pole (~10 Hz)
+    float  dc_x1, dc_y1;    // DC-blocker state
+} XfmrState;
+static XfmrState s_xf_state;
+
+static void xfmr_recompute(Stage *s, float fs) {
+    XfmrState *st = (XfmrState *)s->state;
+    const Param *p = s->params;
+    // Preserve filter + DC-blocker memory across retune so live knob sweeps don't click.
+    float pz1 = st->pre.z1, pz2 = st->pre.z2;
+    float dz1 = st->de.z1,  dz2 = st->de.z2;
+    float hz1 = st->hf.z1,  hz2 = st->hf.z2;
+    biquad_lowshelf (&st->pre, fs, 200.0f,            0.707f,  p[XF_TILT].value);
+    biquad_lowshelf (&st->de,  fs, 200.0f,            0.707f, -p[XF_TILT].value);
+    biquad_highshelf(&st->hf,  fs, p[XF_HF_F].value,  0.707f,  p[XF_HF_G].value);
+    st->pre.z1 = pz1; st->pre.z2 = pz2;
+    st->de.z1  = dz1; st->de.z2  = dz2;
+    st->hf.z1  = hz1; st->hf.z2  = hz2;
+
+    st->drive_lin = powf(10.0f, p[XF_DRIVE].value / 20.0f);
+    st->bias      = p[XF_BIAS].value;
+    st->tanh_bias = tanhf(st->bias);
+    float gcomp   = st->drive_lin * (1.0f - st->tanh_bias * st->tanh_bias);
+    st->inv_gcomp = (gcomp > 1e-6f) ? (1.0f / gcomp) : 1.0f;
+    st->mix       = p[XF_MIX].value;
+    st->dc_r      = 1.0f - (2.0f * 3.14159265358979f * 10.0f / fs);   // ~10 Hz one-pole DC blocker
+}
+
+static void xfmr_process(Stage *s, float *buf, int n) {
+    XfmrState *st = (XfmrState *)s->state;
+    const float mix = st->mix;
+    if (mix <= 0.0f) return;                  // neutral: leave the dry signal untouched (and ~free)
+    const float drive = st->drive_lin, bias = st->bias, tb = st->tanh_bias;
+    const float invg = st->inv_gcomp, r = st->dc_r;
+    float x1 = st->dc_x1, y1 = st->dc_y1;
+    for (int i = 0; i < n; i++) {
+        float dry = buf[i];
+        float lo  = biquad_process(&st->pre, dry);
+        float y   = tanhf(lo * drive + bias) - tb;         // asymmetric soft clip
+        y         = biquad_process(&st->de, y) * invg;     // de-emphasis + level compensation
+        y         = biquad_process(&st->hf, y);            // HF softening
+        float o   = y - x1 + r * y1;                       // DC blocker
+        x1 = y; y1 = o;
+        buf[i] = mix * o + (1.0f - mix) * dry;             // level-matched wet/dry
+    }
+    st->dc_x1 = x1; st->dc_y1 = y1;
+}
+
+// ---------------------------------------------------------------------------
 // Stage 3: Output level (replaces the fixed IR_OUTPUT_SCALE)
 // ---------------------------------------------------------------------------
 enum { OUT_LEVEL, OUT_N };
@@ -196,12 +288,15 @@ static void in_process(Stage *s, float *buf, int n) {
 static Stage s_ir   = { "ir",   true,  NULL,         0,     false, NULL, NULL, NULL };
 static Stage s_in   = { "in",   true,  s_in_params,  IN_N,  true,  in_recompute,   in_process,   &s_in_state  };
 static Stage s_eq   = { "eq",   true,  s_eq_params,  EQ_N,  true,  eq_recompute,   eq_process,   &s_eq_state  };
+// ⚠ xfmr boots DISABLED (off/neutral); a preset enables it. Sits POST-EQ, PRE-comp: the EQ shapes the
+// spectrum first, then the transformer thickens it, then the comp catches whatever that produced.
+static Stage s_xfmr = { "xfmr", false, s_xf_params,  XF_N,  true,  xfmr_recompute, xfmr_process, &s_xf_state  };
 static Stage s_comp = { "comp", true,  s_cp_params,  CP_N,  true,  comp_recompute, comp_process, &s_cp_state  };
 static Stage s_out  = { "out",  true,  s_out_params, OUT_N, true,  out_recompute,  out_process,  &s_out_state };
 
-// Audio stage chain (post-IR): IN trim -> EQ -> Dynamics -> Output. s_ir is intentionally
+// Audio stage chain (post-IR): IN trim -> EQ -> xfmr -> Dynamics -> Output. s_ir is intentionally
 // excluded (it's a selection, not a toggleable stage) — see above.
-static Stage *s_chain[] = { &s_in, &s_eq, &s_comp, &s_out };
+static Stage *s_chain[] = { &s_in, &s_eq, &s_xfmr, &s_comp, &s_out };
 #define N_STAGES ((int)(sizeof(s_chain) / sizeof(s_chain[0])))
 
 int    dsp_chain_stage_count(void) { return N_STAGES; }
@@ -241,151 +336,29 @@ float dsp_chain_comp_in_db(void) {
 // it at an SD-parsed table (see audio/tt_store).
 // ---------------------------------------------------------------------------
 static const Preset s_builtin[] = {
-    // ===== 2026-07-24 RESTAGE FOR THE JFET DAUGHTER AT `pga 0` — FIRST PASS, NOT YET TUNED BY EAR =====
-    // Every preset below was dialed on the OPA1642 op-amp daughter (x2.11). Two measurements forced a
-    // restage: (1) Test C — the ADC clips at 1.35 V pk, so `pga` must sit at 0; (2) the SNR session —
-    // gain ahead of the ADC buys no SNR (+18 dB pga -> +17.4 dB noise), so makeup belongs after it.
+    // ⚠ BUILT-IN TABLE IS DEFAULT-ONLY (2026-10-18). The voiced presets -- tanglewood-slide,
+    // garrison, slg110s, walden -- live ONLY on the SD card (sdcard_template/tonetrix/presets.txt) and
+    // are NOT mirrored here: dsp_chain_install_presets() swaps THIS table out for the card's list at
+    // boot, so there is nothing to keep in sync. This single entry is the NO-CARD FALLBACK and the
+    // inheritance seed a partial SD preset borrows every omitted key from (dsp_chain_default_preset()).
+    // The detailed 2026-07-24 bench restaging of the old built-in tanglewood/garrison is in git history
+    // if it is ever wanted again.
     //
-    // Two independent level changes, applied to every preset:
-    //   a) daughter swap  x2.11 -> x0.84  = -8.0 dB  (hits all three presets equally)
-    //   b) pga -> 0       = -6 dB (tanglewood) / -12 dB (default) / 0 dB (garrison, already floored)
-    //
-    // in.level is NOT set to restore the old RMS — that would clip. It is set to hold the old
-    // comp-input PEAK, because the peaks changed differently from the sustain: at the old staging the
-    // ADC was hard-clipping every transient (a hard strum ran +11.7 dB over at pga 6, +17.8 at pga 12),
-    // so the converter was silently acting as the peak limiter. At `pga 0` through the JFET that same
-    // strum lands at -2.25 dBFS, intact. So the peak arriving at the comp is ~2.2 dB LOWER than before
-    // (it was pinned to 0 dBFS by clipping), while the SUSTAIN dropped by the full a+b. in.level takes
-    // the small peak correction; comp.thresh/makeup take the large sustain correction.
-    //
-    //   preset             in.level      comp.thr      makeup    reason
-    //   default            0.30 -> 0.40  -20 -> -37    3  -> 20  sustain -17.5 dB (pga -12, daughter -8)
-    //   tanglewood-slide   0.90 -> 1.15  -22 -> -34    6  -> 18  sustain -11.8 dB (pga -6,  daughter -8)
-    //   garrison           1.20 -> 3.00  -22 (same)    5 (same)  pga unchanged => pure x2.512 bookkeeping
-    //
-    // The K&K presets are derived from measured numbers and should land close. GARRISON'S in.level 3.00
-    // is exact gain bookkeeping (same total chain gain as before) but assumes the active preamp was
-    // previously at/near ADC clip — its actual output has never been measured. Check `meter` first.
-    // Attack times cut ~30% and out.level trimmed on all three: the ADC no longer limits transients for
-    // us, so the comp has to catch what the converter used to flatten. Dial on `meter` (comp-in peaks
-    // ~-3 dBFS, 0 DAC clips), not by ear alone.
-    //
-    // name              ir             in    eq     cmp   out   in    lo_f lo_g mid_f  mid_g  mid_q hi_f   hi_g  thr  ratio att rel  mkup out    pga
-    // default: dry baseline — no IR (ir NULL ⇒ "none" ⇒ convolution off). Three jobs, all of which
-    // want NEUTRAL AND SAFE rather than tuned: (1) the inheritance seed — a partial SD preset silently
-    // inherits every key it omits from here; (2) the dry A/B reference you switch to in order to hear
-    // what the IR/EQ/comp are actually doing; (3) the power-on preset.
-    //
-    // Revised 2026-07-24 after the Garrison bench session. The previous values (in.level 0.40,
-    // thr -37, makeup 20) came from the same first-pass arithmetic that the Garrison proved ~12 dB
-    // wrong — it restored the old RMS through a stage that had been CLIPPING, which is not a valid
-    // gain calculation. They also made the "dry baseline" the most heavily compressed preset in the
-    // file (20 dB of makeup squashing 30 dB of range), which is the opposite of a baseline.
-    //
-    // - in.level 1.00: unity. An honest seed, and it means comp-in == ADC level on the dry path.
-    // - thr -18 / ratio 3 / makeup 6: light SAFETY limiting, not sustain. Manufacturing loudness is
-    //   the tuned presets' job; this one should sound like the guitar.
-    // - attack 1 ms: THE generalizable lesson. The ADC used to flatten every transient for free at
-    //   the old pga values; at pga 0 nothing does, and the Garrison showed even 3 ms let the leading
-    //   edge through to the DAC. Anything inheriting from here must inherit a fast attack.
-    // Predicted dry, K&K or Garrison at their reference level (ADC peak ~-2.5 dBFS): comp-in -2.5,
-    // GR ~10 dB, out ~-10 dBFS, ~10 dB of DAC margin. To be confirmed on both guitars.
-    // Confirmed on the Garrison 2026-07-24 (preamp 3/4, dry): comp-in peak -1.1 dBFS, GR -5..-7,
-    // out peak -4.0, clip[ADC 0 DAC 0]. out.level 0.70 -> 0.60 because that take was still ~5 dB
-    // under the hardest recorded strum (+4.2 comp-in), which extrapolates to out ~-2 dBFS. 1.3 dB is
-    // cheap insurance on the preset every partial SD preset inherits from.
-    //
-    // Also confirmed on the K&K same day, and this preset is now the standard ADC-headroom probe:
-    // dry + in.level unity + eq off means **comp in IS the ADC level**, no unknown IR gain in the
-    // way. Use `preset default` whenever you need to know where the converter actually sits.
-    // K&K hard body tap + two very hard bridge taps: comp in -1.1 / 0.0 / 0.0 dBFS, clip[ADC 0].
-    // DAC clipped 1/7/12 samples (0.02-0.25 ms) and the builder could not hear it, so 0.60 stands.
-    // That clipping is pure overshoot and is NOT tunable: 0.0 (comp in) + 6.0 (makeup) - 4.4
-    // (out.level 0.60) = +1.6 dBFS whenever the comp contributes nothing, and a 1 ms attack CANNOT
-    // catch a knuckle tap -- the leading edge arrives before any GR exists. Only static headroom
-    // fixes it (out.level 0.35 would), which is not worth the level on a preset this quiet.
-    { "default",          NULL,         true, false, true, true, 1.00f, 120,  0,  700,  0.0f,  1.0f, 3500,  0.0f, -18, 3.0f,  1, 250,  6,  0.60f,  0 },
-    // tanglewood-slide (passive K&K, JFET daughter): pga 0 — the JFET's x0.84 puts the ADC ceiling at
-    // 1.60 V at TSin, which clears a hard strum (1.24 V) with 2.2 dB spare; only body taps clip now.
-    //
-    // DIALED ON THE K&K 2026-07-24, and it is the only preset today whose first pass landed --
-    // because its starting values were the Garrison's MEASURED numbers rather than fresh arithmetic
-    // (shared front end: same JFET daughter, same pga 0, similar ADC peak). Only out.level moved,
-    // 0.50 -> 0.65, because the builder wanted "a touch louder". Everything else is untouched.
-    // The values this replaced (in.level 1.15, thr -34, att 12, makeup 18) were first-pass arithmetic
-    // of exactly the kind the Garrison session disproved -- derived by restoring the old RMS through
-    // the ADC, which had been ~11.7 dB into clipping at the old pga 6. They predicted comp-in ~+8 dBFS
-    // and would have clipped the DAC on the first strum.
-    //
-    // Measured over a full slide passage: GR -6..-14 dB and NEVER 0 (the comp rides the level all the
-    // way through rather than only catching attacks -- what a slide preset is for), comp in swinging
-    // -5..-17 dBFS comes out -7..-13, peak comp in -1.8 -> out -6.3 dBFS, clip[ADC 0 DAC 0] over the
-    // whole take. At out.level 0.65 that peak sits ~-4.0 dBFS, matching the Garrison's margin.
-    //
-    // Two K&K-specific facts, both the OPPOSITE of what was expected going in:
-    //  - **No pad needed.** Its worst case (very hard bridge tap) measures 0.0 dBFS at the ADC with
-    //    ZERO clips -- 4.9..7.0 dB better than the headroom session predicted. Probably the JFET's
-    //    asymmetric window soft-limiting the positive half at +1.2 V before the converter sees it.
-    //    Body taps still clip the DAC by a handful of samples here (inaudible, accepted).
-    //  - **The IR, not the front end, sets the hiss.** Output noise floor -42.5 dBFS vs the
-    //    Garrison's -49.4 at identical in.level/makeup/out.level, even though the ADC noise floor
-    //    measures the same for both guitars (~-53..-55 dBFS on `default`). Back-derived: the
-    //    tanglewood IR is +3 dB on transients and +3.5 dB on broadband noise (flat, passes hiss); the
-    //    garrison IR is +9 dB on transients and -2 dB on noise (peaky, suppresses it). No digital
-    //    gain can fix this -- in.level/makeup move signal and noise together. Levers are gate-node
-    //    shielding or acceptance. Builder finds it noticeable but acceptable.
-    { "tanglewood-slide", "tanglewood", true, true,  true, true, 0.75f, 150,  3,  800, -3.0f,  1.0f, 1500, -2.0f, -28, 4.0f,  1, 300, 16,  0.65f,  0 },
-    // garrison (active pre-amp) — DIALED AT THE BENCH 2026-07-24 on the JFET daughter at pga 0.
-    //
-    // *** REFERENCE CONDITION: guitar preamp at 3/4. *** Record it with any Garrison measurement or
-    // the numbers are not reproducible -- the guitar's own volume sits AHEAD of the whole pedal, so a
-    // preset is only valid for one knob position.
-    //
-    // 3/4 is not arbitrary, it is the measured optimum, and how it was found is the one genuinely
-    // counter-intuitive result of the session. The guitar's preamp is the ONLY gain control in the
-    // chain sitting ahead of the pedal's dominant noise sources (JFET gate, ADC), so it is the only
-    // one that improves SNR. Measured at comp in (pre-comp, so comp settings cannot confound it):
-    //
-    //   preamp     comp-in peak   noise floor   SNR       ADC
-    //   half         -6.2 dBFS     -61.8        55.6 dB   clean
-    //   3/4          +4.2          -59.7        63.9 dB   clean      <- here
-    //   near max     +7.8          -58.4        66.2 dB   7 samples clipped
-    //
-    // half -> 3/4 buys +8.4 dB of real SNR (signal +10.4, noise only +2.1); 3/4 -> near max buys just
-    // +2.3 dB more and starts clipping the converter. Diminishing returns land almost exactly on 3/4.
-    // Gain anywhere AFTER the front end -- pga, in.level, comp makeup -- lifts signal and noise
-    // together and can never do this (SNR session Block 3: +18 dB pga -> +17.4 dB noise). So run the
-    // guitar hot, back off only far enough that hard playing stays clean, and make up nothing analog.
-    // At FULL a hard strum reaches 1.27-1.60 V at TSin and clips the ADC properly (51 samples).
-    //
-    // Measured at these values, preamp 3/4: comp in peak +4.2 dBFS (ADC peak -2.5, 2.5 dB of
-    // converter margin), GR -22 on the attack tapering -13 -> -4 -> 0 across the decay, out peak
-    // -3.4 dBFS, clip[ADC 0 DAC 0]. Noise floor -59.7 at comp in, -49.4 at out.
-    // Limiting behaviour verified at near-max preamp: a body tap at comp in +0.1 and a very hard
-    // strum at +7.8 both produced out ~-4.2 dBFS -- +7.7 dB of input, +0.2 dB of output. The comp is
-    // limiting, not just levelling, which is why out.level 0.50 has never produced a DAC clip in any
-    // take (body tap, hard strum, all three preamp positions).
-    // NOTE the Garrison's worst case is the STRUM, not the body tap (the tap came in 7.7 dB lower) --
-    // the opposite of the K&K. Active under-saddle vs soundboard transducer; don't carry the K&K's
-    // "worst case is a body tap" rule across ([[feedback_transient_peak_capture_method]] is about
-    // soundboard piezos specifically).
-    //
-    // How the values got here, since the first pass was wrong in an instructive way:
-    // - in.level 3.00 -> 0.75. The x2.512 "restore the old chain gain" bookkeeping ran THROUGH A
-    //   CLIPPING STAGE: on the op-amp daughter this guitar was ~8 dB into ADC clipping on every hard
-    //   strum, so its peak was pinned at 0 dBFS and did not scale with the daughter swap the way the
-    //   arithmetic assumed. Gain bookkeeping is only valid through linear stages.
-    // - attack 14 -> 1 ms. The ADC used to flatten these transients for free; at 14 ms (and still at
-    //   3) the leading edge escaped the detector and hit the DAC. 1 ms was worth ~3 dB of GR.
-    // - thr -20 -> -28, ratio 6 -> 4, makeup 6 -> 16. At -20 the comp only caught the initial
-    //   transient (GR 0.0 for the whole decay). At -28 GR holds ~-22 through the first second and
-    //   tapers -10 -> -5 -> 0: input range 43 dB becomes output range 14 dB. That is the sustainer.
-    // - out.level 0.85 -> 0.50. At 0.85 the output peaked -0.1 dBFS -- zero DAC clips by luck, no
-    //   margin. 0.50 puts peaks at -4.2 with the sustain still well above the earlier inaudible take.
-    // Builder accepted the higher hiss (compression lifts the noise floor with the quiet parts) as a
-    // fair trade for the sustain; the JFET's ~5 dB mains excess is a shielding fix, not device noise.
-    { "garrison",         "garrison",   true, true,  true, true, 0.75f, 120,  2, 1000, -2.5f,  1.0f, 3500, -1.5f, -28, 4.0f,  1, 250, 16,  0.50f,  0 },
+    // name              ir     in    eq     cmp    out   in     lo_f lo_g mid_f  mid_g  mid_q hi_f   hi_g  thr  ratio att rel  mkup out    pga
+    // default -- "basically bypass": a TRANSPARENT passthrough. No IR, EQ off, comp OFF, in/out at
+    // unity, so engaging it colours nothing. Three jobs:
+    //   (1) the INHERITANCE SEED -- a partial SD preset inherits every key it omits from here, which is
+    //       why the comp params below stay at sane values. ⚠ attack 1 ms especially: at pga 0 nothing
+    //       limits transients before the DAC, so any partial preset that turns comp ON must inherit a
+    //       fast attack;
+    //   (2) the dry A/B reference you switch to in order to hear what an IR/EQ/comp preset is doing;
+    //   (3) the power-on / no-card preset.
+    // ⚠ comp_on used to be a light SAFETY LIMITER; it is now FALSE so "basically bypass" is literal --
+    // the comp params remain ONLY as the seed, and out.level is unity (was 0.60). The pedal also boots in
+    // g_dsp_bypass regardless, so boot is passthrough either way; this makes the ENGAGED default match it.
+    { "default",          NULL,         true, false, false, true, 1.00f, 120,  0,  700,  0.0f,  1.0f, 3500,  0.0f, -18, 3.0f,  1, 250,  6,  1.00f,  0 },
 };
+
 #define N_BUILTIN ((int)(sizeof(s_builtin) / sizeof(s_builtin[0])))
 
 static const Preset *s_presets = s_builtin;   // active list (built-in or SD-installed)
@@ -434,7 +407,18 @@ int dsp_chain_load_preset(int idx) {
     s_cp_params[CP_ATT].value    = p->att;   s_cp_params[CP_REL].value   = p->rel;
     s_cp_params[CP_MAKEUP].value = p->mkup;
     s_out_params[OUT_LEVEL].value = p->out_level;
-    s_in.dirty = s_eq.dirty = s_comp.dirty = s_out.dirty = true;
+    // ⚠ xfmr: built-in presets zero-init these (xfmr_on=false, everything 0), and an SD preset that
+    // omits the keys inherits those zeros from `default`. Only COPY when the preset actually specified
+    // the stage -- otherwise the Param-array seeds (drive 6, hf 10 kHz, mix 0) stand, so the stage is
+    // off but ready to dial from the menu, and we never write hf_freq=0 (a degenerate shelf). A preset
+    // with "xfmr.on"/"xfmr:" sets real values here.
+    s_xfmr.enabled = p->xfmr_on;
+    if (p->xfmr_on || p->xf_mix > 0.f || p->xf_drive > 0.f) {
+        s_xf_params[XF_DRIVE].value = p->xf_drive; s_xf_params[XF_TILT].value = p->xf_tilt;
+        s_xf_params[XF_BIAS].value  = p->xf_bias;  s_xf_params[XF_HF_F].value = p->xf_hf_f;
+        s_xf_params[XF_HF_G].value  = p->xf_hf_g;  s_xf_params[XF_MIX].value  = p->xf_mix;
+    }
+    s_in.dirty = s_eq.dirty = s_xfmr.dirty = s_comp.dirty = s_out.dirty = true;
     return 0;
 }
 

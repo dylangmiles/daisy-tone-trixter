@@ -175,7 +175,7 @@ static void parse_presets(char *buf) {
                 strncpy(nm, unquote(v), NAME_MAX - 1); nm[NAME_MAX - 1] = 0;
                 active = true;
             } else if (active) {
-                float a[5];
+                float a[6];
                 if (strcmp(k, "ir") == 0) {          // "none"/"off"/empty → no IR (convolution off)
                     const char *uv = unquote(v);
                     if (uv[0] == 0 || strcasecmp(uv, "none") == 0 || strcasecmp(uv, "off") == 0)
@@ -198,6 +198,10 @@ static void parse_presets(char *buf) {
                 else if (strcmp(k, "comp") == 0)   { int c = parse_list(v, a, 5);
                     if (c>=1) cur.thr=a[0]; if (c>=2) cur.ratio=a[1]; if (c>=3) cur.att=a[2];
                     if (c>=4) cur.rel=a[3]; if (c>=5) cur.mkup=a[4]; }
+                else if (strcmp(k, "xfmr.on") == 0) cur.xfmr_on = parse_bool(v);          // ⚠ Daisy addition
+                else if (strcmp(k, "xfmr") == 0)   { int c = parse_list(v, a, 6);          // [drive,tilt,bias,hf_f,hf_g,mix]
+                    if (c>=1) cur.xf_drive=a[0]; if (c>=2) cur.xf_tilt=a[1]; if (c>=3) cur.xf_bias=a[2];
+                    if (c>=4) cur.xf_hf_f=a[3]; if (c>=5) cur.xf_hf_g=a[4]; if (c>=6) cur.xf_mix=a[5]; }
             }
         }
         if (!nl) break;
