@@ -506,6 +506,22 @@ STYLES = {
         },
         fill_from=14,
         fill={"snare": [(14, 0.85)]}),
+
+    # ---- added 2026-10-28 --------------------------------------------------------------------
+    "country_rock": dict(
+        fn="moon", bpm=170, bars=4, div=16, swing=0.0,
+        note="Straight-8th country rock: kick 1 and 3 with an 8th pickup into 3, snare 2 and 4, even "
+             "8th hat. CCR feel -- kept light (no open hat, no crash) under a strummed acoustic.",
+        # Bad Moon Rising (2026-10-28): the record is ~180 bpm. Generated at 120 (learning), 140
+        # (practice) and 170 (almost full speed) for the acoustic -- the strum carries the chug, the bed keeps 2 & 4.
+        pattern={
+            "kick":  [(0, 0.95), (6, 0.45), (8, 0.85)],
+            "snare": [(4, 0.85), (12, 0.90)],
+            "hat":   [(0, 0.50), (2, 0.34), (4, 0.46), (6, 0.34),
+                      (8, 0.50), (10, 0.34), (12, 0.46), (14, 0.38)],
+        },
+        fill_from=14,
+        fill={"snare": [(14, 0.75), (15, 0.85)]}),
 }
 
 # ----------------------------------------------------------------- rendering

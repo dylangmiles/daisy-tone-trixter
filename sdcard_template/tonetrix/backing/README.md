@@ -30,6 +30,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 
 | File | bpm | Feel | Try it with |
 |---|---|---|---|
+| `delta71`   |  71 | Sparse Delta shuffle, as `delta81`, slower still | **"Walking Blues" — Muddy Waters / R. Johnson**, slower take *(requested)* |
 | `delta72`   |  72 | Sparse Delta shuffle, as `delta81`, slower | **"Come Back Baby" — Lightnin' Hopkins** *(requested)* |
 | `stomp71`   |  71 | **Foot-stomp + handclap**: kick on all four, claps on 2 and 4, nothing else | **"Am I Wrong" — Keb' Mo'** *(requested 2026-09-18)* |
 | `blues71`   |  71 | Same country blues shuffle as `blues92`, slower and heavier | slow shuffle |
@@ -55,6 +56,9 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folkr128`  | 128 | Gentle country-folk-rock, soft brushed backbeat, sparse kick | **"Old Man" — Neil Young**, **"Father and Son" — Cat Stevens** *(requested)* |
 | `rkbly138`  | 138 | Rockabilly, handclaps on the backbeat, more bounce | slower take on the below |
 | `soul140`   | 140 | Soul-pop with a little pocket | slower take on the below |
+| `moon120`   | 120 | Same country-rock bed as `moon140`, learning tempo | **"Bad Moon Rising" — CCR**, first-steps tempo *(requested 2026-10-28)* |
+| `moon140`   | 140 | **Straight-8th country rock**: kick 1 & 3 + pickup into 3, snare 2 & 4, even 8th hat, no crash | **"Bad Moon Rising" — CCR**, acoustic practice tempo *(requested 2026-10-28)* |
+| `moon170`   | 170 | Same country-rock bed, almost full speed (record ≈ 180) | **"Bad Moon Rising" — CCR** *(requested 2026-10-28)* |
 | `soull150`  | 150 | **Soul-pop, simplified**: kick 1 & 3, snare 2 & 4, straight hat, no ghosts, no fill | **"Brown Eyed Girl" — Van Morrison** *(requested; the full kit was busy under strummed acoustic)* |
 | `soul150`   | 150 | Bright uptempo soul-pop, full kit, driving 8ths | the busier take on the above |
 | `rkbly145`  | 145 | Rockabilly bounce, handclaps doubling the backbeat | **"Crazy Little Thing Called Love" — Queen** *(requested; 156 was too quick)* |
