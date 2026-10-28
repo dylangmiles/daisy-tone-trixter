@@ -460,7 +460,7 @@ the convolver before it is re-initialised. ⚠ Never call `SelectPreset()` from 
 
 ⚠ **Three fixed caps on the card's contents, all now with a `!!` warning when hit** (each bit us
 silently once): `TT_MAX_SONGS` **48** (was 16 — the set list reached 22 on 2026-09-21 and songs 17+
-vanished), `BACKING_MAX_FILES` **48** (was 16), and the 32 kB read buffer below. Whenever the card can
+vanished), `BACKING_MAX_FILES` **64** (was 16, then 48 until 2026-10-28), and the 32 kB read buffer below. Whenever the card can
 hold more of a thing than a fixed array, it must say when it fills.
 
 ⚠ **The card files are read into one 32 kB buffer, and a longer file is TRUNCATED SILENTLY** — the last
@@ -602,7 +602,7 @@ processing would be both wrong and a waste of the budget.
 ⚠ **`backing_service()` runs in the FOREGROUND, never the audio callback.** It reads the SD card,
 which blocks; `SERVICE_BUDGET_US` caps how long it may spend per pass.
 
-⚠ **The backing folder is scanned into a fixed table — `BACKING_MAX_FILES`, now 48 (was 16).** Past
+⚠ **The backing folder is scanned into a fixed table — `BACKING_MAX_FILES`, now 64 (was 16, then 48 until 2026-10-28).** Past
 the limit the scan just stops, in directory order, and the missing loops show up only as `backing not
 found` on whichever songs name them (2026-09-18: 18 files, `soul150` and `blues71` gone). The scan
 now prints `!! … more than N files` when it fills. Same class as the `presets.txt` buffer: a silent

@@ -23,7 +23,8 @@
 extern "C" {
 #endif
 
-#define BACKING_MAX_FILES  48   // ⚠ was 16: the folder reached 18 on 2026-09-18 and two loops silently vanished
+#define BACKING_MAX_FILES  64   // ⚠ was 16: the folder reached 18 on 2026-09-18 and two loops silently vanished;
+                                // 48 -> 64 on 2026-10-28 at 47 files (+1.5 KB SRAM, 96 B/entry)
 #define BACKING_NAME_LEN   32
 
 // (Re)scan /tonetrix/backing for *.wav. Safe with no card / no folder (count 0).

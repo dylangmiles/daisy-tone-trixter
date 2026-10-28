@@ -133,7 +133,18 @@ static int   g_preset_count   = 0;
 static constexpr int kIrMaxTaps = 4096;
 static float         g_ir_buf[kIrMaxTaps];
 static int           g_ir_len  = 0;
-static char          g_ir_name[24] = "none";
+static char          g_ir_name[64] = "none";   // ⚠ must hold the full IR path (path[64] in LoadIr);
+                                                // was [24] and silently truncated "/tonetrix/ir/
+                                                // tanglewood-std.wav" to "/tonetrix/ir/tanglewood" in the
+                                                // dump, which read as the WRONG IR being loaded (it was not)
+
+// Scanned /tonetrix/ir/ for the menu IR picker (added 2026-10-18 -- was a stub that only ever listed
+// the current preset's IR). The menu list is: index 0 = synthetic "none" (dry), indices 1..count =
+// these scanned .wav basenames. ⚠ A pick is LIVE ONLY -- not written to the card -- and selecting a
+// preset reloads that preset's own IR over it (same not-saved semantics as the IR-dry / BYP rows).
+#define IR_MAX_FILES 24
+static char g_ir_files[IR_MAX_FILES][32];       // basenames including ".wav"
+static int  g_ir_file_count = 0;
 
 // ⚠ The OUTCOME of the SD phase, captured as it happens. The boot report is routinely lost to USB
 // CDC enumeration, so a failure reason that only prints at boot is a reason nobody reads. This has
@@ -210,7 +221,9 @@ static bool          g_in_menu  = false;
 // nothing a player needs mid-song -- no level, no preset, no clip indicator -- and the one moment
 // you would notice that is the moment you cannot do anything about it. Any encoder activity
 // restarts the clock, so it only fires when the menu has genuinely been abandoned.
-static constexpr uint32_t kMenuIdleMs = 5000;
+// ⚠ 5 s -> 60 s (2026-10-28): 5 s kicked the player out mid-edit while dialling presets -- reading a
+// value, playing a few bars to judge it, then reaching back for the knob takes longer than that.
+static constexpr uint32_t kMenuIdleMs = 60000;
 static uint32_t           g_menu_at   = 0;
 static bool          g_oled_dirty = true;
 
@@ -1562,6 +1575,32 @@ static bool LoadIr(const char* name)
     return true;
 }
 
+// Scan /tonetrix/ir/ into g_ir_files for the menu IR picker. Mirrors backing_scan(): skips dirs and
+// macOS "._" AppleDouble sidecars, takes *.wav only, warns if the table fills. Safe with no card
+// (count stays 0). Call once after the card is mounted.
+static void IrScan(void)
+{
+    g_ir_file_count = 0;
+    DIR dir;
+    if(f_opendir(&dir, "/tonetrix/ir") != FR_OK)
+        return;
+    FILINFO fno;
+    while(f_readdir(&dir, &fno) == FR_OK && fno.fname[0] && g_ir_file_count < IR_MAX_FILES)
+    {
+        if(fno.fattrib & AM_DIR)   continue;
+        if(fno.fname[0] == '.')    continue;   // AppleDouble sidecar ("._tanglewood.wav")
+        size_t l = strlen(fno.fname);
+        if(l < 5 || strcasecmp(fno.fname + l - 4, ".wav") != 0)
+            continue;
+        strncpy(g_ir_files[g_ir_file_count], fno.fname, sizeof g_ir_files[0] - 1);
+        g_ir_files[g_ir_file_count][sizeof g_ir_files[0] - 1] = 0;
+        g_ir_file_count++;
+    }
+    if(g_ir_file_count >= IR_MAX_FILES && f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+        printf("!! /tonetrix/ir has more than %d files -- the rest are NOT listed\n", IR_MAX_FILES);
+    f_closedir(&dir);
+}
+
 // Switch preset and load whatever IR it names.
 //
 // ⚠ NOT audio-safe, and deliberately so: reading a WAV off the SD card blocks for a few hundred
@@ -1648,21 +1687,42 @@ const char* app_preset_name(int i)      { return dsp_chain_preset_name(i); }
 int         app_preset_current(void)    { return g_preset_idx; }
 void        app_preset_load(int i)      { SelectPreset(i); }
 
-// ⚠ IR selection is per-PRESET here, not a free-standing table. The Pico scanned the card into an
-// IR list the menu could pick from; this build loads whatever IR the chosen preset names. Reported
-// as a single-entry list so the menu has something coherent to show rather than an empty picker.
-int         app_ir_count(void)          { return 1; }
+// IR picker over the card's /tonetrix/ir/ folder (IrScan fills g_ir_files). Menu index 0 is a
+// synthetic "none" (dry); 1..g_ir_file_count are the scanned files. ⚠ A pick is LIVE ONLY and NOT
+// saved to the card -- selecting a preset reloads that preset's own IR over it (like IR-dry / BYP).
+int         app_ir_count(void)          { return g_ir_file_count + 1; }   // +1 for "none" at index 0
 const char* app_ir_name(int i)
 {
-    // ⚠ Reports the IR of the CURRENT preset, live. Returning a cached name meant the menu's IR row
-    // never changed when the preset did (2026-09-06) -- it looked like preset loading was broken
-    // when in fact only the display was stale.
-    (void)i;
-    const char* ir = dsp_chain_preset_ir(g_preset_idx);
-    return (ir && *ir) ? ir : "none";
+    if(i <= 0)                  return "none";
+    if(i - 1 < g_ir_file_count) return g_ir_files[i - 1];
+    return "none";
 }
-int         app_ir_current(void)        { return 0; }
-void        app_ir_select(int i)        { (void)i; }
+int         app_ir_current(void)
+{
+    // Index of the loaded IR within the scanned list (0 = none / not found). g_ir_name holds the full
+    // path, so compare its basename to the table -- that way it tracks whatever the preset loaded too.
+    // ⚠ A built-in IR NAME (no .wav, no-card fallback) won't match a file here and reads as "none".
+    if(!g_ir_active) return 0;
+    const char* base = strrchr(g_ir_name, '/');
+    base = base ? base + 1 : g_ir_name;
+    for(int i = 0; i < g_ir_file_count; i++)
+        if(strcasecmp(base, g_ir_files[i]) == 0) return i + 1;
+    return 0;
+}
+void        app_ir_select(int i)
+{
+    // ⚠ Not audio-safe: LoadIr blocks and re-inits the convolver, so clear g_ir_active FIRST (as
+    // SelectPreset does) and let the in-flight block finish. Foreground only (menu), never the callback.
+    g_ir_active = false;
+    System::Delay(5);
+    if(i <= 0 || i - 1 >= g_ir_file_count)
+    {
+        g_ir_len = 0;
+        snprintf(g_ir_name, sizeof g_ir_name, "none");   // "none": convolution off (dry)
+        return;
+    }
+    g_ir_active = LoadIr(g_ir_files[i - 1]);
+}
 
 // ⚠ The menu row drives ALL meters, not just the GR band. A row labelled "GR meter" that leaves the
 // in/out bars repainting is the wrong control to reach for when the reason you want them off is I2C
@@ -2373,6 +2433,8 @@ int main(void)
         OledBoot("backing tracks");
         backing_scan();
         hw.PrintLine("  %d backing track(s)", backing_count());
+        IrScan();
+        hw.PrintLine("  %d IR file(s) in /tonetrix/ir", g_ir_file_count);
         hw.PrintLine("  %d song(s) -- hold the tuner switch for song select", tt_store_song_count());
     }
     hw.PrintLine("  ⚠ chain stays BYPASSED at boot. Bypass footswitch toggles it.");
