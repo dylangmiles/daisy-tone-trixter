@@ -1,86 +1,96 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="175.0mm" height="212.0mm" viewBox="0 0 175.0 212.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="172.6mm" height="245.66mm" viewBox="0 0 172.6 245.66">
 <style>text{font-family:sans-serif;fill:#111}.lbl{font-size:3.2px}.dim{font-size:2.6px;fill:#555}.ttl{font-size:4px;font-weight:bold}.note{font-size:2.6px;fill:#a00}.ctr{font-size:2.6px;fill:#09c}.fold{font-size:2.8px;fill:#06c;font-weight:bold}</style>
-<rect x="0" y="0" width="175.0" height="212.0" fill="#fff"/>
+<rect x="0" y="0" width="172.6" height="245.66" fill="#fff"/>
 <text x="12.00" y="7.00" class="ttl" text-anchor="start">1590XX template -- OUTSIDE, ink up, drill from outside -- PRINT AT 100%</text>
-<text x="12.00" y="11.00" class="note" text-anchor="start">Box NET: TOP FACE below (FRONT toward player); REAR WALL = fold-up flap above, hinged at the back edge.</text>
-<text x="12.00" y="14.50" class="note" text-anchor="start">Fold the flap down over the back; jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.</text>
-<rect x="8.50" y="67.00" width="145.00" height="121.00" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="2 2"/>
-<rect x="12.00" y="74.00" width="138.00" height="114.00" fill="none" stroke="#bbb" stroke-width="0.3"/>
-<text x="81.00" y="193.00" class="dim" text-anchor="middle">FRONT (toward player)</text>
-<line x1="81.00" y1="34.00" x2="81.00" y2="191.00" stroke="#09c" stroke-width="0.35" stroke-dasharray="5 2"/>
-<line x1="5.50" y1="131.00" x2="156.50" y2="131.00" stroke="#09c" stroke-width="0.35" stroke-dasharray="5 2"/>
-<text x="155.50" y="130.00" class="ctr" text-anchor="end">BOX CENTRE (align to the diagonals)</text>
-<circle cx="18.00" cy="182.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
-<circle cx="18.00" cy="80.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
-<circle cx="144.00" cy="182.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
-<circle cx="144.00" cy="80.00" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
-<polygon points="15.00,133.00 147.00,133.00 147.00,86.00 137.00,86.00 137.00,76.00 25.00,76.00 25.00,86.00 15.00,86.00" fill="none" stroke="#06c" stroke-width="0.4" stroke-dasharray="3 2"/>
-<text x="81.00" y="128.00" class="dim" text-anchor="middle">full-width board (dashed) -- rear corners square-notched for the bosses</text>
-<circle cx="36.00" cy="166.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="34.00" y1="166.00" x2="38.00" y2="166.00" stroke="#111" stroke-width="0.2"/>
-<line x1="36.00" y1="164.00" x2="36.00" y2="168.00" stroke="#111" stroke-width="0.2"/>
-<circle cx="126.00" cy="166.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="124.00" y1="166.00" x2="128.00" y2="166.00" stroke="#111" stroke-width="0.2"/>
-<line x1="126.00" y1="164.00" x2="126.00" y2="168.00" stroke="#111" stroke-width="0.2"/>
-<text x="81.00" y="173.00" class="dim" text-anchor="middle">footswitches O12 @ 90 ctrs</text>
-<circle cx="67.00" cy="125.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="65.00" y1="125.00" x2="69.00" y2="125.00" stroke="#111" stroke-width="0.2"/>
-<line x1="67.00" y1="123.00" x2="67.00" y2="127.00" stroke="#111" stroke-width="0.2"/>
-<circle cx="95.00" cy="125.00" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="93.00" y1="125.00" x2="97.00" y2="125.00" stroke="#111" stroke-width="0.2"/>
-<line x1="95.00" y1="123.00" x2="95.00" y2="127.00" stroke="#111" stroke-width="0.2"/>
-<text x="81.00" y="121.00" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
-<rect x="63.50" y="94.50" width="35.00" height="20.00" fill="none" stroke="#111" stroke-width="0.4"/>
-<text x="81.00" y="91.50" class="dim" text-anchor="middle">OLED 35x20</text>
-<circle cx="120.00" cy="104.50" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="118.00" y1="104.50" x2="122.00" y2="104.50" stroke="#111" stroke-width="0.2"/>
-<line x1="120.00" y1="102.50" x2="120.00" y2="106.50" stroke="#111" stroke-width="0.2"/>
-<text x="120.00" y="99.50" class="dim" text-anchor="middle">enc O7</text>
-<line x1="32.00" y1="72.50" x2="32.00" y2="75.50" stroke="#111" stroke-width="0.4"/>
-<line x1="54.00" y1="72.50" x2="54.00" y2="75.50" stroke="#111" stroke-width="0.4"/>
-<line x1="76.00" y1="72.50" x2="76.00" y2="75.50" stroke="#111" stroke-width="0.4"/>
-<line x1="98.00" y1="72.50" x2="98.00" y2="75.50" stroke="#111" stroke-width="0.4"/>
-<line x1="124.00" y1="72.50" x2="124.00" y2="75.50" stroke="#111" stroke-width="0.4"/>
+<text x="12.00" y="11.00" class="note" text-anchor="start">Box NET: TOP FACE centre; REAR WALL panel above, FRONT WALL panel below. Each panel: FOLD (outer edge) -> top-face band -> panel -> LID SEAM (lid not drawn).</text>
+<text x="12.00" y="14.50" class="note" text-anchor="start">Fold each panel down over its wall; rear jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.</text>
+<rect x="9.70" y="69.33" width="142.60" height="119.00" fill="none" stroke="#999" stroke-width="0.3" stroke-dasharray="2 2"/>
+<rect x="12.00" y="71.83" width="138.00" height="114.00" fill="none" stroke="#bbb" stroke-width="0.3"/>
+<line x1="81.00" y1="34.00" x2="81.00" y2="223.66" stroke="#09c" stroke-width="0.35" stroke-dasharray="5 2"/>
+<line x1="6.70" y1="128.83" x2="155.30" y2="128.83" stroke="#09c" stroke-width="0.35" stroke-dasharray="5 2"/>
+<text x="154.30" y="127.83" class="ctr" text-anchor="end">BOX CENTRE (align to the diagonals)</text>
+<circle cx="18.00" cy="179.83" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="18.00" cy="77.83" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="144.00" cy="179.83" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<circle cx="144.00" cy="77.83" r="3.50" fill="none" stroke="#999" stroke-width="0.3"/>
+<polygon points="15.00,140.83 147.00,140.83 147.00,83.83 137.00,83.83 137.00,73.83 25.00,73.83 25.00,83.83 15.00,83.83" fill="none" stroke="#06c" stroke-width="0.4" stroke-dasharray="3 2"/>
+<text x="81.00" y="135.83" class="dim" text-anchor="middle">full-width board (dashed) -- rear corners square-notched for the bosses</text>
+<circle cx="36.00" cy="163.83" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="34.00" y1="163.83" x2="38.00" y2="163.83" stroke="#111" stroke-width="0.2"/>
+<line x1="36.00" y1="161.83" x2="36.00" y2="165.83" stroke="#111" stroke-width="0.2"/>
+<circle cx="126.00" cy="163.83" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="124.00" y1="163.83" x2="128.00" y2="163.83" stroke="#111" stroke-width="0.2"/>
+<line x1="126.00" y1="161.83" x2="126.00" y2="165.83" stroke="#111" stroke-width="0.2"/>
+<text x="81.00" y="170.83" class="dim" text-anchor="middle">footswitches O12 @ 90 ctrs</text>
+<circle cx="67.00" cy="129.33" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="65.00" y1="129.33" x2="69.00" y2="129.33" stroke="#111" stroke-width="0.2"/>
+<line x1="67.00" y1="127.33" x2="67.00" y2="131.33" stroke="#111" stroke-width="0.2"/>
+<circle cx="95.00" cy="129.33" r="1.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="93.00" y1="129.33" x2="97.00" y2="129.33" stroke="#111" stroke-width="0.2"/>
+<line x1="95.00" y1="127.33" x2="95.00" y2="131.33" stroke="#111" stroke-width="0.2"/>
+<text x="81.00" y="125.33" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
+<rect x="64.50" y="89.33" width="33.00" height="17.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="81.00" y="86.33" class="dim" text-anchor="middle">OLED 33x17</text>
+<rect x="76.00" y="117.53" width="10.00" height="2.60" fill="none" stroke="#06c" stroke-width="0.3" stroke-dasharray="2 1"/>
+<line x1="81.00" y1="118.83" x2="81.00" y2="97.83" stroke="#06c" stroke-width="0.2" stroke-dasharray="1 1"/>
+<text x="81.00" y="121.63" class="ctr" text-anchor="middle">OLED header (ghost)</text>
+<circle cx="120.00" cy="97.83" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="118.00" y1="97.83" x2="122.00" y2="97.83" stroke="#111" stroke-width="0.2"/>
+<line x1="120.00" y1="95.83" x2="120.00" y2="99.83" stroke="#111" stroke-width="0.2"/>
+<text x="120.00" y="92.83" class="dim" text-anchor="middle">enc O7</text>
+<line x1="36.20" y1="70.33" x2="36.20" y2="73.33" stroke="#111" stroke-width="0.4"/>
+<line x1="58.00" y1="70.33" x2="58.00" y2="73.33" stroke="#111" stroke-width="0.4"/>
+<line x1="76.00" y1="70.33" x2="76.00" y2="73.33" stroke="#111" stroke-width="0.4"/>
+<line x1="102.30" y1="70.33" x2="102.30" y2="73.33" stroke="#111" stroke-width="0.4"/>
+<line x1="125.80" y1="70.33" x2="125.80" y2="73.33" stroke="#111" stroke-width="0.4"/>
 <rect x="12.00" y="34.00" width="138.00" height="33.00" fill="none" stroke="#111" stroke-width="0.6"/>
-<text x="81.00" y="70.00" class="fold" text-anchor="middle">FOLD DOWN HERE -- top-rear edge (z=33) -- flap flops over the back wall</text>
+<rect x="12.00" y="67.00" width="138.00" height="2.33" fill="none" stroke="#999" stroke-width="0.3"/>
+<text x="149.00" y="68.73" class="dim" text-anchor="end">top-face edge 2.33</text>
+<text x="81.00" y="68.53" class="fold" text-anchor="middle">FOLD DOWN -- outer top-rear edge -- panel wraps the back wall</text>
+<text x="81.00" y="33.00" class="dim" text-anchor="middle">LID SEAM (z=0, cavity floor) -- lid is below, not drawn</text>
 <text x="13.00" y="27.00" class="dim" text-anchor="start">← box LEFT wall (player's L)</text>
 <text x="149.00" y="27.00" class="dim" text-anchor="end">box RIGHT wall (player's R) →</text>
-<text x="81.00" y="27.00" class="dim" text-anchor="middle">jack axes: TRS 10.8 mm / USB 16 mm up from base</text>
-<text x="13.00" y="31.50" class="dim" text-anchor="start">base z=0 = pedal bottom (this top edge)</text>
-<line x1="32.00" y1="44.80" x2="32.00" y2="74.00" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="32.00" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="30.00" y1="44.80" x2="34.00" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="32.00" y1="42.80" x2="32.00" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="32.00" y="38.30" class="dim" text-anchor="middle">OUT O10</text>
-<line x1="54.00" y1="50.00" x2="54.00" y2="74.00" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<rect x="47.50" y="46.00" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
-<text x="54.00" y="44.50" class="dim" text-anchor="middle">USB 13x8</text>
-<line x1="76.00" y1="44.80" x2="76.00" y2="74.00" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<text x="81.00" y="29.50" class="dim" text-anchor="middle">jack axes: TRS 10.8 / USB 16 mm up from the lid seam</text>
+<line x1="36.20" y1="44.80" x2="36.20" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="36.20" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="34.20" y1="44.80" x2="38.20" y2="44.80" stroke="#111" stroke-width="0.2"/>
+<line x1="36.20" y1="42.80" x2="36.20" y2="46.80" stroke="#111" stroke-width="0.2"/>
+<text x="36.20" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">OUT O10</text>
+<line x1="58.00" y1="50.00" x2="58.00" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<rect x="51.50" y="46.00" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
+<text x="58.00" y="56.50" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,113.00)">USB 13x8</text>
+<line x1="76.00" y1="44.80" x2="76.00" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
 <circle cx="76.00" cy="44.80" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="74.00" y1="44.80" x2="78.00" y2="44.80" stroke="#111" stroke-width="0.2"/>
 <line x1="76.00" y1="42.80" x2="76.00" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="76.00" y="37.30" class="dim" text-anchor="middle">DC O12</text>
-<line x1="98.00" y1="44.80" x2="98.00" y2="74.00" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="98.00" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="96.00" y1="44.80" x2="100.00" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="98.00" y1="42.80" x2="98.00" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="98.00" y="38.30" class="dim" text-anchor="middle">IN B O10</text>
-<line x1="124.00" y1="44.80" x2="124.00" y2="74.00" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="124.00" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="122.00" y1="44.80" x2="126.00" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="124.00" y1="42.80" x2="124.00" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="124.00" y="38.30" class="dim" text-anchor="middle">IN A O10</text>
-<line x1="12.00" y1="201.00" x2="112.00" y2="201.00" stroke="#111" stroke-width="0.4"/>
-<line x1="12.00" y1="199.00" x2="12.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="22.00" y1="199.00" x2="22.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="32.00" y1="199.00" x2="32.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="42.00" y1="199.00" x2="42.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="52.00" y1="199.00" x2="52.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="62.00" y1="199.00" x2="62.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="72.00" y1="199.00" x2="72.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="82.00" y1="199.00" x2="82.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="92.00" y1="199.00" x2="92.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="102.00" y1="199.00" x2="102.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<line x1="112.00" y1="199.00" x2="112.00" y2="203.00" stroke="#111" stroke-width="0.3"/>
-<text x="62.00" y="207.00" class="note" text-anchor="middle">this bar MUST measure 100.0 mm -- if not, fix the print scale</text>
+<text x="76.00" y="53.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,106.60)">DC O12</text>
+<line x1="102.30" y1="44.80" x2="102.30" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="102.30" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="100.30" y1="44.80" x2="104.30" y2="44.80" stroke="#111" stroke-width="0.2"/>
+<line x1="102.30" y1="42.80" x2="102.30" y2="46.80" stroke="#111" stroke-width="0.2"/>
+<text x="102.30" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">IN B O10</text>
+<line x1="125.80" y1="44.80" x2="125.80" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="125.80" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="123.80" y1="44.80" x2="127.80" y2="44.80" stroke="#111" stroke-width="0.2"/>
+<line x1="125.80" y1="42.80" x2="125.80" y2="46.80" stroke="#111" stroke-width="0.2"/>
+<text x="125.80" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">IN A O10</text>
+<text x="81.00" y="187.33" class="fold" text-anchor="middle">FOLD DOWN -- outer top-front edge -- panel wraps the front wall</text>
+<rect x="12.00" y="188.33" width="138.00" height="2.33" fill="none" stroke="#999" stroke-width="0.3"/>
+<text x="149.00" y="190.06" class="dim" text-anchor="end">top-face edge 2.33</text>
+<rect x="12.00" y="190.66" width="138.00" height="33.00" fill="none" stroke="#111" stroke-width="0.6"/>
+<text x="81.00" y="207.16" class="dim" text-anchor="middle">FRONT WALL panel (toward player, no holes)</text>
+<text x="81.00" y="226.66" class="dim" text-anchor="middle">LID SEAM (panel bottom, z=0) -- lid is below, not drawn</text>
+<line x1="12.00" y1="235.66" x2="112.00" y2="235.66" stroke="#111" stroke-width="0.4"/>
+<line x1="12.00" y1="233.66" x2="12.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="22.00" y1="233.66" x2="22.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="32.00" y1="233.66" x2="32.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="42.00" y1="233.66" x2="42.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="52.00" y1="233.66" x2="52.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="62.00" y1="233.66" x2="62.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="72.00" y1="233.66" x2="72.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="82.00" y1="233.66" x2="82.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="92.00" y1="233.66" x2="92.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="102.00" y1="233.66" x2="102.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<line x1="112.00" y1="233.66" x2="112.00" y2="237.66" stroke="#111" stroke-width="0.3"/>
+<text x="62.00" y="241.66" class="note" text-anchor="middle">this bar MUST measure 100.0 mm -- if not, fix the print scale</text>
 </svg>

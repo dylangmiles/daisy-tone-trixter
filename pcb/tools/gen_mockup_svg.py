@@ -57,37 +57,57 @@ def _poly(pts, stroke='#06c', dash='3 2', sw=0.4):
     return f'<polygon points="{p}" fill="none" stroke="{stroke}" stroke-width="{sw}"{_dash(dash)}/>\n'
 def _txt(x, y, s, cls='lbl', anchor='middle'):
     return f'<text x="{x:.2f}" y="{y:.2f}" class="{cls}" text-anchor="{anchor}">{s}</text>\n'
+def _vtxt(x, y, s, cls='lbl', anchor='middle'):
+    # vertically-flipped text: drawn upside-down on the flat sheet so it reads UPRIGHT once the rear
+    # flap is folded down over the back wall (the fold is a vertical mirror about the hinge).
+    return (f'<text x="{x:.2f}" y="{y:.2f}" class="{cls}" text-anchor="{anchor}" '
+            f'transform="matrix(1,0,0,-1,0,{2*y:.2f})">{s}</text>\n')
 
 # ---- vertical layout (mm, top of page downward) ----------------------------------------------
+# Box NET. Each WALL is a fold-DOWN panel built the same way, from the top face outward:
+#   inside edge -> WALL (dotted outer edge = FOLD) -> TOP-FACE-THICKNESS band -> PANEL (= CAVITY_H)
+#   -> panel bottom = LID SEAM.  The fold is the OUTER top edge; the band is the edge of the top
+#   plate (WALL_TOP); the panel is the wall itself; the LID (bottom plate) is a SEPARATE part on the
+#   bottom and is NOT drawn.  Panel z is measured UP from the lid seam, so jack heights match the
+#   side elevation and the PCB.
 MARGIN   = 12.0
-EXT_OVER = (EXT_D - BOX_D)              # external outline overhang above the inner plane
-# REAR WALL fold-up flap sits ABOVE the top view; its base (z=0, pedal bottom) is the top edge,
-# its hinge (z=CAVITY_H, top-rear fold edge) is the bottom edge -- i.e. the strip is flipped so the
-# "top edge is the bottom", ready to flop down over the back.
-FY_BASE  = 34.0                        # flap TOP edge  = pedal base (z=0)
-FY_HINGE = FY_BASE + CAVITY_H          # flap BOTTOM edge = top-rear fold edge (z=CAVITY_H)
+WALL_FR  = e.WALL_FR                    # front/rear wall = external outline overhang each side (Y)
+WALL_SIDE = e.WALL_SIDE                 # left/right wall = external outline overhang each side (X)
+WALL_TOP = e.WALL_TOP                   # top-face plate thickness -> band between the fold and panel
+# REAR WALL panel ABOVE the top view. Far (top) edge = lid seam (z=0); then panel up to z=CAVITY_H;
+# then the top-face band; then the FOLD (outer top-rear edge).
+FY_BASE    = 34.0                       # panel FAR edge = LID SEAM (cavity floor, z=0)
+FY_PANEL_T = FY_BASE + CAVITY_H         # panel TOP edge (z=CAVITY_H) -- meets the top-face band
+FY_HINGE   = FY_PANEL_T + WALL_TOP      # FOLD = outer top-rear edge (one top-face thickness above)
 ox       = MARGIN
-oy       = FY_HINGE + EXT_OVER         # top-face inner-plane top; external outline top == the fold
+oy       = FY_HINGE + WALL_FR            # inner-plane BACK edge: WALL_FR (rear wall) inside the fold
 def TX(x): return ox + x                                 # SAME X as the flap -> columns align
 def TY(y): return oy + (BOX_D - y)                       # flip so FRONT (Y=0) is at the bottom
 
+# FRONT WALL panel BELOW the top view (same net, folding over the front edge; no holes).
+FF_FOLD    = TY(0) + WALL_FR             # outer top-FRONT edge = front fold
+FF_PANEL_T = FF_FOLD + WALL_TOP          # front panel TOP edge (after the top-face band)
+FF_PANEL_B = FF_PANEL_T + CAVITY_H       # front panel BOTTOM = lid seam
+
 PAGE_W = MARGIN*2 + max(EXT_W, BOX_W) + 6
-PAGE_H = TY(0) + 24
+PAGE_H = FF_PANEL_B + 22
 
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7,  "1590XX template -- OUTSIDE, ink up, drill from outside -- PRINT AT 100%", 'ttl', 'start')
-s += _txt(MARGIN, 11, "Box NET: TOP FACE below (FRONT toward player); REAR WALL = fold-up flap above, hinged at the back edge.", 'note', 'start')
-s += _txt(MARGIN, 14.5,"Fold the flap down over the back; jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.", 'note', 'start')
+s += _txt(MARGIN, 11, "Box NET: TOP FACE centre; REAR WALL panel above, FRONT WALL panel below. Each panel: FOLD (outer edge) -> top-face band -> panel -> LID SEAM (lid not drawn).", 'note', 'start')
+s += _txt(MARGIN, 14.5,"Fold each panel down over its wall; rear jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.", 'note', 'start')
 
 # ============================================================ TOP FACE (player-natural) =========
-ext_off = (EXT_W - BOX_W) / 2.0
-s += _rect(ox - ext_off, oy - EXT_OVER, EXT_W, EXT_D, stroke='#999', dash='2 2', sw=0.3)
+# external outline (dashed) = internal plane + the REAL walls, CENTRED on the box centre so it lines
+# up when you register by the crosshair: X overhang = WALL_SIDE each side, Y overhang = WALL_FR each.
+ext_off   = (EXT_W - BOX_W) / 2.0      # = WALL_SIDE (X, left/right)
+ext_off_y = (EXT_D - BOX_D) / 2.0      # = WALL_FR  (Y, front/rear)
+s += _rect(ox - ext_off, oy - ext_off_y, EXT_W, EXT_D, stroke='#999', dash='2 2', sw=0.3)
 s += _rect(ox, oy, BOX_W, BOX_D, stroke='#bbb', sw=0.3)
-s += _txt(TX(BOX_W/2), TY(0)+5, "FRONT (toward player)", 'dim')
 
-# ONE continuous centre line: through the flap AND the top view (registration datum)
+# ONE continuous centre line: through BOTH panels AND the top view (registration datum)
 cx, cy = BOX_W/2, BOX_D/2
-s += _line(TX(cx), FY_BASE, TX(cx), TY(0)+3, stroke='#09c', dash='5 2', sw=0.35)
+s += _line(TX(cx), FY_BASE, TX(cx), FF_PANEL_B, stroke='#09c', dash='5 2', sw=0.35)
 s += _line(ox - ext_off - 3, TY(cy), ox + BOX_W + ext_off + 3, TY(cy), stroke='#09c', dash='5 2', sw=0.35)
 s += _txt(ox + BOX_W + ext_off + 2, TY(cy)-1, "BOX CENTRE (align to the diagonals)", 'ctr', 'end')
 
@@ -119,6 +139,11 @@ s += _txt(TX(BOX_W/2), TY(e.LEDS[0][1])-4, "LED O3 x2 (shape-distinct)", 'dim')
 oc_x, oc_y = e.OLED_CTR
 s += _rect(TX(oc_x - e.OLED_W/2), TY(oc_y + e.OLED_H/2), e.OLED_W, e.OLED_H, sw=0.4)
 s += _txt(TX(oc_x), TY(oc_y + e.OLED_H/2 + 3), f"OLED {e.OLED_W:g}x{e.OLED_H:g}", 'dim')
+# OLED header ghost (module's 7-pin header, behind the window toward the back wall)
+hx, hy = e.OLED_HEADER
+s += _rect(TX(hx - e.OLED_HDR_W/2), TY(hy + e.OLED_HDR_H/2), e.OLED_HDR_W, e.OLED_HDR_H, stroke='#06c', dash='2 1', sw=0.3)
+s += _line(TX(hx), TY(hy), TX(oc_x), TY(oc_y), stroke='#06c', dash='1 1', sw=0.2)
+s += _txt(TX(hx), TY(hy) + 2.8, "OLED header (ghost)", 'ctr')
 # encoder (RIGHT of the OLED)
 s += _circ(TX(e.ENCODER[0]), TY(e.ENCODER[1]), e.ENC_DIA) + _cross(TX(e.ENCODER[0]), TY(e.ENCODER[1]))
 s += _txt(TX(e.ENCODER[0]), TY(e.ENCODER[1])-5, f"enc O{e.ENC_DIA:g}", 'dim')
@@ -127,31 +152,46 @@ s += _txt(TX(e.ENCODER[0]), TY(e.ENCODER[1])-5, f"enc O{e.ENC_DIA:g}", 'dim')
 for ref, label, xc, size, kind, z in e.REAR:
     s += _line(TX(xc), oy - 1.5, TX(xc), oy + 1.5, stroke='#111', sw=0.4)
 
-# ============================================================ REAR WALL flap (fold-up, above) ===
-# Hinge (bottom edge, z=CAVITY_H) sits on the fold; base (top edge, z=0) is the pedal bottom.
-def RY(z): return FY_BASE + z          # z measured up from base, base at the TOP of the flap
-s += _rect(ox, FY_BASE, BOX_W, CAVITY_H, sw=0.6)
-# fold emphasis on the bottom edge
-s += _txt(TX(BOX_W/2), FY_HINGE + 3, "FOLD DOWN HERE -- top-rear edge (z=%g) -- flap flops over the back wall" % CAVITY_H, 'fold')
-# datum + end-wall labels (above the flap, UN-mirrored: player's left on the left, right on the right)
+# ============================================================ REAR WALL panel (fold-down, above) =
+# Net, top of page downward: LID SEAM (far edge, z=0) -> panel (CAVITY_H) -> top-face band -> FOLD.
+def RY(z): return FY_BASE + z          # z measured UP from the lid seam (far/top edge of the panel)
+s += _rect(ox, FY_BASE, BOX_W, CAVITY_H, sw=0.6)                 # the rear wall panel itself
+s += _rect(ox, FY_PANEL_T, BOX_W, WALL_TOP, stroke='#999', sw=0.3)   # top-face-thickness band
+s += _txt(ox + BOX_W - 1, FY_PANEL_T + WALL_TOP - 0.6, f"top-face edge {WALL_TOP:g}", 'dim', 'end')
+# fold emphasis (bottom edge of the band = outer top-rear edge)
+s += _txt(TX(BOX_W/2), FY_HINGE - 0.8, "FOLD DOWN -- outer top-rear edge -- panel wraps the back wall", 'fold')
+# lid seam (far edge); the lid is a separate bottom plate, NOT drawn
+s += _txt(TX(BOX_W/2), FY_BASE - 1.0, "LID SEAM (z=0, cavity floor) -- lid is below, not drawn", 'dim')
+# datum + end-wall labels (above the panel, UN-mirrored: player's left on the left, right on the right)
 s += _txt(ox + 1, FY_BASE - 7, "← box LEFT wall (player's L)", 'dim', 'start')
 s += _txt(ox + BOX_W - 1, FY_BASE - 7, "box RIGHT wall (player's R) →", 'dim', 'end')
-s += _txt(ox + BOX_W/2, FY_BASE - 7, "jack axes: TRS %g mm / USB %g mm up from base" % (e.JACK_Z, e.USB_Z), 'dim')
-s += _txt(ox + 1, FY_BASE - 2.5, "base z=0 = pedal bottom (this top edge)", 'dim', 'start')
+s += _txt(ox + BOX_W/2, FY_BASE - 4.5, "jack axes: TRS %g / USB %g mm up from the lid seam" % (e.JACK_Z, e.USB_Z), 'dim')
 # holes at TRUE X (TX, same as top view) and true height z; projection line DOWN into the top view
 for ref, label, xc, size, kind, z in e.REAR:
     hy = RY(z)
     s += _line(TX(xc), hy, TX(xc), oy, stroke='#bbb', dash='2 2', sw=0.2)   # vertical projection
+    # label on the FOLD side of the hole (hy + ...), vertically flipped so that once the panel is
+    # folded over the back the label sits ABOVE its jack and reads upright (box normal, lid down).
     if kind == "usb":
         w, h = size
         s += _rect(TX(xc) - w/2, hy - h/2, w, h, sw=0.4)
-        s += _txt(TX(xc), hy - h/2 - 1.5, f"{label} {w:g}x{h:g}", 'dim')
+        s += _vtxt(TX(xc), hy + h/2 + 2.5, f"{label} {w:g}x{h:g}", 'dim')
     else:
         s += _circ(TX(xc), hy, size) + _cross(TX(xc), hy)
-        s += _txt(TX(xc), hy - size/2 - 1.5, f"{label} O{size:g}", 'dim')
+        s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
+
+# ============================================================ FRONT WALL panel (fold-down, below) =
+# Same net as the rear, folding over the FRONT edge (no holes -- a registration/wrap panel).
+# Top of page downward: FOLD (outer top-front edge) -> top-face band -> panel (CAVITY_H) -> LID SEAM.
+s += _txt(TX(BOX_W/2), FF_FOLD - 1.0, "FOLD DOWN -- outer top-front edge -- panel wraps the front wall", 'fold')
+s += _rect(ox, FF_FOLD, BOX_W, WALL_TOP, stroke='#999', sw=0.3)        # top-face-thickness band
+s += _txt(ox + BOX_W - 1, FF_FOLD + WALL_TOP - 0.6, f"top-face edge {WALL_TOP:g}", 'dim', 'end')
+s += _rect(ox, FF_PANEL_T, BOX_W, CAVITY_H, sw=0.6)                    # the front wall panel itself
+s += _txt(TX(BOX_W/2), FF_PANEL_T + CAVITY_H/2, "FRONT WALL panel (toward player, no holes)", 'dim')
+s += _txt(TX(BOX_W/2), FF_PANEL_B + 3.0, "LID SEAM (panel bottom, z=0) -- lid is below, not drawn", 'dim')
 
 # ---- 100 mm scale ruler (print check) ----
-ruy = TY(0) + 13
+ruy = FF_PANEL_B + 12
 s += _line(ox, ruy, ox+100, ruy, sw=0.4)
 for i in range(0, 101, 10):
     s += _line(ox+i, ruy-2, ox+i, ruy+2, sw=0.3)

@@ -23,8 +23,9 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "
 # natural way up); the flap only draws z inverted because it physically folds over the back.
 DEPTH    = e.BOX_D    # internal depth (front 0 .. back wall) = enclosure BOX_D
 H_INT    = e.CAVITY_H # ✅ internal cavity (35.30 box - 2.3 top) = enclosure CAVITY_H
-T_TOP    = e.WALL     # top-face / wall thickness = enclosure WALL
-T_BASE   = 4.0        # base-plate thickness (measured 2026-10-10; not in enclosure.py)
+T_TOP    = e.WALL        # top-face thickness = enclosure WALL (top face carrying the holes)
+T_BASE   = e.BOTTOM_LID  # base-plate / bottom-lid thickness = enclosure BOTTOM_LID (measured 4.23)
+T_FR     = e.WALL_FR     # front & rear wall thickness = enclosure WALL_FR (measured 2.5)
 
 # ---- board + stack (Z measured UP from the base inner surface) -------------------------------
 # ✅ ALL MEASURED 2026-10-10 off the prototype (encoder, OLED, K3599, Seed) and the box -- see each line.
@@ -83,15 +84,15 @@ def ZY(z): return TM + (Z_TOP_DRAW + H_INT) - z   # z=0 (base inner) low, up inc
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(LM-22, 7, "1590XX SIDE ELEVATION (height study, projected) -- PRINT AT 100%", 'ttl')
 s += _txt(LM-22, 11, "ALL heights MEASURED off the prototype + box 2026-10-10 (recalibrated caliper). Front=left, back wall=right.", 'note')
-s += _txt(LM-22, 14.5, f"Cavity {H_INT:g} mm (35.30 box - {T_TOP:g} top), walls {T_TOP:g} mm. Gap {STANDOFF:g} (OLED glass flush, encoder clears). Jack axis {-JACK_AX_ABOVE_BRD:g} below the board.", 'note')
+s += _txt(LM-22, 14.5, f"Cavity {H_INT:g} mm. Top face {T_TOP:g}, F/R walls {T_FR:g}, bottom lid {T_BASE:g} mm (all measured). Gap {STANDOFF:g} (OLED glass flush, encoder clears). Jack axis {-JACK_AX_ABOVE_BRD:g} below the board.", 'note')
 s += _txt(LM-22, 18, f"Z datum shared with the fold-up flap: z=0 = base (pedal bottom), z={H_INT:g} = top inner (the fold edge), jack z={Z_JACK:g}.", 'note')
 
 # --- casting: base plate, top face, back wall (with jack hole), front wall ---
 s += _rect(DX(0), ZY(0), DEPTH, T_BASE, fill='#eee', sw=0.5)                 # base plate (below z=0)
 s += _rect(DX(0), ZY(H_INT) - T_TOP, DEPTH, T_TOP, fill='#eee', sw=0.5)      # top face (above z=H_INT)
 # back wall (right), split around the jack hole
-s += _rect(DX(DEPTH), ZY(H_INT) - T_TOP, 2.0, (H_INT + T_TOP + T_BASE), fill='#eee', sw=0.5)
-s += _rect(DX(0) - 2.0, ZY(H_INT) - T_TOP, 2.0, (H_INT + T_TOP + T_BASE), fill='#eee', sw=0.5)  # front wall
+s += _rect(DX(DEPTH), ZY(H_INT) - T_TOP, T_FR, (H_INT + T_TOP + T_BASE), fill='#eee', sw=0.5)
+s += _rect(DX(0) - T_FR, ZY(H_INT) - T_TOP, T_FR, (H_INT + T_TOP + T_BASE), fill='#eee', sw=0.5)  # front wall
 # cavity outline
 s += _rect(DX(0), ZY(H_INT), DEPTH, H_INT, sw=0.3, stroke='#bbb')
 s += _txt(DX(2), ZY(H_INT)-T_TOP-1.5, "top face", 'dim')
