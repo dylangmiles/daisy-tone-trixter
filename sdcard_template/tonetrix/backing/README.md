@@ -56,6 +56,7 @@ usually sits, **not measured against any recording**, so expect to want a nudge.
 | `folkr128`  | 128 | Gentle country-folk-rock, soft brushed backbeat, sparse kick | **"Old Man" — Neil Young**, **"Father and Son" — Cat Stevens** *(requested)* |
 | `rkbly138`  | 138 | Rockabilly, handclaps on the backbeat, more bounce | slower take on the below |
 | `soul140`   | 140 | Soul-pop with a little pocket | slower take on the below |
+| `moon100`   | 100 | Same country-rock bed as `moon140`, slowest learning tempo | **"Bad Moon Rising" — CCR**, first-steps tempo *(requested 2026-10-29)* |
 | `moon120`   | 120 | Same country-rock bed as `moon140`, learning tempo | **"Bad Moon Rising" — CCR**, first-steps tempo *(requested 2026-10-28)* |
 | `moon140`   | 140 | **Straight-8th country rock**: kick 1 & 3 + pickup into 3, snare 2 & 4, even 8th hat, no crash | **"Bad Moon Rising" — CCR**, acoustic practice tempo *(requested 2026-10-28)* |
 | `moon170`   | 170 | Same country-rock bed, almost full speed (record ≈ 180) | **"Bad Moon Rising" — CCR** *(requested 2026-10-28)* |

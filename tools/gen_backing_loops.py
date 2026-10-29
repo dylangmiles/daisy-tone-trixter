@@ -512,7 +512,7 @@ STYLES = {
         fn="moon", bpm=170, bars=4, div=16, swing=0.0,
         note="Straight-8th country rock: kick 1 and 3 with an 8th pickup into 3, snare 2 and 4, even "
              "8th hat. CCR feel -- kept light (no open hat, no crash) under a strummed acoustic.",
-        # Bad Moon Rising (2026-10-28): the record is ~180 bpm. Generated at 120 (learning), 140
+        # Bad Moon Rising (2026-10-28): the record is ~180 bpm. Generated at 100 and 120 (learning), 140
         # (practice) and 170 (almost full speed) for the acoustic -- the strum carries the chug, the bed keeps 2 & 4.
         pattern={
             "kick":  [(0, 0.95), (6, 0.45), (8, 0.85)],
