@@ -85,15 +85,44 @@ def seed3_symbol():
   )'''
     return body
 
-# monkey-patch the library lookup so Sym() can see the custom symbol
-_seed_blk = seed3_symbol()
+# ---- custom TT symbols: a registry so multiple ICs (Daisy, TPA6130A2, mic preamp, ...) coexist ----
+TT_SYMS = {"Daisy_Seed3": seed3_symbol()}
+def custom_ic(name, value, pins):
+    """Register a rectangular IC symbol under lib 'TT' and return ('TT', name) for Sym().
+    pins = [(number, pin_name, side, etype)], side 'L'/'R', etype a KiCad pin type
+    (power_in / input / output / bidirectional / passive / ...). Pins stack top→bottom per side."""
+    L = [p for p in pins if p[2] == 'L']; R = [p for p in pins if p[2] == 'R']
+    rows = max(len(L), len(R)); H = round((rows + 1) * 2.54 / 2, 2); W = round(max(len(value) + 2, 10) * 0.9 + 3, 2)
+    def row(ps, side):
+        o = []
+        for i, (num, pn, _, et) in enumerate(ps):
+            y = round(H - 2.54 - i * 2.54, 2); x = (-W if side == 'L' else W); rot = (0 if side == 'L' else 180)
+            o.append(f'''      (pin {et} line (at {x} {y} {rot}) (length 2.54)
+        (name "{pn}" (effects (font (size 1.016 1.016))))
+        (number "{num}" (effects (font (size 1.016 1.016)))))''')
+        return o
+    pinsx = row(L, 'L') + row(R, 'R')
+    TT_SYMS[name] = f'''(symbol "TT:{name}"
+    (pin_names (offset 0.762)) (exclude_from_sim no) (in_bom yes) (on_board yes)
+    (property "Reference" "U" (at 0 {H+1.27} 0) (effects (font (size 1.27 1.27))))
+    (property "Value" "{value}" (at 0 {-H-1.27} 0) (effects (font (size 1.27 1.27))))
+    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (symbol "{name}_0_1"
+      (rectangle (start {-W} {H}) (end {W} {-H}) (stroke (width 0.254) (type default)) (fill (type background))))
+    (symbol "{name}_1_1"
+{chr(10).join(pinsx)}
+    )
+  )'''
+    return ("TT", name)
+# monkey-patch the library lookup so Sym() can see the custom symbols
 _orig_sym, _orig_pins = kisym.lib_symbol, kisym.lib_pins
 def _lib_symbol(lib, name):
-    return _seed_blk if lib == "TT" else _orig_sym(lib, name)
+    return TT_SYMS[name] if lib == "TT" else _orig_sym(lib, name)
 def _lib_pins(lib, name):
     if lib != "TT": return _orig_pins(lib, name)
     return [(m.group(5), m.group(4), float(m.group(1)), float(m.group(2)), int(m.group(3)))
-            for m in re.finditer(r'\(pin \w+ line \(at ([-\d.]+) ([-\d.]+) (\d+)\).*?\(name "([^"]+)".*?\(number "([^"]+)"', _seed_blk, re.S)]
+            for m in re.finditer(r'\(pin \w+ line \(at ([-\d.]+) ([-\d.]+) (\d+)\).*?\(name "([^"]+)".*?\(number "([^"]+)"', TT_SYMS[name], re.S)]
 kisym.lib_symbol, kisym.lib_pins = _lib_symbol, _lib_pins
 import kisch; kisch.lib_symbol, kisch.lib_pins = _lib_symbol, _lib_pins
 
@@ -446,10 +475,68 @@ for ch, tap in zip("AB", VREF_BIAS_TAPS):
     S.wire(top, (top[0], top[1] - G)); rail("VREF", (top[0], top[1] - G))
     gnd(bot, "GNDA")
 
+# ---------------------------------------------------------------- HEADPHONE MONITOR (added 2026-10-29)
+# TPA6130A2 I2C-volume DirectPath HP amp (0x60, no output caps). Taps the Daisy mono DAC out (AOUT1) to
+# BOTH channels (dual-mono) -> 3.5mm panel jack (left wall, flying leads). VDD=+3V3D keeps its charge-pump
+# off the analog rail. Created LAST so existing refs/UUIDs do not shift. datasheets/TPA6130A2_datasheet.pdf.
+FP["TPA_QFN"] = "Package_DFN_QFN:QFN-20-1EP_4x4mm_P0.5mm_EP2.5x2.5mm"   # WQFN-20; EP = pad 21. ⚠ confirm EP size vs TI RTJ mech
+custom_ic("TPA6130A2", "TPA6130A2", [
+    ("1", "LEFTINM", "L", "passive"), ("2", "LEFTINP", "L", "passive"),
+    ("5", "RIGHTINM", "L", "passive"), ("4", "RIGHTINP", "L", "passive"),
+    ("6", "SD", "L", "passive"), ("7", "SDA", "L", "passive"), ("8", "SCL", "L", "passive"),
+    ("14", "HPLEFT", "R", "passive"), ("11", "HPRIGHT", "R", "passive"),
+    ("12", "VDD", "R", "power_in"), ("20", "VDD", "R", "power_in"),
+    ("3", "GND", "R", "power_in"), ("9", "GND", "R", "power_in"), ("10", "GND", "R", "power_in"),
+    ("13", "GND", "R", "power_in"), ("19", "GND", "R", "power_in"), ("21", "GND", "R", "power_in"),
+    ("15", "CPVSS", "R", "passive"), ("16", "CPVSS", "R", "passive"),
+    ("17", "CPN", "R", "passive"), ("18", "CPP", "R", "passive"),
+])
+S.text("HEADPHONE MONITOR — TPA6130A2 I2C DirectPath (0x60, no output caps). Taps AOUT1 dual-mono to a 3.5mm panel jack. VDD=+3V3D (charge-pump off +3V3A). Volume/mute over I2C = firmware menu.", g(130, 28), 1.8)
+u_hp = S.add(Sym("TT", "TPA6130A2", "U5", "TPA6130A2", g(150, 48), 0, footprint=FP["TPA_QFN"],
+             fields={"LCSC": "C130046", "Note": "138mW DirectPath HP amp; I2C 0x60 on the OLED bus; SD->+3V3D=enabled, mute/vol via I2C"}))
+def _hp(num, net, d='L', k='g'):
+    p = u_hp.pin(num); dd = {'L': (-G, 0), 'R': (G, 0)}[d]
+    q = (round(p[0] + dd[0], 3), round(p[1] + dd[1], 3)); S.wire(p, q)
+    if k == 'g': S.glabel(net, q, 180 if d == 'L' else 0)
+    elif k == 'rail': rail(net, q)
+    elif k == 'gnd': gnd(q, net)
+for n in ("12", "20"): _hp(n, "+3V3D", 'R', 'rail')
+for n in ("3", "9", "10", "13", "19", "21"): _hp(n, "GNDD", 'R', 'gnd')
+_hp("6", "+3V3D", 'L', 'rail')          # SD: tie high = enabled; mute/shutdown over I2C
+_hp("7", "SDA_U", 'L'); _hp("8", "SCL_U", 'L')
+_hp("14", "HP_L", 'R'); _hp("11", "HP_R", 'R')
+for num, lbl, yy in (("1", "HP_INL", 44), ("5", "HP_INR", 50)):     # dual-mono inputs from AOUT1 via 0.47u
+    _hp(num, lbl, 'L')
+    c = C("470n", g(132, yy), 0, Note="HP input AC-coupling 0.47u (~34 Hz into the TPA input)")
+    S.wire(c.pin(1), (c.pin(1)[0] - G, c.pin(1)[1])); S.glabel(lbl, (c.pin(1)[0] - G, c.pin(1)[1]), 180)
+    S.wire(c.pin(2), (c.pin(2)[0] + G, c.pin(2)[1])); S.glabel("AOUT1", (c.pin(2)[0] + G, c.pin(2)[1]), 0)
+for num, lbl, yy in (("2", "HP_ACL", 56), ("4", "HP_ACR", 62)):     # INP AC-grounded, matched cap
+    _hp(num, lbl, 'L')
+    c = C("470n", g(132, yy), 0, Note="HP INP AC-ground, matches the input cap")
+    S.wire(c.pin(1), (c.pin(1)[0] - G, c.pin(1)[1])); S.glabel(lbl, (c.pin(1)[0] - G, c.pin(1)[1]), 180)
+    gnd(c.pin(2), "GNDD")
+for n, yy in (("12", 44), ("20", 48)):                              # VDD decoupling 1u x2
+    c = C("1u", g(170, yy), 0, Note="TPA VDD decoupling")
+    S.wire(c.pin(1), (c.pin(1)[0] - G, c.pin(1)[1])); rail("+3V3D", (c.pin(1)[0] - G, c.pin(1)[1])); gnd(c.pin(2), "GNDD")
+_hp("15", "CPVSS", 'R'); _hp("16", "CPVSS", 'R')
+c = C("1u", g(170, 52), 0, Note="TPA CPVSS charge-pump reservoir 1u")
+S.wire(c.pin(1), (c.pin(1)[0] - G, c.pin(1)[1])); S.glabel("CPVSS", (c.pin(1)[0] - G, c.pin(1)[1]), 180); gnd(c.pin(2), "GNDD")
+_hp("18", "HP_CPP", 'R'); _hp("17", "HP_CPN", 'R')
+c = C("1u", g(170, 56), 0, Note="TPA charge-pump flying cap 1u (CPP-CPN)")
+S.wire(c.pin(1), (c.pin(1)[0] - G, c.pin(1)[1])); S.glabel("HP_CPP", (c.pin(1)[0] - G, c.pin(1)[1]), 180)
+S.wire(c.pin(2), (c.pin(2)[0] + G, c.pin(2)[1])); S.glabel("HP_CPN", (c.pin(2)[0] + G, c.pin(2)[1]), 0)
+j_hp = S.add(Sym("Connector", "Conn_01x03_Pin", "J11", "HP 3.5mm jack lead", g(178, 48), 0, footprint=FP["JST3"],
+             fields={"Note": "3.5mm TRS panel jack, LEFT wall, flying leads: pin1 Tip=HP-L, pin2 Ring=HP-R, pin3 Sleeve=GND"}))
+S.wire(j_hp.pin(1), (j_hp.pin(1)[0] - G, j_hp.pin(1)[1])); S.glabel("HP_L", (j_hp.pin(1)[0] - G, j_hp.pin(1)[1]), 180)
+S.wire(j_hp.pin(2), (j_hp.pin(2)[0] - G, j_hp.pin(2)[1])); S.glabel("HP_R", (j_hp.pin(2)[0] - G, j_hp.pin(2)[1]), 180)
+S.wire(j_hp.pin(3), (j_hp.pin(3)[0] - G, j_hp.pin(3)[1])); gnd((j_hp.pin(3)[0] - G, j_hp.pin(3)[1]), "GNDD")
+
 # ---------------------------------------------------------------- write
 # --- project files: TT symbol library, sym-lib-table, .kicad_pro (created once, never overwritten)
 LIB = HERE.parent / "TT.kicad_sym"
-LIB.write_text('(kicad_symbol_lib (version 20231120) (generator "tt_gen")\n' + _seed_blk.replace('(symbol "TT:Daisy_Seed3"', '(symbol "Daisy_Seed3"', 1) + '\n)\n')
+LIB.write_text('(kicad_symbol_lib (version 20231120) (generator "tt_gen")\n'
+    + "\n".join(b.replace(f'(symbol "TT:{nm}"', f'(symbol "{nm}"', 1) for nm, b in TT_SYMS.items())
+    + '\n)\n')
 (HERE.parent / "sym-lib-table").write_text('(sym_lib_table (version 7)\n  (lib (name "TT") (type "KiCad") (uri "${KIPRJMOD}/TT.kicad_sym") (options "") (descr "Tone Trixter custom symbols"))\n)\n')
 pro = HERE.parent / "tone_trixter.kicad_pro"
 if not pro.exists():
