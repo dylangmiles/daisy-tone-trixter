@@ -21,6 +21,10 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "
 # Same Z datum as the rear-wall fold-up flap (gen_mockup_svg.py): z=0 = base (pedal bottom),
 # z=H_INT = top inner = the top-rear FOLD edge. This elevation keeps base-at-bottom (reads the
 # natural way up); the flap only draws z inverted because it physically folds over the back.
+# ⚠ NOTE (2026-10-29, for a future datum flip): consider re-referencing z from the TOP-INNER face
+#   instead of the base. The board registers to the TOP (OLED glass flush, encoder bushing nutted
+#   through it) and top-referenced heights are MEASURABLE with the lid off; the base is a REMOVABLE
+#   lid, so its reference can't be checked once closed. Not changed yet -- just flagged.
 DEPTH    = e.BOX_D    # internal depth (front 0 .. back wall) = enclosure BOX_D
 H_INT    = e.CAVITY_H # ✅ internal cavity (35.30 box - 2.3 top) = enclosure CAVITY_H
 T_TOP    = e.WALL        # top-face thickness = enclosure WALL (top face carrying the holes)
@@ -46,10 +50,11 @@ ENC_BODY_ABOVE   = 7.23          # ✅ encoder body (flat top) above the board -
 ENC_SHAFT_ABOVE_TOP = 16.61       # ✅ shaft top 26.61 above board; outer top face at gap+T_TOP -> ~16.6 proud (knob)
 ENC_Y      = 84.0
 
-JACK_AX_ABOVE_BRD = -13.99        # ✅ K3599 barrel axis 12.39 below the board BOTTOM (+1.6 PCB) = 13.99
-                                 #    below the board top, pushed through. Bottom-mounted, hangs below.
-_Z_JACK_MEASURED = Z_BRD_TOP + JACK_AX_ABOVE_BRD      # measured stack chain -> ~10.77
-Z_JACK     = e.JACK_Z             # AUTHORITATIVE rear-wall hole centre = fold-up template + PCB (10.8)
+JACK_AX_ABOVE_BRD = -15.45        # MEASURED 2026-10-29: K3599 barrel axis 13.85 below the board BOTTOM
+                                 #    (barrel centre to board plane) + 1.6 PCB = 15.45 below the board top.
+                                 #    Bottom-mounted, hangs below (was -13.99 / 12.39-below-bottom).
+_Z_JACK_MEASURED = Z_BRD_TOP + JACK_AX_ABOVE_BRD      # measured -> ~9.31
+Z_JACK     = e.JACK_Z             # AUTHORITATIVE rear-wall hole centre = fold-up template + PCB (9.31)
 assert abs(_Z_JACK_MEASURED - Z_JACK) < 0.2, \
     f"jack-z DRIFT: measured stack {_Z_JACK_MEASURED:.2f} vs enclosure.JACK_Z {Z_JACK:.2f} -- reconcile before trusting the drawing"
 JACK_DIA   = 10.0                 # TRS barrel, = enclosure.REAR trs size
@@ -142,7 +147,7 @@ ny = ZY(0) + T_BASE + 13
 _stack = SEED_STACK + PCB_T + STANDOFF
 s += _txt(LM-22, ny, f"Jacks BOTTOM-MOUNTED: barrel hangs below the board -> axis z={Z_JACK:g} (~{Z_JACK/H_INT*100:.0f}% up the {H_INT:g} mm wall, lower third).", 'note')
 s += _txt(LM-22, ny+3.5, f"Budget: Seed {SEED_STACK:g} + PCB {PCB_T:g} + gap {STANDOFF:g} = {_stack:.1f} of {H_INT:g} mm cavity -> ~{H_INT-_stack:.1f} mm spare over the base.", 'note')
-s += _txt(LM-22, ny+7.0, "Check the plug + base-plate battery box don't crowd down there. TRS/DC bottom-mount (legs up); USB = Seed's own port.", 'dim')
+s += _txt(LM-22, ny+7.0, f"Check the plug + base-plate battery box don't crowd down there. TRS/DC bottom-mount (legs up); USB = PAN-USBCC panel socket O12 @ z{e.USB_Z:g}, barrel 16.9 into the under-board space (Seed USB faces player-L, lead loops to it).", 'dim')
 
 # --- 100 mm ruler ---
 ruy = ny + 16

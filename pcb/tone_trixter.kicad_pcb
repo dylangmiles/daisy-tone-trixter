@@ -159,7 +159,7 @@
 		(property "Reference" "D5"
 			(at 1.595 -2.96 0)
 			(layer "F.SilkS")
-			(uuid "e3ceea19-249b-4d24-897e-22503068e19b")
+			(uuid "5926f459-fd47-409a-9adb-cffca80d0d71")
 			(effects
 				(font
 					(size 1 1)
@@ -170,7 +170,7 @@
 		(property "Value" "3mm record"
 			(at 1.27 2.96 0)
 			(layer "F.Fab")
-			(uuid "0a2f11df-487c-44d0-9f5c-54ac317356e9")
+			(uuid "255369f3-b23f-4876-900a-982fb5c2604b")
 			(effects
 				(font
 					(size 1 1)
@@ -182,7 +182,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "7571a5d6-2da8-4596-baf9-721da0770bfa")
+			(uuid "0169dda2-7ef2-4df0-93f3-e93705fb4440")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -193,7 +193,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "ff182a7d-987f-456e-8ae6-839a38c22620")
+			(uuid "351c4c9a-1d78-48eb-8195-cf4493eecdec")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -216,12 +216,6 @@
 		(path "/09ef74f1-c372-5812-aeab-8a472a851c25")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -279,7 +273,7 @@
 		)
 		(fp_arc
 			(start 2.941437 1.08)
-			(mid 1.36566 1.9877)
+			(mid 1.36566 1.987699)
 			(end -0.29 1.235516)
 			(stroke
 				(width 0.12)
@@ -383,16 +377,16 @@
 			)
 		)
 	)
-	(footprint "PinHeader_1x04_P2.54mm_Horizontal"
+	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Horizontal"
 		(layer "F.Cu")
 		(uuid "39e275fe-bf7f-40ad-b279-41f51808ac1f")
-		(at 99.81 42 -90)
+		(at 99.81 41.5 -90)
 		(descr "Through hole angled pin header, 1x04, 2.54mm pitch, 6mm pin length, single row")
 		(tags "Through hole angled pin header THT 1x04 2.54mm single row")
 		(property "Reference" "J6"
 			(at 4.385 -2.27 270)
 			(layer "F.SilkS")
-			(uuid "94a362c1-a6b9-4f8a-ae96-ea90b74de542")
+			(uuid "6debbd50-44bb-426f-ac7c-0c18473cc596")
 			(effects
 				(font
 					(size 1 1)
@@ -403,7 +397,7 @@
 		(property "Value" "OLED I2C 1x4 (right-angle)"
 			(at 4.385 9.89 270)
 			(layer "F.Fab")
-			(uuid "25aa3942-fa94-42f5-957c-3378f18093a2")
+			(uuid "813a301a-d02a-4d78-9ccb-2910986ed2ab")
 			(effects
 				(font
 					(size 1 1)
@@ -415,7 +409,7 @@
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "834a03e4-94df-4af9-86d4-824fec73190e")
+			(uuid "6d02c73d-1053-418c-afcd-80cae03a877b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -426,7 +420,7 @@
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "8f579521-3860-4de3-ab33-8c8bdc234d2b")
+			(uuid "c7b8c0dd-0df9-4073-902e-b408aabeb66d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -455,7 +449,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "9d7dfc56-89ce-4a56-b4a0-eda036292d70")
+			(uuid "479665e1-6380-4215-a660-53f261ef0901")
 		)
 		(fp_line
 			(start 10.15 8.05)
@@ -465,7 +459,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "eb5940de-37f7-4c6e-a988-1c6304483597")
+			(uuid "027b5fac-fd97-43e0-831c-b4cd6f91cc29")
 		)
 		(fp_line
 			(start 1.077358 7.19)
@@ -475,7 +469,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "11a14862-9eb0-4a48-a910-af1c82992e75")
+			(uuid "ca888e93-ca5d-42c5-9cd5-eee96eaaa5d6")
 		)
 		(fp_line
 			(start 4.15 7.19)
@@ -485,7 +479,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "ac566c57-2eb8-449a-a59d-6db65b3ab699")
+			(uuid "251bbf48-ccd9-4c50-83e5-1d0c7c3abf65")
 		)
 		(fp_line
 			(start 10.15 7.19)
@@ -495,7 +489,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "889d8542-f5d7-4a2e-8335-07324a8fa4c2")
+			(uuid "f0d33c3c-6b20-452f-ab52-f30068c64d4a")
 		)
 		(fp_line
 			(start 1.39 6.35)
@@ -505,7 +499,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "5a2f3118-35c8-403e-8fd1-353886a8a7eb")
+			(uuid "7a029a04-42e1-4cbe-ba34-bb86d67a0348")
 		)
 		(fp_line
 			(start 1.077358 5.51)
@@ -515,7 +509,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "a762d1c2-da6f-4d31-b455-e92264f44888")
+			(uuid "23c38943-b9a9-49a8-8d7e-c2c43c4c9619")
 		)
 		(fp_line
 			(start 10.15 5.51)
@@ -525,7 +519,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "75524000-2b4e-404f-a6e0-d0501e6bcf67")
+			(uuid "3f27da81-5af1-4de0-a101-383c598e7d09")
 		)
 		(fp_line
 			(start 1.077358 4.65)
@@ -535,7 +529,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "89fda14d-241f-466b-a88f-3fa6bb03c551")
+			(uuid "8ba7e09a-867d-4a73-9ee1-f9db4b55325c")
 		)
 		(fp_line
 			(start 4.15 4.65)
@@ -545,7 +539,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "71112cd2-9240-4b9a-8e49-be2ed1a2fe9b")
+			(uuid "29724df3-5ad5-465b-99c3-d98674dac01f")
 		)
 		(fp_line
 			(start 10.15 4.65)
@@ -555,7 +549,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "646641de-9840-4b3a-9f36-9de5bfebbcb8")
+			(uuid "bb4edd1c-509b-4e93-8c39-b0e3148a5048")
 		)
 		(fp_line
 			(start 1.39 3.81)
@@ -565,7 +559,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "e8b393fd-645a-4368-ac9d-f7f0bcf4961a")
+			(uuid "d968ecc0-dfa6-4392-8e6f-cadeb103d296")
 		)
 		(fp_line
 			(start 1.077358 2.97)
@@ -575,7 +569,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "f061e29d-c1ca-41bd-acb4-baa5155f83af")
+			(uuid "78862a7e-24c2-4ad6-b0cc-722aff62cd3d")
 		)
 		(fp_line
 			(start 10.15 2.97)
@@ -585,7 +579,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "c1fb348a-995f-4a04-ac3d-d95dc81dd4f3")
+			(uuid "757ab6cc-110c-4ae4-8839-dc6a39dd1941")
 		)
 		(fp_line
 			(start 1.077358 2.11)
@@ -595,7 +589,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "23ee4a3c-a03f-4844-a9a7-404d48e4e2d5")
+			(uuid "3339cae6-d487-4caa-8fce-20661d617dad")
 		)
 		(fp_line
 			(start 4.15 2.11)
@@ -605,7 +599,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "3d841add-c444-4f87-b54c-2137e91c7cf8")
+			(uuid "e372337e-a923-44ea-8bf3-006a46bad40f")
 		)
 		(fp_line
 			(start 10.15 2.11)
@@ -615,7 +609,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "d3465541-5dc3-4dea-86a8-7cf781c459f5")
+			(uuid "22aa401f-c0a3-4612-89a5-286a3b79b4be")
 		)
 		(fp_line
 			(start 1.39 1.27)
@@ -625,7 +619,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "83c267ac-e35d-4b21-aae4-e3e0ea8dfd34")
+			(uuid "0f7d25aa-22f3-458c-94f9-e3e4c05c9786")
 		)
 		(fp_line
 			(start 1.16 0.43)
@@ -635,7 +629,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "32169009-6bd5-4a42-86c6-31678148aa99")
+			(uuid "92df9b9a-0117-4e0c-89c2-c136d029676e")
 		)
 		(fp_line
 			(start -1.27 0)
@@ -655,7 +649,7 @@
 				(type solid)
 			)
 			(layer "F.SilkS")
-			(uuid "474f957b-cb64-4b55-bac5-06d26c88cd1e")
+			(uuid "6df294ff-1c61-40b5-9578-f4ce4bb6e668")
 		)
 		(fp_line
 			(start -1.27 -1.27)
@@ -676,7 +670,7 @@
 			)
 			(fill yes)
 			(layer "F.SilkS")
-			(uuid "9e07b37b-8244-450e-8e2a-662ed1057983")
+			(uuid "7753da8c-7c87-449a-9c5e-9e2c42f5179e")
 		)
 		(fp_rect
 			(start 1.39 -1.38)
@@ -1059,7 +1053,7 @@
 		(property "Reference" "D4"
 			(at 1.27 -2.96 0)
 			(layer "F.SilkS")
-			(uuid "b362b7b6-0578-4682-918c-017c831ca145")
+			(uuid "801138ce-c0bf-4265-880d-a46e5e907dba")
 			(effects
 				(font
 					(size 1 1)
@@ -1068,9 +1062,9 @@
 			)
 		)
 		(property "Value" "3mm engaged"
-			(at 1.27 2.5 0)
+			(at -1.23 5.5 0)
 			(layer "F.Fab")
-			(uuid "4ba82022-1fd7-4a11-a4fb-952dac08b7f4")
+			(uuid "f02cb529-4b13-45b6-97f7-e74b3f1ef31f")
 			(effects
 				(font
 					(size 1 1)
@@ -1082,7 +1076,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "4c340ffe-32cf-4b12-a019-946de136b7d1")
+			(uuid "c068677f-460a-4eab-8f8d-3472b713e103")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1093,7 +1087,7 @@
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
-			(uuid "c8800215-605d-4f36-b5c4-240580e4eb24")
+			(uuid "eb938788-6b1a-4397-80c5-543820844ea4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1116,12 +1110,6 @@
 		(path "/cc3ca405-b3c0-5250-aebe-d8f16854f9a4")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1179,7 +1167,7 @@
 		)
 		(fp_arc
 			(start 2.941437 1.08)
-			(mid 1.36566 1.9877)
+			(mid 1.36566 1.987699)
 			(end -0.29 1.235516)
 			(stroke
 				(width 0.12)
@@ -1354,12 +1342,6 @@
 		(path "/3e457321-b1a2-5a47-a6e5-0b5df4aad70e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "A" "C" "B" "S1" "S2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1790,12 +1772,6 @@
 		(path "/979fe04c-0662-5105-bba1-ec8ef99cf5dd")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1886,11 +1862,11 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "0a1bd788-a2a4-45a7-a70b-9e534601ebb4")
-		(at 107.5875 54.5 180)
+		(at 87 50 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R24"
-			(at 3.0875 0 0)
+			(at 3.0875 0 90)
 			(layer "B.SilkS")
 			(uuid "631f9c6d-716a-46cd-940d-881d7a9e5ddb")
 			(effects
@@ -1902,7 +1878,7 @@
 			)
 		)
 		(property "Value" "33R"
-			(at 0 -1.65 0)
+			(at -3.5 0 0)
 			(layer "B.Fab")
 			(uuid "ba90356c-db21-41fb-9a02-aa69e5ddf40c")
 			(effects
@@ -1914,7 +1890,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "202d9d73-ae2b-4e8c-af64-f2361ba4d1bf")
@@ -1926,7 +1902,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "42d18a0e-804b-4e6f-b208-f52efbb13c4f")
@@ -1938,7 +1914,7 @@
 			)
 		)
 		(property "KiLib_Generator" "SMD_2terminal_chip_molded"
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "db3fe9bc-4300-45ce-8e62-b3652b374dd3")
@@ -1954,24 +1930,8 @@
 		(path "/960dc29f-f8cd-567c-ae5d-23cfd27c7646")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_line
-			(start -0.227064 0.735)
-			(end 0.227064 0.735)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "58981005-b099-4777-a9d6-3912ce86748d")
-		)
 		(fp_line
 			(start -0.227064 -0.735)
 			(end 0.227064 -0.735)
@@ -1981,6 +1941,16 @@
 			)
 			(layer "B.SilkS")
 			(uuid "4ffb23d3-ee8b-46eb-a46d-19af9bfe3fd3")
+		)
+		(fp_line
+			(start -0.227064 0.735)
+			(end 0.227064 0.735)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "58981005-b099-4777-a9d6-3912ce86748d")
 		)
 		(fp_rect
 			(start -1.68 0.95)
@@ -2005,7 +1975,7 @@
 			(uuid "a8a4dc32-7a7b-4e07-9314-905398a60052")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(uuid "bdab3812-eb88-4852-a068-c491e763ebbd")
 			(effects
@@ -2017,7 +1987,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -0.9125 0 180)
+			(at -0.9125 0 90)
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
@@ -2026,7 +1996,7 @@
 			(uuid "b911b3d1-0107-4463-91a6-159fbb941adc")
 		)
 		(pad "2" smd roundrect
-			(at 0.9125 0 180)
+			(at 0.9125 0 90)
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
@@ -2123,12 +2093,6 @@
 		(path "/bab8630e-71c0-501a-a6d1-823c7ad63933")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2417,12 +2381,6 @@
 		(path "/0415d931-d75e-538f-b966-3911452e2289")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2513,13 +2471,13 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "0f0a5840-f532-4f21-aca3-14bcb898e3fb")
-		(at 99.5 71 90)
+		(at 94.5 45 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R25"
-			(at 3.5 2.5 90)
+			(at -3.5 0 90)
 			(layer "B.SilkS")
-			(uuid "7da92f02-0bd6-44fa-a180-4ed2b50c9676")
+			(uuid "fa5485e6-7c68-4367-9add-f61ff06f8fd1")
 			(effects
 				(font
 					(size 1 1)
@@ -2531,7 +2489,7 @@
 		(property "Value" "4k7"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "385c554c-b47f-4bb7-96b9-544957590663")
+			(uuid "5dee67f7-6c01-416e-9abe-dc4bc8bb95da")
 			(effects
 				(font
 					(size 1 1)
@@ -2544,7 +2502,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "20be3ca6-8fee-4a70-bfc7-60ae85deacb4")
+			(uuid "2e1ab4ac-1120-4073-942f-42c9d339c724")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2556,7 +2514,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "73bf8e67-5b06-43e6-a614-29e191399a8a")
+			(uuid "8d776160-7ede-4f6e-a69b-f748dcbf4a7d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2581,12 +2539,6 @@
 		(path "/1c92f983-b9c9-51c4-bdd2-da175c86bfc1")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2678,7 +2630,7 @@
 		(layer "B.Cu")
 		(uuid "0fbdb102-ad0c-46e5-b189-37a3f503c156")
 		(at 74.725 77.86 180)
-		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin leg 1.34mm (through the board), along-row pitch 6.36mm c-c (3 legs/row), row spacing 16.55mm c-c (17.89 outside-to-outside - 1.34 leg; legs FLEX in this direction so holes are generous), lug width 20mm, jack length 34.12mm, barrel axis 12.39mm below the board (bottom-mount drop). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
+		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin through-pin FLAT 1.33w x 0.5 thick (diag ~1.42, fits the 1.5 drill), along-row pitch 6.36mm c-c (3 legs/row), ROW SPACING 17.0mm c-c (MEASURED 2026-10-29 at the body exit without splay -- supersedes the earlier 16.55; legs FLEX across the rows so holes are forgiving). Fat legs TAPER to the thin through-pin and seat on the PCB (~6mm standoff, INFERRED -- confirm on a real mount). lug width 20.42mm, jack length 34.26mm, barrel axis 13.85mm below the board (MEASURED 2026-10-29, barrel centre to board plane -> JACK_Z 9.31; supersedes the inferred 13.9 and the stale 12.39). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
 		(tags "jack TRS 6.35mm phone K3599 open-frame switched measured")
 		(property "Reference" "J8"
 			(at -7.275 15.36 0)
@@ -2746,12 +2698,6 @@
 		(path "/40f0de89-4df1-5e52-a559-301b444915ec")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2930,15 +2876,7 @@
 			)
 		)
 		(pad "" thru_hole circle
-			(at 8.275 -6.36 180)
-			(size 2.6 2.6)
-			(drill 1.5)
-			(layers "*.Cu" "*.Mask")
-			(remove_unused_layers no)
-			(uuid "73f02b6c-2231-4eb5-9412-622e7a60acd0")
-		)
-		(pad "" thru_hole circle
-			(at 8.275 0 180)
+			(at 8.5 -6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -2946,7 +2884,15 @@
 			(uuid "eeed6168-f877-4ee8-90d4-4ac932e649ed")
 		)
 		(pad "" thru_hole circle
-			(at 8.275 6.36 180)
+			(at 8.5 0 180)
+			(size 2.6 2.6)
+			(drill 1.5)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(uuid "73f02b6c-2231-4eb5-9412-622e7a60acd0")
+		)
+		(pad "" thru_hole circle
+			(at 8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -2954,7 +2900,7 @@
 			(uuid "0b4c4101-ea7b-4c41-8f95-cfacdf9f7459")
 		)
 		(pad "1" thru_hole circle
-			(at -8.275 6.36 180)
+			(at -8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -2965,7 +2911,7 @@
 			(uuid "2e0f94ba-9bce-41d5-96e8-fe76f9e0973f")
 		)
 		(pad "2" thru_hole circle
-			(at -8.275 0 180)
+			(at -8.5 0 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -2976,7 +2922,7 @@
 			(uuid "0841fd90-dfd8-4bda-b144-95fe4b0ddd40")
 		)
 		(pad "3" thru_hole circle
-			(at -8.275 -6.36 180)
+			(at -8.5 -6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -2992,7 +2938,7 @@
 		(layer "B.Cu")
 		(uuid "121b91c6-50dd-40a5-8b13-517c15aad360")
 		(at 51.225 77.86 180)
-		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin leg 1.34mm (through the board), along-row pitch 6.36mm c-c (3 legs/row), row spacing 16.55mm c-c (17.89 outside-to-outside - 1.34 leg; legs FLEX in this direction so holes are generous), lug width 20mm, jack length 34.12mm, barrel axis 12.39mm below the board (bottom-mount drop). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
+		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin through-pin FLAT 1.33w x 0.5 thick (diag ~1.42, fits the 1.5 drill), along-row pitch 6.36mm c-c (3 legs/row), ROW SPACING 17.0mm c-c (MEASURED 2026-10-29 at the body exit without splay -- supersedes the earlier 16.55; legs FLEX across the rows so holes are forgiving). Fat legs TAPER to the thin through-pin and seat on the PCB (~6mm standoff, INFERRED -- confirm on a real mount). lug width 20.42mm, jack length 34.26mm, barrel axis 13.85mm below the board (MEASURED 2026-10-29, barrel centre to board plane -> JACK_Z 9.31; supersedes the inferred 13.9 and the stale 12.39). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
 		(tags "jack TRS 6.35mm phone K3599 open-frame switched measured")
 		(property "Reference" "J1"
 			(at 12.225 7.36 0)
@@ -3060,12 +3006,6 @@
 		(path "/b131c22b-5820-51ae-b53c-f6d5fac45ba2")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3244,7 +3184,7 @@
 			)
 		)
 		(pad "" thru_hole circle
-			(at 8.275 -6.36 180)
+			(at 8.5 -6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3252,7 +3192,7 @@
 			(uuid "b403adb2-0044-4ace-9cef-75b376f7ef8e")
 		)
 		(pad "" thru_hole circle
-			(at 8.275 0 180)
+			(at 8.5 0 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3260,7 +3200,7 @@
 			(uuid "f4a029e0-2bb9-4d68-878b-3ef77f54d166")
 		)
 		(pad "" thru_hole circle
-			(at 8.275 6.36 180)
+			(at 8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3268,7 +3208,7 @@
 			(uuid "001fa6a5-6861-4c10-b96c-a489be628222")
 		)
 		(pad "1" thru_hole circle
-			(at -8.275 6.36 180)
+			(at -8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3279,7 +3219,7 @@
 			(uuid "8691eaef-61fc-4ac7-8a2a-4ba858ce1e0c")
 		)
 		(pad "2" thru_hole circle
-			(at -8.275 0 180)
+			(at -8.5 0 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3290,7 +3230,7 @@
 			(uuid "eb335f12-ec0e-4d78-bb63-7ff1f75145d7")
 		)
 		(pad "3" thru_hole circle
-			(at -8.275 -6.36 180)
+			(at -8.5 -6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -3364,12 +3304,6 @@
 		(path "/26a072be-49e5-5118-9feb-36cd5d269f4f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -3487,12 +3421,6 @@
 		(path "/28b71485-6b1a-5100-969b-7d8735ea2fc6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3651,12 +3579,6 @@
 		(path "/652ac793-92af-5aed-9f10-91de874ac55a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3840,23 +3762,9 @@
 			)
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm* DIP*W7.62mm* TO*99* OnSemi*Micro8* TSSOP*3x3mm*P0.65mm* TSSOP*4.4x3mm*P0.65mm* MSOP*3x3mm*P0.65mm* SSOP*3.9x4.9mm*P0.635mm* LFCSP*2x2mm*P0.5mm* *SIP* SOIC*5.3x6.2mm*P1.27mm*")
-		(path "/b7e457df-effe-5e00-8492-844c08953329")
+		(path "/60109c78-6f0d-5f19-9d83-d93dfd3315d6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "3" "2" "1")
-			)
-			(unit
-				(name "B")
-				(pins "5" "6" "7")
-			)
-			(unit
-				(name "C")
-				(pins "8" "4")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4237,12 +4145,6 @@
 		(path "/4a597640-920e-5926-9691-9b5de4caee8e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4401,12 +4303,6 @@
 		(path "/305bf047-cccf-5cf0-aab4-98a95782f425")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4579,12 +4475,6 @@
 		(path "/a4fa33a1-ec3f-5217-a831-7cb0cfb8c49e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4743,12 +4633,6 @@
 		(path "/5e86d8c9-7134-55fa-b108-6856abe01933")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4907,12 +4791,6 @@
 		(path "/2a00a4b8-416f-5a47-97f6-be65a441ae51")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5085,12 +4963,6 @@
 		(path "/22344f19-b4fd-5618-9d64-08e40b303272")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5182,7 +5054,7 @@
 		(layer "B.Cu")
 		(uuid "2e5efdd5-eab0-4474-b10d-ff902c4017bc")
 		(at 140.775 77.86 180)
-		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin leg 1.34mm (through the board), along-row pitch 6.36mm c-c (3 legs/row), row spacing 16.55mm c-c (17.89 outside-to-outside - 1.34 leg; legs FLEX in this direction so holes are generous), lug width 20mm, jack length 34.12mm, barrel axis 12.39mm below the board (bottom-mount drop). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
+		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin through-pin FLAT 1.33w x 0.5 thick (diag ~1.42, fits the 1.5 drill), along-row pitch 6.36mm c-c (3 legs/row), ROW SPACING 17.0mm c-c (MEASURED 2026-10-29 at the body exit without splay -- supersedes the earlier 16.55; legs FLEX across the rows so holes are forgiving). Fat legs TAPER to the thin through-pin and seat on the PCB (~6mm standoff, INFERRED -- confirm on a real mount). lug width 20.42mm, jack length 34.26mm, barrel axis 13.85mm below the board (MEASURED 2026-10-29, barrel centre to board plane -> JACK_Z 9.31; supersedes the inferred 13.9 and the stale 12.39). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
 		(tags "jack TRS 6.35mm phone K3599 open-frame switched measured")
 		(property "Reference" "J2"
 			(at 0 15.36 0)
@@ -5250,12 +5122,6 @@
 		(path "/374fd274-167d-5b8b-a3cb-78bb67b33053")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5434,7 +5300,15 @@
 			)
 		)
 		(pad "" thru_hole circle
-			(at 8.275 -6.36 180)
+			(at 8.5 -6.36 180)
+			(size 2.6 2.6)
+			(drill 1.5)
+			(layers "*.Cu" "*.Mask")
+			(remove_unused_layers no)
+			(uuid "b86dcdf6-ddac-458e-a75a-eddcbc56df6c")
+		)
+		(pad "" thru_hole circle
+			(at 8.5 0 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -5442,23 +5316,15 @@
 			(uuid "8609756b-0a27-4465-a1a4-c061644a4dbd")
 		)
 		(pad "" thru_hole circle
-			(at 8.275 0 180)
+			(at 8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(uuid "80f57e80-8968-498a-9375-ebfadf48a091")
 		)
-		(pad "" thru_hole circle
-			(at 8.275 6.36 180)
-			(size 2.6 2.6)
-			(drill 1.5)
-			(layers "*.Cu" "*.Mask")
-			(remove_unused_layers no)
-			(uuid "b86dcdf6-ddac-458e-a75a-eddcbc56df6c")
-		)
 		(pad "1" thru_hole circle
-			(at -8.275 6.36 180)
+			(at -8.5 6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -5469,7 +5335,7 @@
 			(uuid "947435b6-66be-489c-a423-15cedf2be362")
 		)
 		(pad "2" thru_hole circle
-			(at -8.275 0 180)
+			(at -8.5 0 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -5480,7 +5346,7 @@
 			(uuid "18b1d925-4a36-42c8-ba51-ec4494113f88")
 		)
 		(pad "3" thru_hole circle
-			(at -8.275 -6.36 180)
+			(at -8.5 -6.36 180)
 			(size 2.6 2.6)
 			(drill 1.5)
 			(layers "*.Cu" "*.Mask")
@@ -5563,12 +5429,6 @@
 		(path "/72ba16ac-8c00-5b69-a5e4-82294f9e87a9")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5741,12 +5601,6 @@
 		(path "/a5fc5562-b76c-5bcf-b7e6-2ae2d5a57e81")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5837,13 +5691,13 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "2fea570c-9941-4f34-87ec-7757129bd97e")
-		(at 102 71.05 -90)
+		(at 97 45 -90)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C25"
-			(at -3.55 2.5 90)
+			(at 3.5 0 90)
 			(layer "B.SilkS")
-			(uuid "e5f0aa9c-dafe-4dbe-8cdc-3ea1d0d82da7")
+			(uuid "62a3898d-b464-42e7-a2a1-ab422eb7abc3")
 			(effects
 				(font
 					(size 1 1)
@@ -5855,7 +5709,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "509e90ed-45f3-453c-ba1e-2e4da7fd9df5")
+			(uuid "f2ba3a48-0b1f-4112-a754-b4d5c83f263b")
 			(effects
 				(font
 					(size 1 1)
@@ -5868,7 +5722,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "bfbe07b9-b1f5-43fc-99f7-6008d6c74378")
+			(uuid "7cf05761-8394-4e53-97d1-a7ac4efa077f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5880,7 +5734,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f4fcc651-d7f1-4505-9bcc-e582b1c8f4de")
+			(uuid "e1eb5a00-1d5f-422c-b427-148633e95d10")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5905,12 +5759,6 @@
 		(path "/a0a3cf74-8174-5124-8ab2-4802998dfb4d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6069,12 +5917,6 @@
 		(path "/7dea7dd7-6e71-5312-bc4a-c55f650398c9")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6247,12 +6089,6 @@
 		(path "/377b6fa6-7349-5d87-a0a9-e0dac5b1178e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6411,12 +6247,6 @@
 		(path "/1071245f-0f32-5218-8f66-f7a62ee52c65")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6575,12 +6405,6 @@
 		(path "/af0b1efe-ae46-5a91-bdfb-90044935ffaf")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6753,12 +6577,6 @@
 		(path "/5b62e516-3cca-5e00-95d4-e60fc2c983f6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6849,7 +6667,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "3e14d34e-7bb7-4276-99d9-2a0679e3ab62")
-		(at 108 44.5)
+		(at 77 57)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP6"
@@ -6908,12 +6726,6 @@
 		(path "/8e2f2d8c-2e8a-5e18-95e6-2300261553d5")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -6938,7 +6750,7 @@
 			(uuid "b96d6120-dd1f-4407-b0da-b12869e93389")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 1.65 180)
+			(at -28.5 11.65 180)
 			(layer "B.Fab")
 			(uuid "ab5498cb-af61-444c-877a-043a32b17138")
 			(effects
@@ -6963,7 +6775,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "4486bb5d-0185-42d1-bd1c-d658ea78cfdc")
-		(at 136 57.5)
+		(at 136 58.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP7"
@@ -7022,12 +6834,6 @@
 		(path "/d444c6d6-95a3-56fb-9236-0eb4c10f421f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7077,7 +6883,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "45e00598-6a4e-41e6-9fbc-c0d46e1a953b")
-		(at 130.5 52)
+		(at 115 34.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP9"
@@ -7136,12 +6942,6 @@
 		(path "/7efa6f12-9cb3-59d7-a676-912763ceaa8b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7259,12 +7059,6 @@
 		(path "/2f529b83-f407-5d7e-aa42-f6f30217291a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7423,12 +7217,6 @@
 		(path "/3fb37461-ed79-59bf-bedf-57f06e7db2cb")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7519,7 +7307,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "516f3bf4-8c02-4b50-90b3-eef19828f3bc")
-		(at 130.5 37)
+		(at 69.5 34.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP12"
@@ -7578,12 +7366,6 @@
 		(path "/4af1ebb5-c413-5edd-a6c5-b6653c7c85e0")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7633,7 +7415,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "51e837db-191e-48f1-bace-c7546596e0bf")
-		(at 130.5 47)
+		(at 112.5 34.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP11"
@@ -7692,12 +7474,6 @@
 		(path "/9e7c55c5-c345-58b9-82d6-7e3453a7da76")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7753,7 +7529,7 @@
 		(property "Reference" "R33"
 			(at 0.0875 -2 90)
 			(layer "B.SilkS")
-			(uuid "d3dee972-57db-489b-b3fc-57b219064e1e")
+			(uuid "7d98c9dc-3a37-48b3-b573-559d84a89b9b")
 			(effects
 				(font
 					(size 1 1)
@@ -7765,7 +7541,7 @@
 		(property "Value" "1k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "96d0231a-50fc-4cc7-a4c4-a210ce6b2128")
+			(uuid "4dd6c555-2390-4e87-848b-be029957b1e5")
 			(effects
 				(font
 					(size 1 1)
@@ -7778,7 +7554,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6f6fb6d4-3267-4f88-af8c-4162f834d9b8")
+			(uuid "28f9c69c-80fd-4c48-b5bc-9a5cf97210a6")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7790,7 +7566,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a05263d6-0729-44c8-bc5c-ec3c4d35bd01")
+			(uuid "dc24aada-d6e8-45ab-9200-1d2221bf3821")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7815,12 +7591,6 @@
 		(path "/6d08bab5-3fe7-58c6-92f6-c94c07220373")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7979,12 +7749,6 @@
 		(path "/94f25e83-4fb9-58e7-9e31-ad05146f8840")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8143,12 +7907,6 @@
 		(path "/8b228f49-b5ff-59e5-9a44-442136722384")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8321,12 +8079,6 @@
 		(path "/6e862c28-dd07-524f-bf83-21e34d0f57f5")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8513,12 +8265,6 @@
 		(path "/373ad3a1-6a00-57f0-90ae-ed181dabb223")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8677,12 +8423,6 @@
 		(path "/a9fb3275-a7e1-5148-afdb-d8a7922a7ef1")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8841,12 +8581,6 @@
 		(path "/d6d322fd-4911-5a80-954c-809f566921be")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8937,7 +8671,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "6a4db036-4738-4e44-a108-5058ebfcdeef")
-		(at 130.5 57.5)
+		(at 117.5 34.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP14"
@@ -8996,12 +8730,6 @@
 		(path "/b0c72c86-aa49-5d3f-86b6-b7148863c166")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9119,12 +8847,6 @@
 		(path "/4507dddc-b81f-5110-b657-ddb2806548f0")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9283,12 +9005,6 @@
 		(path "/888e171a-4bfc-52fb-9217-79e0a86b5e45")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9447,12 +9163,6 @@
 		(path "/10f60d61-5ee9-5bce-a89d-c1f15526fa24")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9602,12 +9312,6 @@
 		(path "/3ea72680-9910-504b-a971-28b212364f62")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9725,12 +9429,6 @@
 		(path "/1d063b11-c45f-5b5b-91e5-c0543692aa82")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9821,7 +9519,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "6ea6dcef-f959-482c-b21b-472f764d6d61")
-		(at 75 60.5)
+		(at 75 61.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP5"
@@ -9880,12 +9578,6 @@
 		(path "/cb464e5d-be84-598c-bdfb-f09e4bb3f5c6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -10003,12 +9695,6 @@
 		(path "/974377da-7441-50c7-9d0f-e128a1992d1b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10186,12 +9872,6 @@
 		(path "/b3611669-6ffe-5bb2-9443-28a8ca56b774")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10480,12 +10160,6 @@
 		(path "/c8261b77-2a3b-56a1-af1e-869d757926c8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10576,11 +10250,11 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "7c38909c-ca68-4f0b-be7d-a4e015ff0ada")
-		(at 107.5875 57 180)
+		(at 90 49.9125 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R23"
-			(at 3.0875 0 0)
+			(at 3.0875 0 90)
 			(layer "B.SilkS")
 			(uuid "d735157d-2b9e-46bb-8da9-bf00d994cc31")
 			(effects
@@ -10592,7 +10266,7 @@
 			)
 		)
 		(property "Value" "33R"
-			(at 0 -1.65 0)
+			(at 0 -1.65 90)
 			(layer "B.Fab")
 			(uuid "b6bb59ef-1a3b-4d36-9959-cfe4bbe7d299")
 			(effects
@@ -10604,7 +10278,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "1a5982b5-0bb2-4809-a97e-a69cc5f85f99")
@@ -10616,7 +10290,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "1b47a2c5-f410-43be-a61a-3fe315886643")
@@ -10628,7 +10302,7 @@
 			)
 		)
 		(property "KiLib_Generator" "SMD_2terminal_chip_molded"
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "88e89825-ff62-4bf6-bc29-773a4b1840dc")
@@ -10644,24 +10318,8 @@
 		(path "/583bf23a-7433-5b2f-aa10-55dff0e125f8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
-		(fp_line
-			(start -0.227064 0.735)
-			(end 0.227064 0.735)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "ca67575a-453d-437a-82d8-c9c033a6518c")
-		)
 		(fp_line
 			(start -0.227064 -0.735)
 			(end 0.227064 -0.735)
@@ -10671,6 +10329,16 @@
 			)
 			(layer "B.SilkS")
 			(uuid "e5c6b7cc-9b41-4ed3-be39-40f6b7fcb48c")
+		)
+		(fp_line
+			(start -0.227064 0.735)
+			(end 0.227064 0.735)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "ca67575a-453d-437a-82d8-c9c033a6518c")
 		)
 		(fp_rect
 			(start -1.68 0.95)
@@ -10695,7 +10363,7 @@
 			(uuid "18092629-0270-4a04-b469-560501b1aa18")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 0)
+			(at 0 0 90)
 			(layer "B.Fab")
 			(uuid "4dd36923-5b5f-44f0-8502-f41dbbcd4428")
 			(effects
@@ -10707,7 +10375,7 @@
 			)
 		)
 		(pad "1" smd roundrect
-			(at -0.9125 0 180)
+			(at -0.9125 0 90)
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
@@ -10716,7 +10384,7 @@
 			(uuid "e012653c-49a6-4a2e-bffb-f8fcf85a78fa")
 		)
 		(pad "2" smd roundrect
-			(at 0.9125 0 180)
+			(at 0.9125 0 90)
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
@@ -10808,12 +10476,6 @@
 		(path "/50d208b4-64ec-5506-aaf3-01b77f7af77f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10972,12 +10634,6 @@
 		(path "/14a3666e-2688-519c-9365-826ef62b074f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11136,12 +10792,6 @@
 		(path "/437d0c72-b22e-5d92-9988-8eecad89bf41")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11238,7 +10888,7 @@
 		(property "Reference" "J7"
 			(at 1.25 3.55 0)
 			(layer "B.SilkS")
-			(uuid "07fb4367-0445-4c50-aadd-63a742af24cf")
+			(uuid "5462f947-1c2f-4f4c-9a0b-7cfd6fe6ffa5")
 			(effects
 				(font
 					(size 1 1)
@@ -11250,7 +10900,7 @@
 		(property "Value" "SW-L bypass"
 			(at 9.55 -4.8125 0)
 			(layer "B.Fab")
-			(uuid "bf57cc25-99eb-43ea-83bb-8af7e459fb0d")
+			(uuid "92daa7fc-ff31-4521-a5e2-2d0f0836f322")
 			(effects
 				(font
 					(size 1 1)
@@ -11263,7 +10913,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8a61a5e9-b427-4b4d-a764-f173ae4572ec")
+			(uuid "4ffdd354-207a-48ca-8004-f3c605b2bdc2")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11275,7 +10925,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e9cea565-da2f-47bb-92b4-296b32a8f191")
+			(uuid "5f6c960b-6f8a-46e8-8312-954633cac9be")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11300,12 +10950,6 @@
 		(path "/999a5efb-b1b6-54ca-bce2-0ee476b36761")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11593,12 +11237,6 @@
 		(path "/a0813683-ac4a-5e2d-af8c-042c885e9edd")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11757,12 +11395,6 @@
 		(path "/a061b0a4-3e30-5f4c-ae94-3d657d4cb05a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11921,12 +11553,6 @@
 		(path "/b7c4a61b-d3a4-5495-86f7-be01f516091d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12239,23 +11865,9 @@
 			)
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm* DIP*W7.62mm* TO*99* OnSemi*Micro8* TSSOP*3x3mm*P0.65mm* TSSOP*4.4x3mm*P0.65mm* MSOP*3x3mm*P0.65mm* SSOP*3.9x4.9mm*P0.635mm* LFCSP*2x2mm*P0.5mm* *SIP* SOIC*5.3x6.2mm*P1.27mm*")
-		(path "/ed3063ca-264a-513f-af96-b4ec1feb8b99")
+		(path "/cc75780d-e128-59b6-93ee-29bacef6a024")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "3" "2" "1")
-			)
-			(unit
-				(name "B")
-				(pins "5" "6" "7")
-			)
-			(unit
-				(name "C")
-				(pins "8" "4")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12568,7 +12180,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "9982e91e-9664-4213-a1ab-bb7e1f0e3cd4")
-		(at 108 37)
+		(at 69.5 57)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP13"
@@ -12627,12 +12239,6 @@
 		(path "/fef419e8-66d6-56be-8d94-6e3c35803903")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -12682,11 +12288,11 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "9b4e88b1-514b-4fc2-870a-57789fbdc62b")
-		(at 97 71 90)
+		(at 92 45 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R26"
-			(at 3.5 0 90)
+			(at -3.5875 0 90)
 			(layer "B.SilkS")
 			(uuid "2a0e3ce5-4d36-48b3-993c-47074aced5b8")
 			(effects
@@ -12750,12 +12356,6 @@
 		(path "/5d2eee6c-7283-53f1-87ff-817ae6498872")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12928,12 +12528,6 @@
 		(path "/a7b7d4ae-1680-5a19-a27c-89c74879ab69")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -13153,13 +12747,13 @@
 	(footprint "Module:Electrosmith_Daisy_Seed"
 		(layer "B.Cu")
 		(uuid "a295b4b2-093c-47d3-9338-ea8f2aed78dc")
-		(at 111.5 85.08)
+		(at 117.7 53.24 90)
 		(descr "Embedded platform for audio applications. 96kHz / 24-bit audio hardware. 64MB of SDRAM for up to 10 minute long audio. ARM Cortex-M7 MCU, running at 480MHz. 31 total GPIO pins with configurable functionality. 12-bit Digital to Analog Converters (x2). SD card interfaces. PWM outputs. Serial Protocols for connecting external sensors and devices (SPI, UART, I2S, I2C). Dedicated VIN pin for power. Micro USB port, and additional USB pins for full OTG-support as host and device. https://static1.squarespace.com/static/58d03fdc1b10e3bf442567b8/t/6227e6236f02fb68d1577146/1646781988478/Daisy_Seed_datasheet_v1.0.3.pdf")
 		(tags "Electrosmith Daisy Seed Microcontroller Module ARM Cortex-M7 Audio Codec")
 		(property "Reference" "U4"
-			(at 7.62 3.6 0)
+			(at 7.62 3.6 90)
 			(layer "B.SilkS")
-			(uuid "d214adf8-5813-4295-90d4-0ae9ba20a225")
+			(uuid "1ed7c976-8688-48ed-9685-2e6ba365fc5a")
 			(effects
 				(font
 					(size 1 1)
@@ -13169,9 +12763,9 @@
 			)
 		)
 		(property "Value" "Daisy Seed3"
-			(at 7.5 0.02 0)
+			(at 7.5 0.02 90)
 			(layer "B.Fab")
-			(uuid "3cb9f77d-f442-4115-907c-af9927fda92f")
+			(uuid "751d4aa6-f36a-4cca-84b3-64afdcfcb8fd")
 			(effects
 				(font
 					(size 1 1)
@@ -13181,11 +12775,11 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6b061be5-52b2-403e-ae4e-924225a05ad5")
+			(uuid "deac24a6-2251-4655-a08f-d806dcbb64bf")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13195,11 +12789,11 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 180)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "63d7ec46-4dcc-4b63-9d84-7ab433201702")
+			(uuid "f39124d7-a7ce-4549-90dd-46fac63141ac")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13209,7 +12803,7 @@
 			)
 		)
 		(property "Note" "2 × 20-way 0.1\" sockets (Sullins PPTC201LFBN-RC); Seed plugs in component-side up"
-			(at 0 0 180)
+			(at 0 0 270)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
@@ -13225,26 +12819,17 @@
 		(path "/536c743c-4cf5-5af5-a62a-e061b020120f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15"
-					"16" "17" "18" "19" "20" "40" "39" "38" "37" "36" "35" "34" "33" "32"
-					"31" "30" "29" "28" "27" "26" "25" "24" "23" "22" "21"
-				)
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
-			(start -1.58 1.7)
-			(end -1.58 -0.7)
+			(start 16.52 -49.6)
+			(end -1.28 -49.6)
 			(stroke
 				(width 0.12)
 				(type solid)
 			)
 			(layer "B.SilkS")
-			(uuid "f2adb7b9-1159-4897-814f-204f545ace62")
+			(uuid "9a9d94cd-a65a-47b2-8536-a7c276f03fd7")
 		)
 		(fp_line
 			(start -1.28 -49.6)
@@ -13255,6 +12840,46 @@
 			)
 			(layer "B.SilkS")
 			(uuid "477e5d8e-840a-4296-8be9-8316d997d1ba")
+		)
+		(fp_line
+			(start 16.52 1.4)
+			(end 16.52 -49.6)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "c8af131e-1dda-4e49-9ace-92b6a8e57e2b")
+		)
+		(fp_line
+			(start 14 1.4)
+			(end 14 -49.6)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "39bf7ac6-8435-4c4f-b5dd-05ddbdf3be8d")
+		)
+		(fp_line
+			(start 3.62 1.4)
+			(end 3.62 2.6)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "5efb1229-2a63-428f-a6e1-e1da6c12125f")
+		)
+		(fp_line
+			(start 1.2 1.4)
+			(end 1.2 -49.6)
+			(stroke
+				(width 0.12)
+				(type solid)
+			)
+			(layer "B.SilkS")
+			(uuid "ee6396c6-afb4-41c7-9c0c-e18586d9783e")
 		)
 		(fp_line
 			(start -1.28 1.4)
@@ -13277,34 +12902,14 @@
 			(uuid "8ca46cee-03c4-4f7b-a468-1ec83ed3958d")
 		)
 		(fp_line
-			(start 1.2 1.4)
-			(end 1.2 -49.6)
+			(start -1.58 1.7)
+			(end -1.58 -0.7)
 			(stroke
 				(width 0.12)
 				(type solid)
 			)
 			(layer "B.SilkS")
-			(uuid "ee6396c6-afb4-41c7-9c0c-e18586d9783e")
-		)
-		(fp_line
-			(start 3.62 1.4)
-			(end 3.62 2.6)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "5efb1229-2a63-428f-a6e1-e1da6c12125f")
-		)
-		(fp_line
-			(start 3.62 2.6)
-			(end 11.62 2.6)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "9b99b9ee-fdc4-4187-9fcc-8a0029db654f")
+			(uuid "f2adb7b9-1159-4897-814f-204f545ace62")
 		)
 		(fp_line
 			(start 11.62 2.6)
@@ -13317,94 +12922,14 @@
 			(uuid "2281cba5-30c8-4135-80c1-6e859be88976")
 		)
 		(fp_line
-			(start 14 1.4)
-			(end 14 -49.6)
+			(start 3.62 2.6)
+			(end 11.62 2.6)
 			(stroke
 				(width 0.12)
 				(type solid)
 			)
 			(layer "B.SilkS")
-			(uuid "39bf7ac6-8435-4c4f-b5dd-05ddbdf3be8d")
-		)
-		(fp_line
-			(start 16.52 -49.6)
-			(end -1.28 -49.6)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "9a9d94cd-a65a-47b2-8536-a7c276f03fd7")
-		)
-		(fp_line
-			(start 16.52 1.4)
-			(end 16.52 -49.6)
-			(stroke
-				(width 0.12)
-				(type solid)
-			)
-			(layer "B.SilkS")
-			(uuid "c8af131e-1dda-4e49-9ace-92b6a8e57e2b")
-		)
-		(fp_line
-			(start -1.75 -50.01)
-			(end -1.75 1.75)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "e32c704c-7ffc-42e3-afaa-2484e4d94e66")
-		)
-		(fp_line
-			(start -1.75 1.75)
-			(end 3.12 1.75)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "07b854a1-3764-411f-976f-5ae9fb7fbf38")
-		)
-		(fp_line
-			(start 3.12 1.75)
-			(end 3.12 3)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "b2dba5fd-3e75-4da8-b5c6-f6af3548af63")
-		)
-		(fp_line
-			(start 3.12 3)
-			(end 12.12 3)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "04d03cf7-328a-4088-a5cb-d9cf5e63335f")
-		)
-		(fp_line
-			(start 12.12 1.75)
-			(end 16.99 1.75)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "6805b8a1-60ee-42a6-97ad-afbfc093b5ed")
-		)
-		(fp_line
-			(start 12.12 3)
-			(end 12.12 1.75)
-			(stroke
-				(width 0.05)
-				(type solid)
-			)
-			(layer "B.CrtYd")
-			(uuid "afdb54a0-011b-405b-a7b5-5d7a06a1fbf6")
+			(uuid "9b99b9ee-fdc4-4187-9fcc-8a0029db654f")
 		)
 		(fp_line
 			(start 16.99 -50.01)
@@ -13417,6 +12942,16 @@
 			(uuid "a4b7506d-0901-4d85-bc6e-9ab299dc264b")
 		)
 		(fp_line
+			(start -1.75 -50.01)
+			(end -1.75 1.75)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "e32c704c-7ffc-42e3-afaa-2484e4d94e66")
+		)
+		(fp_line
 			(start 16.99 1.75)
 			(end 16.99 -50.01)
 			(stroke
@@ -13425,6 +12960,66 @@
 			)
 			(layer "B.CrtYd")
 			(uuid "54128861-c42a-4cb1-9c69-1a204e89b79d")
+		)
+		(fp_line
+			(start 12.12 1.75)
+			(end 16.99 1.75)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "6805b8a1-60ee-42a6-97ad-afbfc093b5ed")
+		)
+		(fp_line
+			(start 3.12 1.75)
+			(end 3.12 3)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "b2dba5fd-3e75-4da8-b5c6-f6af3548af63")
+		)
+		(fp_line
+			(start -1.75 1.75)
+			(end 3.12 1.75)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "07b854a1-3764-411f-976f-5ae9fb7fbf38")
+		)
+		(fp_line
+			(start 12.12 3)
+			(end 12.12 1.75)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "afdb54a0-011b-405b-a7b5-5d7a06a1fbf6")
+		)
+		(fp_line
+			(start 3.12 3)
+			(end 12.12 3)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+			(layer "B.CrtYd")
+			(uuid "04d03cf7-328a-4088-a5cb-d9cf5e63335f")
+		)
+		(fp_line
+			(start 16.74 -49.76)
+			(end 16.74 1.5)
+			(stroke
+				(width 0.1)
+				(type solid)
+			)
+			(layer "B.Fab")
+			(uuid "6d43bf8b-8187-486b-aa37-7adc3194bdfa")
 		)
 		(fp_line
 			(start -1.5 -49.76)
@@ -13447,26 +13042,6 @@
 			(uuid "e1ccebfe-ac01-41fc-adb4-66f651863b88")
 		)
 		(fp_line
-			(start -0.5 1.5)
-			(end -1.5 0.5)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "878cd57f-7842-44a3-a1f4-20baddeee7c4")
-		)
-		(fp_line
-			(start 16.74 -49.76)
-			(end 16.74 1.5)
-			(stroke
-				(width 0.1)
-				(type solid)
-			)
-			(layer "B.Fab")
-			(uuid "6d43bf8b-8187-486b-aa37-7adc3194bdfa")
-		)
-		(fp_line
 			(start 16.74 1.5)
 			(end -0.5 1.5)
 			(stroke
@@ -13476,8 +13051,18 @@
 			(layer "B.Fab")
 			(uuid "07f865af-b787-4045-8dc9-c601e52af3e7")
 		)
+		(fp_line
+			(start -0.5 1.5)
+			(end -1.5 0.5)
+			(stroke
+				(width 0.1)
+				(type solid)
+			)
+			(layer "B.Fab")
+			(uuid "878cd57f-7842-44a3-a1f4-20baddeee7c4")
+		)
 		(fp_text user "${REFERENCE}"
-			(at 7.62 -22 0)
+			(at 7.62 -22 90)
 			(layer "B.Fab")
 			(uuid "5b2797bb-5bae-4e7c-bf6f-98391f068c09")
 			(effects
@@ -13489,7 +13074,7 @@
 			)
 		)
 		(pad "1" thru_hole rect
-			(at 0 0)
+			(at 0 0 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13500,7 +13085,7 @@
 			(uuid "92fbab26-edbb-48a3-b409-6c0577323a23")
 		)
 		(pad "2" thru_hole circle
-			(at 0 -2.54)
+			(at 0 -2.54 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13511,7 +13096,7 @@
 			(uuid "59b19249-1f42-4bcc-853e-247084c7cabd")
 		)
 		(pad "3" thru_hole circle
-			(at 0 -5.08)
+			(at 0 -5.08 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13522,7 +13107,7 @@
 			(uuid "4e859425-2854-493d-bcc6-8f88c661fa00")
 		)
 		(pad "4" thru_hole circle
-			(at 0 -7.62)
+			(at 0 -7.62 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13533,7 +13118,7 @@
 			(uuid "45936621-142b-4dee-bd54-23dcda4c03f9")
 		)
 		(pad "5" thru_hole circle
-			(at 0 -10.16)
+			(at 0 -10.16 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13544,7 +13129,7 @@
 			(uuid "d3a0e5c7-af34-4150-91f3-548a24ae662d")
 		)
 		(pad "6" thru_hole circle
-			(at 0 -12.7)
+			(at 0 -12.7 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13555,7 +13140,7 @@
 			(uuid "71a57708-a5be-4674-836f-cf15c534d0d5")
 		)
 		(pad "7" thru_hole circle
-			(at 0 -15.24)
+			(at 0 -15.24 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13566,7 +13151,7 @@
 			(uuid "bc3a3b1f-acf4-416b-90f1-2be43eff2ca6")
 		)
 		(pad "8" thru_hole circle
-			(at 0 -17.78)
+			(at 0 -17.78 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13577,7 +13162,7 @@
 			(uuid "dee1756a-5a63-4c6c-95dc-f900d433daff")
 		)
 		(pad "9" thru_hole circle
-			(at 0 -20.32)
+			(at 0 -20.32 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13588,7 +13173,7 @@
 			(uuid "08c37865-ea4d-4116-9350-6804776afc00")
 		)
 		(pad "10" thru_hole circle
-			(at 0 -22.86)
+			(at 0 -22.86 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13599,7 +13184,7 @@
 			(uuid "3b876ac8-e98f-42ef-bd33-9c3f13cdae95")
 		)
 		(pad "11" thru_hole circle
-			(at 0 -25.4)
+			(at 0 -25.4 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13610,7 +13195,7 @@
 			(uuid "d7e4a903-076c-45f0-ab0f-319ba090d43a")
 		)
 		(pad "12" thru_hole circle
-			(at 0 -27.94)
+			(at 0 -27.94 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13621,7 +13206,7 @@
 			(uuid "0aff9f4c-f0c5-4c04-b9e7-5e750bfada12")
 		)
 		(pad "13" thru_hole circle
-			(at 0 -30.48)
+			(at 0 -30.48 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13632,7 +13217,7 @@
 			(uuid "625c996f-c48f-4230-9b68-7db5497be37b")
 		)
 		(pad "14" thru_hole circle
-			(at 0 -33.02)
+			(at 0 -33.02 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13643,7 +13228,7 @@
 			(uuid "a1e4ae6a-5041-47f9-9e9a-95ab9d9de09c")
 		)
 		(pad "15" thru_hole circle
-			(at 0 -35.56)
+			(at 0 -35.56 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13654,7 +13239,7 @@
 			(uuid "5310b7b9-21dc-4203-8daa-2f418ba3cd73")
 		)
 		(pad "16" thru_hole circle
-			(at 0 -38.1)
+			(at 0 -38.1 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13665,7 +13250,7 @@
 			(uuid "f236f07c-64c7-4337-bc9e-100de17aaa2a")
 		)
 		(pad "17" thru_hole circle
-			(at 0 -40.64)
+			(at 0 -40.64 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13676,7 +13261,7 @@
 			(uuid "858995c5-d284-4d2d-934a-5f13b939bc79")
 		)
 		(pad "18" thru_hole circle
-			(at 0 -43.18)
+			(at 0 -43.18 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13687,7 +13272,7 @@
 			(uuid "ab3370bd-6045-42a4-a485-b5f3e73d44f5")
 		)
 		(pad "19" thru_hole circle
-			(at 0 -45.72)
+			(at 0 -45.72 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13698,7 +13283,7 @@
 			(uuid "5352dc98-8c5c-420c-ad24-bc9906b430b9")
 		)
 		(pad "20" thru_hole circle
-			(at 0 -48.26)
+			(at 0 -48.26 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13709,7 +13294,7 @@
 			(uuid "070d852d-d4ea-4b33-9338-7bef012d62e8")
 		)
 		(pad "21" thru_hole circle
-			(at 15.24 -48.26)
+			(at 15.24 -48.26 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13720,7 +13305,7 @@
 			(uuid "27687d98-95b5-4697-b7d3-0ef45701866f")
 		)
 		(pad "22" thru_hole circle
-			(at 15.24 -45.72)
+			(at 15.24 -45.72 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13731,7 +13316,7 @@
 			(uuid "ed9fe9ce-0d7b-49f0-aeb0-1e112abda736")
 		)
 		(pad "23" thru_hole circle
-			(at 15.24 -43.18)
+			(at 15.24 -43.18 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13742,7 +13327,7 @@
 			(uuid "fb83d009-a7ec-4a08-919c-f2b091c0f161")
 		)
 		(pad "24" thru_hole circle
-			(at 15.24 -40.64)
+			(at 15.24 -40.64 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13753,7 +13338,7 @@
 			(uuid "503c2fb0-30ef-4502-8c57-3568f583bc8b")
 		)
 		(pad "25" thru_hole circle
-			(at 15.24 -38.1)
+			(at 15.24 -38.1 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13764,7 +13349,7 @@
 			(uuid "20335445-5c18-4650-8c8d-df925cd2c4c0")
 		)
 		(pad "26" thru_hole circle
-			(at 15.24 -35.56)
+			(at 15.24 -35.56 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13775,7 +13360,7 @@
 			(uuid "f26c1bb6-341a-4ea4-b525-2a34bd3548cd")
 		)
 		(pad "27" thru_hole circle
-			(at 15.24 -33.02)
+			(at 15.24 -33.02 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13786,7 +13371,7 @@
 			(uuid "5d20b932-549a-4587-9088-5595f1c9ac9b")
 		)
 		(pad "28" thru_hole circle
-			(at 15.24 -30.48)
+			(at 15.24 -30.48 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13797,7 +13382,7 @@
 			(uuid "f1405700-ca6f-4f34-9de9-81c2856a46a6")
 		)
 		(pad "29" thru_hole circle
-			(at 15.24 -27.94)
+			(at 15.24 -27.94 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13808,7 +13393,7 @@
 			(uuid "0b09dc56-c927-4dd9-9c0b-471f9b3c984c")
 		)
 		(pad "30" thru_hole circle
-			(at 15.24 -25.4)
+			(at 15.24 -25.4 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13819,7 +13404,7 @@
 			(uuid "98a631ec-abb2-4e4f-afda-5f19e2e4425d")
 		)
 		(pad "31" thru_hole circle
-			(at 15.24 -22.86)
+			(at 15.24 -22.86 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13830,7 +13415,7 @@
 			(uuid "66030147-192e-4d76-955f-50444cf8dc05")
 		)
 		(pad "32" thru_hole circle
-			(at 15.24 -20.32)
+			(at 15.24 -20.32 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13841,7 +13426,7 @@
 			(uuid "b155b110-184a-4858-a527-1196fd98ee6b")
 		)
 		(pad "33" thru_hole circle
-			(at 15.24 -17.78)
+			(at 15.24 -17.78 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13852,7 +13437,7 @@
 			(uuid "5d4baade-3039-4a8e-91f6-7dea586de617")
 		)
 		(pad "34" thru_hole circle
-			(at 15.24 -15.24)
+			(at 15.24 -15.24 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13863,7 +13448,7 @@
 			(uuid "aa94cf5e-9846-4ae2-a2cd-c7c3021fa56d")
 		)
 		(pad "35" thru_hole circle
-			(at 15.24 -12.7)
+			(at 15.24 -12.7 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13874,7 +13459,7 @@
 			(uuid "30b5e2c4-9a3e-40bb-a055-06f6209df611")
 		)
 		(pad "36" thru_hole circle
-			(at 15.24 -10.16)
+			(at 15.24 -10.16 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13885,7 +13470,7 @@
 			(uuid "e92ffd34-8dd7-4e60-957c-dbf4a53f7a30")
 		)
 		(pad "37" thru_hole circle
-			(at 15.24 -7.62)
+			(at 15.24 -7.62 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13896,7 +13481,7 @@
 			(uuid "26212a58-0d38-47a6-b00a-d67f6702bb16")
 		)
 		(pad "38" thru_hole circle
-			(at 15.24 -5.08)
+			(at 15.24 -5.08 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13907,7 +13492,7 @@
 			(uuid "832c556f-6770-46d1-8698-6e2a69cd7c1e")
 		)
 		(pad "39" thru_hole circle
-			(at 15.24 -2.54)
+			(at 15.24 -2.54 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -13918,7 +13503,7 @@
 			(uuid "09baa8b8-3bde-4bb3-9739-7ab4ff7f0cc3")
 		)
 		(pad "40" thru_hole circle
-			(at 15.24 0)
+			(at 15.24 0 90)
 			(size 1.7 1.7)
 			(drill 1.1)
 			(layers "*.Cu" "*.Mask")
@@ -14017,12 +13602,6 @@
 		(path "/97c03367-4996-513f-a4d7-64aa2c5b7332")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2" "3" "4" "5" "6" "7" "8" "10" "9" "SH")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -14845,12 +14424,6 @@
 		(path "/fef3e640-10d9-53e2-89d3-79d21c5c4d15")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15009,12 +14582,6 @@
 		(path "/dcdf3240-4cb3-56d2-9577-e035372cf959")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15173,12 +14740,6 @@
 		(path "/9f38e3f7-3314-5415-9f4a-eda2af1c0439")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15337,12 +14898,6 @@
 		(path "/dd3f7102-8619-5f11-8b2c-8882f9202af6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15439,7 +14994,7 @@
 		(property "Reference" "R32"
 			(at 0 -2 90)
 			(layer "B.SilkS")
-			(uuid "68eb82ee-9a3d-4c09-b7a6-f49779debca8")
+			(uuid "7acaf065-490a-44b8-ad3f-1b51747f73f2")
 			(effects
 				(font
 					(size 1 1)
@@ -15451,7 +15006,7 @@
 		(property "Value" "1k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "0b1bf625-6a9c-4370-ba5f-8fa8a350dcfb")
+			(uuid "75398515-e337-4c7f-bf35-2e9a4120a8e4")
 			(effects
 				(font
 					(size 1 1)
@@ -15464,7 +15019,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "751f188c-7668-4e97-af92-4b74214de7e1")
+			(uuid "b75937e3-b4b1-4eba-b26b-f18b8470d95d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15476,7 +15031,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0a978497-3d09-456d-9984-b7c545e11f17")
+			(uuid "bcc64375-e64a-41d7-9a9a-db5009c4fe69")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15501,12 +15056,6 @@
 		(path "/5612715b-cbb2-575d-a993-f9fb3f7ad90b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15665,12 +15214,6 @@
 		(path "/c59f3e95-d2a8-535f-bc99-e74a2c487552")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15761,7 +15304,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "b318bb31-f85d-4b72-9e65-60c95340c30a")
-		(at 108 47)
+		(at 79.5 57)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP3"
@@ -15820,12 +15363,6 @@
 		(path "/85496bdd-8062-5c40-ae3d-5f7fd3ea7562")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -15875,7 +15412,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "b36b0a7a-29ca-40e4-a05b-67b9d7fcadc8")
-		(at 72.5 24)
+		(at 77 22.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP10"
@@ -15934,12 +15471,6 @@
 		(path "/af3c56ca-2a23-5a04-8eec-86a618fca002")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -16057,12 +15588,6 @@
 		(path "/5390d28b-7327-59ed-82a4-4aa5c8ebd66e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16235,12 +15760,6 @@
 		(path "/8a690f60-3b9b-568d-ae38-21bb74c559fc")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16528,12 +16047,6 @@
 		(path "/7250ae7d-0a79-5125-9beb-353ad237501d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16624,7 +16137,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "bd9cafeb-1c7b-4932-b508-44c0cb4cefb9")
-		(at 70.5 60.5 90)
+		(at 70.5 61.5 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R12"
@@ -16706,12 +16219,6 @@
 		(path "/39079ea2-5275-56dd-a85e-8bd90f38329a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16884,12 +16391,6 @@
 		(path "/bf395a93-f481-50a7-8df9-ddeea3e0d775")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16980,7 +16481,7 @@
 	(footprint "NetTie:NetTie-2_SMD_Pad0.5mm"
 		(layer "B.Cu")
 		(uuid "bff74267-a854-44d9-83d8-87ef71297d8a")
-		(at 105 37)
+		(at 72 30.5)
 		(descr "Net tie, 2 pin, 0.5mm square SMD pads")
 		(tags "net tie")
 		(property "Reference" "NT1"
@@ -17055,12 +16556,6 @@
 		(path "/4e424239-958b-5bb9-8b27-f8cf90380ec8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr allow_missing_courtyard)
 		(net_tie_pad_groups "1, 2")
 		(duplicate_pad_numbers_are_jumpers no)
@@ -17167,12 +16662,6 @@
 		(path "/acd3d6bc-f822-5313-86db-9d757be6e66b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -17263,11 +16752,11 @@
 	(footprint "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 		(layer "B.Cu")
 		(uuid "c2665888-2dda-4466-822e-1055595eabc3")
-		(at 71.5 30.5 -90)
+		(at 72 22.5 -90)
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C4"
-			(at 6 0 90)
+			(at -3 0 0)
 			(layer "B.SilkS")
 			(uuid "f0f77293-d907-4a58-b104-99e982f75090")
 			(effects
@@ -17331,12 +16820,6 @@
 		(path "/599a3ba1-d70c-5a82-a01f-80926dc4bfa3")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18869,12 +18352,6 @@
 		(path "/b3bdcca3-d961-53bb-8c8f-f62104514877")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19033,12 +18510,6 @@
 		(path "/09f158bd-04e0-5a0c-a266-4b942869719b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19197,12 +18668,6 @@
 		(path "/70d63201-5398-51ef-9f6d-58057b174312")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19361,12 +18826,6 @@
 		(path "/f15ee391-13f2-554c-84ff-2b0f14758a2a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19516,12 +18975,6 @@
 		(path "/49a24d1a-e53a-5a33-b61c-94fca24a44a6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -19667,20 +19120,6 @@
 		(path "/f696b005-f262-5a66-afef-769ffa1925f3")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "3" "2" "1")
-			)
-			(unit
-				(name "B")
-				(pins "5" "6" "7")
-			)
-			(unit
-				(name "C")
-				(pins "8" "4")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20075,12 +19514,6 @@
 		(path "/0b1cd861-3b5f-5c35-a2b7-a08f8d4b4f5d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20253,12 +19686,6 @@
 		(path "/4aba001b-a53b-500c-b43b-1ba4a52db435")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20417,12 +19844,6 @@
 		(path "/167a72a6-de51-55b4-80d0-0266bcd14ff9")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20513,7 +19934,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "f0fb1fc3-3d76-4eeb-b2ab-77861c276af9")
-		(at 45.5 60.5 90)
+		(at 45.5 61.5 90)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R5"
@@ -20595,12 +20016,6 @@
 		(path "/d61a2d32-30c0-5b22-83d3-4d772a489830")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20759,12 +20174,6 @@
 		(path "/dc225086-ef64-5db2-a2c5-3e710552e729")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20923,12 +20332,6 @@
 		(path "/ff995e20-b5cc-53a5-8dc5-81550aa45f53")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -21087,12 +20490,6 @@
 		(path "/0f08fdee-0ae6-5eca-ad35-434dc77e2673")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -21270,12 +20667,6 @@
 		(path "/09f63d49-2406-5708-b9ea-4916515afaaa")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -21496,7 +20887,7 @@
 	(footprint "TestPoint:TestPoint_Pad_D1.5mm"
 		(layer "B.Cu")
 		(uuid "f4ab4118-2706-4ce1-b612-a17b66a07b75")
-		(at 41.5 60.5)
+		(at 41.5 61.5)
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP2"
@@ -21555,12 +20946,6 @@
 		(path "/12775b04-e65c-5606-9630-d4253407ec61")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1")
-			)
-		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -21614,7 +20999,7 @@
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C1"
-			(at 1.25 4.4 90)
+			(at 1.25 4.4 180)
 			(layer "B.SilkS")
 			(uuid "5f7c3518-82c7-46df-86a5-f9e4546e4df3")
 			(effects
@@ -21678,12 +21063,6 @@
 		(path "/7a6684fa-9f0c-5819-b66d-4e3c7fa83dd2")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -23216,12 +22595,6 @@
 		(path "/a8e987a4-9345-5098-a8db-83877e131e81")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -23394,12 +22767,6 @@
 		(path "/71a7cc7c-f714-5377-a109-7f79741698ab")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -23687,12 +23054,6 @@
 		(path "/dfa705af-6322-5742-9f1f-c3bc5c648a94")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
-		(units
-			(unit
-				(name "A")
-				(pins "1" "2")
-			)
-		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -23821,26 +23182,6 @@
 		(uuid "e35b7edc-0b2c-4377-adea-787a3c268e76")
 	)
 	(gr_line
-		(start 93 75)
-		(end 99 75)
-		(stroke
-			(width 0.2)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "f7567790-0851-4a80-91b4-849d79222d16")
-	)
-	(gr_line
-		(start 96 72)
-		(end 96 78)
-		(stroke
-			(width 0.2)
-			(type default)
-		)
-		(layer "F.SilkS")
-		(uuid "96d2304e-a7fb-4706-80a2-8985a78e77fd")
-	)
-	(gr_line
 		(start 107 31.5)
 		(end 113 31.5)
 		(stroke
@@ -23931,16 +23272,6 @@
 		(uuid "1ec320f1-f0e4-419e-9c29-34aa79a327da")
 	)
 	(gr_line
-		(start 92 75)
-		(end 100 75)
-		(stroke
-			(width 0.25)
-			(type default)
-		)
-		(layer "B.SilkS")
-		(uuid "8ff57410-1454-4be2-81fd-e27f305a256e")
-	)
-	(gr_line
 		(start 93.741666 77.86)
 		(end 99.741666 77.86)
 		(stroke
@@ -23949,16 +23280,6 @@
 		)
 		(layer "B.SilkS")
 		(uuid "e83b3609-a14d-4cc0-808f-4195c59b10b5")
-	)
-	(gr_line
-		(start 96 71)
-		(end 96 79)
-		(stroke
-			(width 0.25)
-			(type default)
-		)
-		(layer "B.SilkS")
-		(uuid "afd0733c-42c0-48f9-aad5-1248f3caba39")
 	)
 	(gr_line
 		(start 96.741666 74.86)
@@ -24200,7 +23521,7 @@
 		)
 	)
 	(gr_text "D5"
-		(at 82 36.5 0)
+		(at 77.5 31.5 0)
 		(layer "B.SilkS")
 		(uuid "ba3d47de-48f9-4463-a991-e16270ab83c4")
 		(effects

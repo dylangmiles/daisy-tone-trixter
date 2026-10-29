@@ -58,10 +58,14 @@ def _poly(pts, stroke='#06c', dash='3 2', sw=0.4):
 def _txt(x, y, s, cls='lbl', anchor='middle'):
     return f'<text x="{x:.2f}" y="{y:.2f}" class="{cls}" text-anchor="{anchor}">{s}</text>\n'
 def _vtxt(x, y, s, cls='lbl', anchor='middle'):
-    # vertically-flipped text: drawn upside-down on the flat sheet so it reads UPRIGHT once the rear
-    # flap is folded down over the back wall (the fold is a vertical mirror about the hinge).
+    # 180deg-rotated text: drawn rotated on the flat sheet so it reads UPRIGHT AND FORWARD once the rear
+    # flap is folded down over the back wall AND viewed from behind the pedal. That round trip is TWO
+    # flips -- the fold flips it vertically, viewing the ink from behind flips it horizontally -- i.e. a
+    # 180deg rotation, so the flat sheet must pre-rotate 180deg to cancel it (a vertical-only flip left
+    # the text mirrored L-R after folding). The anchor stays at the hole's X, so the label travels WITH
+    # its hole (holes themselves stay at true X -> they still drill correctly by wrapping the flap).
     return (f'<text x="{x:.2f}" y="{y:.2f}" class="{cls}" text-anchor="{anchor}" '
-            f'transform="matrix(1,0,0,-1,0,{2*y:.2f})">{s}</text>\n')
+            f'transform="matrix(-1,0,0,-1,{2*x:.2f},{2*y:.2f})">{s}</text>\n')
 
 # ---- vertical layout (mm, top of page downward) ----------------------------------------------
 # Box NET. Each WALL is a fold-DOWN panel built the same way, from the top face outward:
@@ -172,13 +176,17 @@ for ref, label, xc, size, kind, z in e.REAR:
     s += _line(TX(xc), hy, TX(xc), oy, stroke='#bbb', dash='2 2', sw=0.2)   # vertical projection
     # label on the FOLD side of the hole (hy + ...), vertically flipped so that once the panel is
     # folded over the back the label sits ABOVE its jack and reads upright (box normal, lid down).
-    if kind == "usb":
+    if kind == "usb":            # legacy rectangular direct-port slot (unused since 2026-10-29)
         w, h = size
         s += _rect(TX(xc) - w/2, hy - h/2, w, h, sw=0.4)
         s += _vtxt(TX(xc), hy + h/2 + 2.5, f"{label} {w:g}x{h:g}", 'dim')
     else:
         s += _circ(TX(xc), hy, size) + _cross(TX(xc), hy)
-        s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
+        if kind == "usbc":       # panel USB-C: dashed ghost = finished bezel OD (keep-clear vs neighbours)
+            s += _circ(TX(xc), hy, e.USB_BEZEL_OD, stroke='#111', dash='1 1')
+            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g} (bezel O{e.USB_BEZEL_OD:g})", 'dim')
+        else:
+            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
 
 # ============================================================ FRONT WALL panel (fold-down, below) =
 # Same net as the rear, folding over the FRONT edge (no holes -- a registration/wrap panel).

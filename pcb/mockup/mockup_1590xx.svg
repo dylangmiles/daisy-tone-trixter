@@ -50,30 +50,33 @@
 <text x="81.00" y="33.00" class="dim" text-anchor="middle">LID SEAM (z=0, cavity floor) -- lid is below, not drawn</text>
 <text x="13.00" y="27.00" class="dim" text-anchor="start">← box LEFT wall (player's L)</text>
 <text x="149.00" y="27.00" class="dim" text-anchor="end">box RIGHT wall (player's R) →</text>
-<text x="81.00" y="29.50" class="dim" text-anchor="middle">jack axes: TRS 10.8 / USB 16 mm up from the lid seam</text>
-<line x1="36.20" y1="44.80" x2="36.20" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="36.20" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="34.20" y1="44.80" x2="38.20" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="36.20" y1="42.80" x2="36.20" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="36.20" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">OUT O10</text>
+<text x="81.00" y="29.50" class="dim" text-anchor="middle">jack axes: TRS 9.31 / USB 16 mm up from the lid seam</text>
+<line x1="36.20" y1="43.31" x2="36.20" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="36.20" cy="43.31" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="34.20" y1="43.31" x2="38.20" y2="43.31" stroke="#111" stroke-width="0.2"/>
+<line x1="36.20" y1="41.31" x2="36.20" y2="45.31" stroke="#111" stroke-width="0.2"/>
+<text x="36.20" y="50.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,72.40,101.62)">OUT O10</text>
 <line x1="58.00" y1="50.00" x2="58.00" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<rect x="51.50" y="46.00" width="13.00" height="8.00" fill="none" stroke="#111" stroke-width="0.4"/>
-<text x="58.00" y="56.50" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,113.00)">USB 13x8</text>
-<line x1="76.00" y1="44.80" x2="76.00" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="76.00" cy="44.80" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="74.00" y1="44.80" x2="78.00" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="76.00" y1="42.80" x2="76.00" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="76.00" y="53.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,106.60)">DC O12</text>
-<line x1="102.30" y1="44.80" x2="102.30" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="102.30" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="100.30" y1="44.80" x2="104.30" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="102.30" y1="42.80" x2="102.30" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="102.30" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">IN B O10</text>
-<line x1="125.80" y1="44.80" x2="125.80" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="125.80" cy="44.80" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="123.80" y1="44.80" x2="127.80" y2="44.80" stroke="#111" stroke-width="0.2"/>
-<line x1="125.80" y1="42.80" x2="125.80" y2="46.80" stroke="#111" stroke-width="0.2"/>
-<text x="125.80" y="52.30" class="dim" text-anchor="middle" transform="matrix(1,0,0,-1,0,104.60)">IN A O10</text>
+<circle cx="58.00" cy="50.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="56.00" y1="50.00" x2="60.00" y2="50.00" stroke="#111" stroke-width="0.2"/>
+<line x1="58.00" y1="48.00" x2="58.00" y2="52.00" stroke="#111" stroke-width="0.2"/>
+<circle cx="58.00" cy="50.00" r="6.95" fill="none" stroke="#111" stroke-width="0.3" stroke-dasharray="1 1"/>
+<text x="58.00" y="58.50" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,116.00,117.00)">USB O12 (bezel O13.9)</text>
+<line x1="76.00" y1="43.31" x2="76.00" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="76.00" cy="43.31" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="74.00" y1="43.31" x2="78.00" y2="43.31" stroke="#111" stroke-width="0.2"/>
+<line x1="76.00" y1="41.31" x2="76.00" y2="45.31" stroke="#111" stroke-width="0.2"/>
+<text x="76.00" y="51.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,152.00,103.62)">DC O12</text>
+<line x1="102.30" y1="43.31" x2="102.30" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="102.30" cy="43.31" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="100.30" y1="43.31" x2="104.30" y2="43.31" stroke="#111" stroke-width="0.2"/>
+<line x1="102.30" y1="41.31" x2="102.30" y2="45.31" stroke="#111" stroke-width="0.2"/>
+<text x="102.30" y="50.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,204.60,101.62)">IN B O10</text>
+<line x1="125.80" y1="43.31" x2="125.80" y2="71.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="125.80" cy="43.31" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="123.80" y1="43.31" x2="127.80" y2="43.31" stroke="#111" stroke-width="0.2"/>
+<line x1="125.80" y1="41.31" x2="125.80" y2="45.31" stroke="#111" stroke-width="0.2"/>
+<text x="125.80" y="50.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,251.60,101.62)">IN A O10</text>
 <text x="81.00" y="187.33" class="fold" text-anchor="middle">FOLD DOWN -- outer top-front edge -- panel wraps the front wall</text>
 <rect x="12.00" y="188.33" width="138.00" height="2.33" fill="none" stroke="#999" stroke-width="0.3"/>
 <text x="149.00" y="190.06" class="dim" text-anchor="end">top-face edge 2.33</text>

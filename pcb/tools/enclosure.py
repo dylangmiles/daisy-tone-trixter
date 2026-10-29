@@ -57,8 +57,17 @@ def to_board(x, y):
 #   and J6 is a 1x4 I2C header on the board linked by a short flat cable. So the window is placed on
 #   the top face in its own right; the old header->window offset no longer applies.
 OLED_CTR    = (69.0, 88.0)                    # OLED window centre on the top face (free placement)
-OLED_W, OLED_H = 33.0, 17.0                   # window CUT = black glass 34.44 x 18.66 minus a ~0.7 mm
-                                              #   retaining lip; active area 29.42 x 14.7 shows through
+OLED_W, OLED_H = 33.0, 17.0                   # window CUT -- sits BETWEEN the active area (shows through) and the
+                                              #   flat black "nice" glass (lip all round):
+                                              #   active 29.42 x 14.7  <  WINDOW 33 x 17  <  nice glass 35.58 x 18.66
+                                              #   -> ~1.8/1.2 mm black border over active; ~1.3/0.8 mm lip onto glass.
+# ⚠ OLED mechanicals MEASURED off the CURRENT 7-PIN SPI module 2026-10-29 (re-verify on the 4-pin I2C build part;
+#   glass + active transfer, but perf size / header offsets / thickness will differ):
+#   module(perf) 35.58w x 33.61h (datasheet rounds to 36x34); whole glass 35.58 x 22.93; flat black "nice" viewable
+#   glass 35.58 x 18.66; active area 29.42 x 14.7 (STD 1.3in SH1106 -- NOT on the Joy-IT/SH1106 sheets, confirm later).
+#   perf-top->glass-top 5.2; perf-top->hdr-row-ctr 2.0; side->nearest hdr-pin-ctr 10.16 (7-pin hdr; 4-pin differs).
+#   DEPTH: glass 1.83 proud of perf-top; module 3.10 thick (4.12 incl. lowest discrete) -> clears the 8.24 mm
+#   board->top-face gap (STANDOFF) with room. PCB ghost keep-clear 36x34 still covers the measured module.
 OLED_HEADER = (69.0, 67.0)                    # J6 1x4 header, just FWD of the window (cable folds flat
                                               #   rearward to the screen). ⚠ board is source of truth.
 OLED_HDR_W, OLED_HDR_H = 10.0, 2.6            # 1x4 right-angle header strip (4 x 2.54), for the ghost
@@ -74,11 +83,23 @@ LED_DIA    = 3.0
 
 # Rear-wall holes, LEFT -> RIGHT: OUT, USB, DC, IN B, IN A  -- INPUT on the RIGHT.
 JACK_Y   = 102.9        # enclosure depth where the board-mounted jack bodies sit (barrel reaches wall)
-JACK_Z   = 10.8         # barrel axis above the base (bottom-mount)
-USB_Z    = 16.0         # Seed USB-C height above base -- ⚠ CONFIRM from the Daisy mount (side elevation)
+JACK_Z   = 9.31         # barrel axis above the base (bottom-mount). MEASURED 2026-10-29: K3599 barrel
+                        #   centre to board plane = 13.85 below the board bottom (Z_BRD_BOT 23.16) -> 9.31.
+                        #   (Was 10.8; 13.85 supersedes the earlier inferred 13.9 and the stale 12.39.)
+# USB is now a PANEL-MOUNT extension (Micro Robotics PAN-USBCC), NOT the Seed's own port (decided 2026-10-29):
+#   the Seed sits crosswise on the board UNDERSIDE with its USB-C facing player-LEFT; a 150 mm flexible lead
+#   loops from that port to this nut-mount USB-C socket on the rear wall. So this hole is a free choice on the
+#   panel; it stays at the old x=46 (builder's call -- "exit where the existing USB exits"). Mechanicals
+#   (PAN-USBCC datasheet): drilled hole O12.0, front bezel O13.9 x 1.8 proud, barrel O11.6 x 16.9 deep behind
+#   the wall + locking nut (A/F ~14). Lead: 6x AWG22, USB 2.0 + CC -> DFU + PD both work.
+USB_BEZEL_OD = 13.9     # finished outer bezel (keep-clear vs neighbours); the DRILLED hole is 12.0
+USB_Z    = 16.0         # panel-hole centre above base -- sits just UNDER the board (board top 24.76, bottom
+                        #   23.16; barrel O11.6 tops out ~21.8) so the 16.9 mm barrel runs in the under-board
+                        #   space between the hanging jack barrels, rearward of the Seed (Y<=95). ~1.4 mm under
+                        #   the PCB -- revisit if the board height drops. Bezels clear OUT (22.4) + DC (18.7).
 REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
     ("J2",  "OUT",  24.2,  10.0,        "trs", JACK_Z),
-    (None,  "USB",  46.0,  (13.0, 8.0), "usb", USB_Z),   # Seed's own USB-C, DIRECT through the rear wall
+    (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead
     ("J3",  "DC",   64.0,  12.0,        "dc",  JACK_Z),  # panel jack + flying lead -- x is a design choice
     ("J8",  "IN B", 90.3,  10.0,        "trs", JACK_Z),   # IN B inner
     ("J1",  "IN A", 113.8, 10.0,        "trs", JACK_Z),   # IN A outermost-right (primary guitar input)
