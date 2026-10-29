@@ -234,16 +234,22 @@ S.text("USB: the Seed's own USB-C port via the panel extender — no board conne
 
 # ================================================================ 3. FRONT END — Fig 3.3 with rev D Vref
 VREF_BIAS_TAPS = []   # 1 M VREF bias tap per channel → local VREF bypass cap, placed at the END (2026-10-21)
-def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None):
-    """One channel of the Seed3 Fig 3.3 instrument input. y0 in grid units. Returns nothing; draws."""
+def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None, make_jack=True):
+    """One channel of the Seed3 Fig 3.3 instrument input. y0 in grid units. Returns nothing; draws.
+       make_jack=False: no jack drawn here — the chain input is fed externally through the `in_net`
+       label (CH B: the combo jack in the XLR/mic block drives IN2_TIP; its 1/4in switch selects
+       stomp-box piezo vs mic-preamp, 2026-10-29)."""
     x = 4
     jack_fp = jack_fp or FP["JST3"]
     S.text(f"FRONT END CH {chan} — Seed3 Fig 3.3 (RF stopper · unity follower · pole+pad · inverting unity · 100R+33n), Vref = rev D 2.7 V. Rin 1 M (K&K 24.5 nF → 6.5 Hz).", g(x, y0 - 3), 1.8)
-    j = S.add(Sym("Connector", "Conn_01x03_Pin", jack_ref, f"IN{chan} jack lead", g(x + 2, y0 + 2), 0, footprint=jack_fp, fields={"Note": jack_note}))
-    # pins: 1 tip, 2 ring, 3 sleeve
-    tip = j.pin(1); ring = j.pin(2); slv = j.pin(3)
-    S.wire(slv, (slv[0] + G, slv[1])); gnd((slv[0] + G, slv[1]), "GNDA")
-    S.wire(ring, (ring[0] + G, ring[1])); S.noconnect((ring[0] + G, ring[1]))    # ring link is AT THE JACK (pinmap §4e)
+    if make_jack:
+        j = S.add(Sym("Connector", "Conn_01x03_Pin", jack_ref, f"IN{chan} jack lead", g(x + 2, y0 + 2), 0, footprint=jack_fp, fields={"Note": jack_note}))
+        # pins: 1 tip, 2 ring, 3 sleeve
+        tip = j.pin(1); ring = j.pin(2); slv = j.pin(3)
+        S.wire(slv, (slv[0] + G, slv[1])); gnd((slv[0] + G, slv[1]), "GNDA")
+        S.wire(ring, (ring[0] + G, ring[1])); S.noconnect((ring[0] + G, ring[1]))    # ring link is AT THE JACK (pinmap §4e)
+    else:
+        tip = g(x + 4, y0 + 2)   # synthetic chain-input node; fed by the combo jack elsewhere via the in_net label
     S.glabel(in_net, tip, 0)
     tp(in_net, (tip[0] + 2*G, tip[1] - 2*G)); S.wire(tip, (tip[0] + 2*G, tip[1])); S.wire((tip[0] + 2*G, tip[1]), (tip[0] + 2*G, tip[1] - 2*G)); S.junction((tip[0] + 2*G, tip[1]))   # T: tip→cap passes through here, so the TP stub needs a junction
     # chain along y = yc
@@ -310,7 +316,8 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     S.text("Second stage inverts → firmware flips the sign (brief §3.1).", g(x + 62, y0 + 2), 1.2)
 
 front_end("A", 86, "U1", "J1", "IN jack, K3599 board-mount TRS switched, bottom-mounted. pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN1_TIP", "AIN1", jack_fp=FP["K3599"])
-front_end("B", 112, "U2", "J8", "IN B jack, K3599 board-mount TRS switched, bottom-mounted (DRILLED in v1 — second high-Z instrument input, brief §3.2). pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN2_TIP", "AIN2", jack_fp=FP["K3599"])
+# CH B input jack is the COMBO jack (XLR mic + 1/4in), created in the XLR/mic block below — it drives IN2_TIP.
+front_end("B", 112, "U2", "J8", "IN B — fed by the combo jack (XLR mic OR 1/4in stomp-box/instrument) via IN2_TIP; see XLR block", "IN2_TIP", "AIN2", make_jack=False)
 
 # ================================================================ 4. VREF + OUTPUT (Fig 3.6)
 y0 = 138; x = 4
@@ -530,6 +537,90 @@ j_hp = S.add(Sym("Connector", "Conn_01x03_Pin", "J11", "HP 3.5mm jack lead", g(1
 S.wire(j_hp.pin(1), (j_hp.pin(1)[0] - G, j_hp.pin(1)[1])); S.glabel("HP_L", (j_hp.pin(1)[0] - G, j_hp.pin(1)[1]), 180)
 S.wire(j_hp.pin(2), (j_hp.pin(2)[0] - G, j_hp.pin(2)[1])); S.glabel("HP_R", (j_hp.pin(2)[0] - G, j_hp.pin(2)[1]), 180)
 S.wire(j_hp.pin(3), (j_hp.pin(3)[0] - G, j_hp.pin(3)[1])); gnd((j_hp.pin(3)[0] - G, j_hp.pin(3)[1]), "GNDD")
+
+# ================================================================ XLR MIC FRONT-END + 48 V PHANTOM (2026-10-29)
+# CH2 combo input: XLR mic (dynamic/condenser) OR 1/4in stomp-box/instrument, one at a time via the combo's
+# 1/4in normalling switch. INA163 low-noise mic in-amp (single-supply off VIN, mid-rail bias) → IN2_TIP (the
+# CH B chain input, make_jack=False). LM2577 boost makes 48 V phantom, gated by a GPIO P-FET (firmware enable).
+# Fixed gain + DSP. Full spec: private/docs/daisy_xlr_mic_frontend_2026-10-29.md. Created LAST (refs/UUIDs after).
+FP["INA163"] = "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm"
+FP["LM2577"] = "Package_TO_SOT_SMD:TO-263-5_TabPin3"                        # ⚠ TO-263; place in a corner, 48 V node clearance
+FP["COMBO"]  = "Connector_Audio:Jack_Combo_Neutrik_NCJ9FI-H_Horizontal"    # ⚠ confirm exact combo part/footprint at layout
+FP["SOT23"]  = "Package_TO_SOT_SMD:SOT-23"
+FP["SOD123"] = "Diode_SMD:D_SOD-123"
+FP["IND"]    = "Inductor_SMD:L_12x12mm_H8mm"                                # ⚠ size to ~100 uH at the boost's light load
+custom_ic("INA163", "INA163UA", [
+    ("5", "VIN+", "L", "input"), ("4", "VIN-", "L", "input"), ("3", "GS1", "L", "passive"), ("6", "V-", "L", "power_in"),
+    ("9", "VO", "R", "output"), ("8", "Sense", "R", "passive"), ("10", "Ref", "R", "input"), ("12", "GS2", "R", "passive"), ("11", "V+", "R", "power_in"),
+])
+custom_ic("LM2577", "LM2577S-ADJ", [
+    ("5", "VIN", "L", "power_in"), ("3", "GND", "L", "power_in"), ("1", "COMP", "L", "passive"),
+    ("4", "VSW", "R", "output"), ("2", "FB", "R", "input"),
+])
+S.text("XLR MIC FRONT-END + 48 V PHANTOM — CH2 combo: XLR mic (INA163, G=1+6k/RG, RG=120R≈+34 dB fixed + DSP) OR 1/4\" stomp-box/instrument via the combo's normalling switch. LM2577 boost → 48 V phantom, GPIO P-FET enable (default OFF). Single-supply off VIN (best at 12 V).", g(6, 133), 1.6)
+def xg(sym, num, net, d='L', k='g'):
+    p = sym.pin(num); dd = {'L': (-G, 0), 'R': (G, 0), 'U': (0, -G), 'D': (0, G)}[d]
+    q = (round(p[0] + dd[0], 3), round(p[1] + dd[1], 3)); S.wire(p, q)
+    if k == 'g': S.glabel(net, q, 180 if d in ('L', 'U') else 0)
+    elif k == 'rail': rail(net, q)
+    elif k == 'gnd': gnd(q, net)
+def rc(kind, val, gx, gy, a, b, **f):
+    """passive at g(gx,gy) rot90 (pin1 left, pin2 right); a/b are (net) or ('gnd',net)/('rail',net)."""
+    s = (R if kind == 'R' else C)(val, g(gx, gy), 90, **f)
+    for pin, side, spec in (("1", 'L', a), ("2", 'R', b)):
+        if isinstance(spec, tuple): xg(s, pin, spec[1], side, spec[0])
+        else: xg(s, pin, spec, side)
+    return s
+# --- combo jack J8 (replaces the old K3599 CH2 jack; drives IN2_TIP) ---
+j_combo = S.add(Sym("Connector", "Conn_01x06_Pin", "J8", "Combo XLR+1/4in (CH2)", g(158, 98), 0, footprint=FP["COMBO"],
+    fields={"Note": "Neutrik-type combo, CH2: p1 XLR shield/GND · p2 XLR hot · p3 XLR cold · p4 1/4in TIP · p5 1/4in TIP-switch (normal) · p6 1/4in SLEEVE/GND. A 1/4in plug breaks p4↔p5 → selects the stomp-box piezo over the mic preamp. THT hand-soldered, panel-mount."}))
+for num, net in (("1", "GNDA"), ("2", "XLR_HOT"), ("3", "XLR_COLD"), ("4", "IN2_TIP"), ("5", "MIC_OUT"), ("6", "GNDA")):
+    if net == "GNDA": xg(j_combo, num, "GNDA", 'L', 'gnd')
+    else: xg(j_combo, num, net, 'L')
+# --- phantom feed (6k8 x2 matched, +48V → XLR 2/3) + DC-blocks (>=63 V) into the INA163 ---
+rc('R', "6k8", 186, 92, "P48V", "XLR_HOT", Note="phantom feed, matched 1% to its pair")
+rc('R', "6k8", 186, 98, "P48V", "XLR_COLD", Note="phantom feed, matched 1% to its pair")
+rc('C', "2u2", 172, 92, "XLR_HOT", "MIC_INP", fp="C1210", Note=">=63 V DC-block (blocks 48 V phantom off the INA163)")
+rc('C', "2u2", 172, 98, "XLR_COLD", "MIC_INN", fp="C1210", Note=">=63 V DC-block")
+rc('R', "2k2", 172, 106, "MIC_INP", "MIC_MID", Note="INA163 input bias/return to mid-rail (~2k2 = input Z/leg)")
+rc('R', "2k2", 186, 106, "MIC_INN", "MIC_MID", Note="INA163 input bias/return to mid-rail")
+# --- INA163 mic in-amp (U6) ---
+u_ina = S.add(Sym("TT", "INA163", "U6", "INA163UA", g(202, 100), 0, footprint=FP["INA163"],
+    fields={"LCSC": "C962542", "Note": "low-noise mic in-amp, 1 nV/sqrtHz, G=1+6k/RG; single-supply off VIN, Ref at mid-rail; Sense tied to VO; pins 1,2,7,13,14 NC"}))
+xg(u_ina, "5", "MIC_INP", 'L'); xg(u_ina, "4", "MIC_INN", 'L'); xg(u_ina, "3", "MIC_RG_A", 'L'); xg(u_ina, "6", "GNDA", 'L', 'gnd')
+xg(u_ina, "9", "MIC_VO", 'R'); xg(u_ina, "8", "MIC_VO", 'R'); xg(u_ina, "10", "MIC_MID", 'R'); xg(u_ina, "12", "MIC_RG_B", 'R'); xg(u_ina, "11", "VIN", 'R', 'rail')
+rc('R', "120R", 172, 114, "MIC_RG_A", "MIC_RG_B", Note="gain set: G=1+6k/120=51 (+34 dB); tune for mic headroom, DSP does fine gain")
+rc('C', "4u7", 172, 122, "MIC_VO", "MIC_OUT", fp="C1210", Note="INA163 output AC-couple to the combo switch → IN2_TIP (piezo-level)")
+rc('C', "100n", 186, 122, "VIN", ('gnd', "GNDA"), Note="INA163 V+ bypass, at the pins")
+rc('R', "1M", 202, 120, "IN2_TIP", ('gnd', "GNDA"), Note="IN2_TIP DC reference (combo/piezo float); bleeds plug pops")
+# mid-rail = VIN/2, bypassed (low-Z at audio for the INA163 Ref/CMRR)
+rc('R', "10k", 158, 112, ('rail', "VIN"), "MIC_MID", Note="mid-rail divider top")
+rc('R', "10k", 158, 118, "MIC_MID", ('gnd', "GNDA"), Note="mid-rail divider bottom")
+rc('C', "10u", 158, 124, "MIC_MID", ('gnd', "GNDA"), fp="C1210", polar=True, Note="mid-rail bypass (low-Z for Ref/CMRR); buffered op-amp is the quality upgrade")
+# --- 48 V phantom boost (LM2577, U7) ---
+u_bst = S.add(Sym("TT", "LM2577", "U7", "LM2577S-ADJ", g(190, 146), 0, footprint=FP["LM2577"],
+    fields={"LCSC": "C5122561", "Note": "boost 9-12 V→48 V phantom; Vout=1.23*(1+Rfb1/Rfb2); input gated by Q_ph (phantom enable). 52 kHz — keep the loop small, filter the 48 V, away from the mic."}))
+xg(u_bst, "5", "BST_IN", 'L'); xg(u_bst, "3", "GNDD", 'L', 'gnd'); xg(u_bst, "1", "BST_COMP", 'L')
+xg(u_bst, "4", "BST_SW", 'R'); xg(u_bst, "2", "BST_FB", 'R')
+L1 = S.add(Sym("Device", "L", ref("L"), "100u", g(188, 136), 90, footprint=FP["IND"], fields={"Note": "boost inductor; size at ~10 mA load"}))
+xg(L1, "1", "BST_IN", 'L'); xg(L1, "2", "BST_SW", 'R')
+Db = S.add(Sym("Device", "D_Schottky", ref("D"), "SS26", g(204, 140), 90, footprint=FP["SOD123"], fields={"Note": ">=60 V Schottky (48 V out); pin1 K pin2 A"}))
+xg(Db, "2", "BST_SW", 'L'); xg(Db, "1", "P48V", 'R')          # A(2)←SW, K(1)→+48V
+rc('C', "4u7", 216, 140, "P48V", ('gnd', "GNDD"), fp="C1210", Note=">=63 V boost output cap (48 V)")
+rc('R', "39k", 216, 148, "P48V", "BST_FB", Note="FB divider top (sets 48 V with the 1k)")
+rc('R', "1k", 216, 156, "BST_FB", ('gnd', "GNDD"), Note="FB divider bottom; Vout=1.23*(1+39k/1k)=49 V")
+rc('R', "2k2", 204, 152, "BST_COMP", "BST_COMPC", Note="LM2577 loop comp (verify per datasheet)")
+rc('C', "470n", 204, 158, "BST_COMPC", ('gnd', "GNDD"), Note="LM2577 loop comp cap")
+# phantom enable: P-FET high-side switch on the boost input, level-shifted from the PH_EN GPIO
+q_ph = S.add(Sym("Transistor_FET", "Q_PMOS_GSD", ref("Q"), "AO3401", g(160, 140), 0, footprint=FP["SOT23"], fields={"Note": "phantom enable P-FET; S=VIN D=boost-in; off (pulled up) by default"}))
+xg(q_ph, "2", "VIN", 'D', 'rail'); xg(q_ph, "3", "BST_IN", 'U'); xg(q_ph, "1", "BST_GATE", 'L')
+rc('R', "100k", 172, 138, "BST_GATE", ('rail', "VIN"), Note="P-FET gate pull-up = default OFF")
+rc('C', "100n", 172, 144, "BST_GATE", ('rail', "VIN"), Note="soft-start (slows 48 V turn-on)")
+q_en = S.add(Sym("Transistor_FET", "Q_NMOS_GSD", ref("Q"), "2N7002", g(160, 154), 0, footprint=FP["SOT23"], fields={"Note": "level-shift: PH_EN high → pulls the P-FET gate low → boost ON"}))
+xg(q_en, "3", "BST_GATE", 'U'); xg(q_en, "2", "GNDD", 'D', 'gnd'); xg(q_en, "1", "PH_EN_G", 'L')
+rc('R', "1k", 172, 154, "PH_EN", "PH_EN_G", Note="GPIO gate series")
+rc('R', "100k", 172, 160, "PH_EN_G", ('gnd', "GNDD"), Note="gate pulldown = OFF at boot/float")
+seed_net(33, "PH_EN")   # D26 / PD11 — phantom enable GPIO (firmware; default drive LOW = phantom off)
 
 # ---------------------------------------------------------------- write
 # --- project files: TT symbol library, sym-lib-table, .kicad_pro (created once, never overwritten)
