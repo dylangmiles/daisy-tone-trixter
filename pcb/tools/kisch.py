@@ -156,6 +156,14 @@ class Sch:
             just = "left" if rot in (0, 90) else "right"
             out.append(f'  (global_label "{name}" (shape {shape}) (at {at[0]} {at[1]} {rot}) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify {just})) (uuid "{U()}")\n'
                        f'    (property "Intersheetrefs" "${{INTERSHEET_REFS}}" (at {at[0]} {at[1]} 0) (effects (font (size 1.27 1.27)) (hide yes)))\n  )\n')
+        # number anonymous power refs (#PWR -> #PWR01, ...) deterministically, so eeschema needs no
+        # manual "Annotate" pass after a regenerate. Does not touch UUIDs (assigned at creation).
+        _pctr = {}
+        for s in self.syms:
+            base = s.ref
+            if base.startswith("#"):
+                _pctr[base] = _pctr.get(base, 0) + 1
+                s.ref = f"{base}{_pctr[base]:02d}"
         for s in self.syms: out.append(self._sym_sexp(s))
         out.append('  (sheet_instances (path "/" (page "1")))\n)\n')
         open(path, "w").write("".join(out))

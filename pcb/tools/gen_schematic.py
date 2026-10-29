@@ -32,7 +32,7 @@ FP = {
     "JST2":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "JST3":  "Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical",
     "K3599": "TT:K3599_TRS_6leg",   # ✅ board-mount TRS jack, measured off the part 2026-10-10 (IN A, IN B, OUT)
-    "HDR7":  "Connector_PinSocket_2.54mm:PinSocket_1x07_P2.54mm_Vertical",
+    "HDR4":  "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Horizontal",
     "HDR20": "Connector_PinSocket_2.54mm:PinSocket_1x20_P2.54mm_Vertical",
     "DAISY": "Module:Electrosmith_Daisy_Seed",   # 2×20, 40 pads -- the real Seed footprint (not 1×20!)
     "ENC":   "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles",
@@ -351,7 +351,7 @@ for i, u in enumerate(("U1", "U2", "U3")):
 X = 100
 # --- I2C OLED
 y = 24
-S.text("OLED 1.3\" SH1106 I²C module on a 7-pin socket. DC + CS hard to GND → 0x3C (board.h). 33R series at the Seed, 4k7 pull-ups at the header (brief §3.6).", g(X, y - 3), 1.8)
+S.text("OLED 1.3\" SH1106 I²C module, 4-pin (GND/VCC/SCL/SDA) → 0x3C (board.h). 33R series at the Seed, 4k7 pull-ups at the header (brief §3.6). RES onboard self-reset, D13 a no-op.", g(X, y - 3), 1.8)
 r_scl = R("33R", g(X + 4, y + 2), 90); r_sda = R("33R", g(X + 4, y + 5), 90)
 S.glabel("SCL_U", min(r_scl.pin(1), r_scl.pin(2)), 180); S.glabel("SDA_U", min(r_sda.pin(1), r_sda.pin(2)), 180)
 scl = max(r_scl.pin(1), r_scl.pin(2)); sda = max(r_sda.pin(1), r_sda.pin(2))
@@ -359,16 +359,14 @@ pu1 = R("4k7", (scl[0] + 2*G, scl[1] - 4*G), 0); pu2 = R("4k7", (scl[0] + 4*G, s
 S.wire(scl, (pu1.pin(2)[0], scl[1])); S.wire((pu1.pin(2)[0], scl[1]), pu1.pin(2)); S.junction((pu1.pin(2)[0], scl[1]))
 S.wire(sda, (pu2.pin(2)[0], sda[1])); S.wire((pu2.pin(2)[0], sda[1]), pu2.pin(2)); S.junction((pu2.pin(2)[0], sda[1]))
 S.wire(pu1.pin(1), (pu1.pin(1)[0], pu1.pin(1)[1] - G)); S.wire(pu2.pin(1), (pu2.pin(1)[0], pu2.pin(1)[1] - G)); S.wire((pu1.pin(1)[0], pu1.pin(1)[1] - G), (pu2.pin(1)[0], pu2.pin(1)[1] - G)); rail("+3V3D", (pu1.pin(1)[0], pu1.pin(1)[1] - G))
-j_oled = S.add(Sym("Connector", "Conn_01x07_Pin", "J6", "OLED 1.3\" 7-pin", (scl[0] + 12*G, scl[1] + 4*G), 180, footprint=FP["HDR7"],
-                   fields={"Note": "module pins: 1 GND · 2 VCC · 3 SCL(CLK) · 4 SDA(MOSI) · 5 RES · 6 DC · 7 CS"}))
+j_oled = S.add(Sym("Connector", "Conn_01x04_Pin", "J6", "OLED 1.3\" 4-pin I2C", (scl[0] + 12*G, scl[1] + 4*G), 180, footprint=FP["HDR4"],
+                   fields={"Note": "4-pin I2C module: 1 GND · 2 VCC · 3 SCL · 4 SDA (right-angle header, cable to top-face screen)"}))
 # rot 180: pins to the left; pin1 top? lib pin1 at y=+7.62 (top) → rot180 → sch y = at.y + 7.62 (bottom). fine, just wire by pin()
 S.wire(j_oled.pin(1), (j_oled.pin(1)[0] - G, j_oled.pin(1)[1])); gnd((j_oled.pin(1)[0] - G, j_oled.pin(1)[1]), "GNDD")
 S.wire(j_oled.pin(2), (j_oled.pin(2)[0] - G, j_oled.pin(2)[1])); rail("+3V3D", (j_oled.pin(2)[0] - G, j_oled.pin(2)[1]))
 S.wire((pu1.pin(2)[0], scl[1]), (pu1.pin(2)[0] + 3*G, scl[1])); S.wire((pu1.pin(2)[0] + 3*G, scl[1]), (pu1.pin(2)[0] + 3*G, j_oled.pin(3)[1])); S.wire((pu1.pin(2)[0] + 3*G, j_oled.pin(3)[1]), j_oled.pin(3))
 S.wire((pu2.pin(2)[0], sda[1]), (pu2.pin(2)[0] + 2*G, sda[1])); S.wire((pu2.pin(2)[0] + 2*G, sda[1]), (pu2.pin(2)[0] + 2*G, j_oled.pin(4)[1])); S.wire((pu2.pin(2)[0] + 2*G, j_oled.pin(4)[1]), j_oled.pin(4))
-S.wire(j_oled.pin(5), (j_oled.pin(5)[0] - 3*G, j_oled.pin(5)[1])); S.glabel("OLED_RES", (j_oled.pin(5)[0] - 3*G, j_oled.pin(5)[1]), 180)
-S.wire(j_oled.pin(6), (j_oled.pin(6)[0] - G, j_oled.pin(6)[1])); gnd((j_oled.pin(6)[0] - G, j_oled.pin(6)[1]), "GNDD")
-S.wire(j_oled.pin(7), (j_oled.pin(7)[0] - G, j_oled.pin(7)[1])); gnd((j_oled.pin(7)[0] - G, j_oled.pin(7)[1]), "GNDD")
+# 4-pin module has no RES/DC/CS pins — onboard self-reset; OLED_RES stays on U4.D13 only (a no-op).
 c_ol = C("100n", (j_oled.pin(2)[0] - 3*G, j_oled.pin(2)[1] + 3*G), 0)
 S.wire((j_oled.pin(2)[0] - G, j_oled.pin(2)[1]), (c_ol.pin(1)[0], j_oled.pin(2)[1])); S.wire((c_ol.pin(1)[0], j_oled.pin(2)[1]), c_ol.pin(1)); S.junction((j_oled.pin(2)[0] - G, j_oled.pin(2)[1])); gnd(c_ol.pin(2), "GNDD")
 

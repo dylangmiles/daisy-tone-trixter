@@ -213,9 +213,15 @@
 			)
 		)
 		(property ki_fp_filters "LED* LED_SMD:* LED_THT:*")
-		(path "/09ef74f1-c372-5812-aeab-8a472a851c25")
+		(path "/c00803a6-2435-5c23-a5b1-d81ec24651f0")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -394,7 +400,7 @@
 				)
 			)
 		)
-		(property "Value" "OLED I2C 1x4 (right-angle)"
+		(property "Value" "OLED 1.3\" 4-pin I2C"
 			(at 4.385 9.89 270)
 			(layer "F.Fab")
 			(uuid "813a301a-d02a-4d78-9ccb-2910986ed2ab")
@@ -437,6 +443,29 @@
 					(size 1 1)
 					(thickness 0.15)
 				)
+			)
+		)
+		(property "Note" "4-pin I2C module: 1 GND · 2 VCC · 3 SCL · 4 SDA (right-angle header, cable to top-face screen)"
+			(at 0 0 270)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b8575ba8-b371-4d14-b19f-91b93436c807")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property ki_fp_filters "Connector*:*_1x??_*")
+		(path "/88f55789-d208-5ba1-8945-8ce9a0289eff")
+		(sheetname "/")
+		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3" "4")
 			)
 		)
 		(attr through_hole)
@@ -1002,6 +1031,8 @@
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "GNDD")
+			(pinfunction "Pin_1_1")
+			(pintype "passive")
 			(uuid "fd137e1b-00ed-4540-9cef-8781652187f0")
 		)
 		(pad "2" thru_hole circle
@@ -1011,6 +1042,8 @@
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "+3V3D")
+			(pinfunction "Pin_2_2")
+			(pintype "passive")
 			(uuid "2893510b-5b89-4180-bd5c-0982f7a7578a")
 		)
 		(pad "3" thru_hole circle
@@ -1019,7 +1052,9 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(net "Net-(J6-Pin_3)")
+			(net "Net-(R23-Pad2)")
+			(pinfunction "Pin_3_3")
+			(pintype "passive")
 			(uuid "9ad5110a-b57a-4abe-8a04-ba5edf72363b")
 		)
 		(pad "4" thru_hole circle
@@ -1028,7 +1063,9 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(net "Net-(J6-Pin_4)")
+			(net "Net-(J6-Pin_3)")
+			(pinfunction "Pin_4_4")
+			(pintype "passive")
 			(uuid "a791476d-a914-4300-8566-6a03b050d56d")
 		)
 		(embedded_fonts no)
@@ -1107,9 +1144,15 @@
 			)
 		)
 		(property ki_fp_filters "LED* LED_SMD:* LED_THT:*")
-		(path "/cc3ca405-b3c0-5250-aebe-d8f16854f9a4")
+		(path "/a1369ff0-0ba9-5936-bcf7-c907a2beacad")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1339,9 +1382,15 @@
 			)
 		)
 		(property ki_fp_filters "RotaryEncoder*Switch*")
-		(path "/3e457321-b1a2-5a47-a6e5-0b5df4aad70e")
+		(path "/a0a3cf74-8174-5124-8ab2-4802998dfb4d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "A" "C" "B" "S1" "S2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1710,7 +1759,7 @@
 		(property "Reference" "R4"
 			(at 0 1.5 0)
 			(layer "B.SilkS")
-			(uuid "fe4834c8-2415-45eb-ba7f-611e67481250")
+			(uuid "dcfe9fd1-6862-44cb-a42d-b56df869fa7f")
 			(effects
 				(font
 					(size 1 1)
@@ -1722,7 +1771,7 @@
 		(property "Value" "3k3"
 			(at 0 -1.65 0)
 			(layer "B.Fab")
-			(uuid "92d47810-7a1a-4484-8b1a-ff9181e09991")
+			(uuid "b07bb860-fb53-4d88-9765-04f5fdce77fb")
 			(effects
 				(font
 					(size 1 1)
@@ -1735,7 +1784,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e7226f7e-81ac-4c93-bb90-0a40a08b8f98")
+			(uuid "9df238fd-01ed-43a2-843e-57e6f7e40ce5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1747,7 +1796,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f32813ff-1ffa-4d2e-8071-88a75a7e4e57")
+			(uuid "cfa8f46d-85a7-49b9-b1d2-6110b2a7bf61")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1772,6 +1821,12 @@
 		(path "/979fe04c-0662-5105-bba1-ec8ef99cf5dd")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1868,7 +1923,7 @@
 		(property "Reference" "R24"
 			(at 3.0875 0 90)
 			(layer "B.SilkS")
-			(uuid "631f9c6d-716a-46cd-940d-881d7a9e5ddb")
+			(uuid "54625d7e-2d1a-425c-9893-5b9a9d4ec29e")
 			(effects
 				(font
 					(size 1 1)
@@ -1880,7 +1935,7 @@
 		(property "Value" "33R"
 			(at -3.5 0 0)
 			(layer "B.Fab")
-			(uuid "ba90356c-db21-41fb-9a02-aa69e5ddf40c")
+			(uuid "5c19bd07-8027-4cb9-8e31-164c7736d9d9")
 			(effects
 				(font
 					(size 1 1)
@@ -1893,7 +1948,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "202d9d73-ae2b-4e8c-af64-f2361ba4d1bf")
+			(uuid "804bda15-451c-4825-8dba-c15bbf9ace14")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1905,7 +1960,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "42d18a0e-804b-4e6f-b208-f52efbb13c4f")
+			(uuid "2e475c14-615c-48a7-908a-84d2f389f4a5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1930,6 +1985,12 @@
 		(path "/960dc29f-f8cd-567c-ae5d-23cfd27c7646")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2000,7 +2061,7 @@
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
-			(net "Net-(J6-Pin_4)")
+			(net "Net-(J6-Pin_3)")
 			(pintype "passive")
 			(uuid "4330828e-64b3-4111-91b4-b6fb73f0d267")
 		)
@@ -2026,7 +2087,7 @@
 		(property "Reference" "D3"
 			(at -4 2.1375 0)
 			(layer "B.SilkS")
-			(uuid "bf47c0c7-9ac2-44b9-b792-58b797093120")
+			(uuid "27768934-a819-428a-98c4-c5b0e0d838ad")
 			(effects
 				(font
 					(size 1 1)
@@ -2038,7 +2099,7 @@
 		(property "Value" "SMAJ15A"
 			(at 0 -2.6 0)
 			(layer "B.Fab")
-			(uuid "31abeafa-8c68-4c13-9f12-cf1e9f6fb07c")
+			(uuid "cf0b65cc-8b9e-42e7-8547-fbb3ace4a92a")
 			(effects
 				(font
 					(size 1 1)
@@ -2052,7 +2113,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f4efc21d-4590-4aae-acc5-5755c884ad2a")
+			(uuid "01aee0df-b2e7-4aa0-9102-1097c6d517d1")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2066,7 +2127,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "60585e02-709c-4812-bb5e-4b1bec9d380e")
+			(uuid "604a10d4-bddb-409c-a719-8cb1859db404")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2093,6 +2154,12 @@
 		(path "/bab8630e-71c0-501a-a6d1-823c7ad63933")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2319,7 +2386,7 @@
 		(property "Reference" "C24"
 			(at 0 1.5 0)
 			(layer "B.SilkS")
-			(uuid "86281f0e-a473-4348-ba3b-9c5e72364e5b")
+			(uuid "e32686f3-402b-4913-ac7d-535775f81b9e")
 			(effects
 				(font
 					(size 1 1)
@@ -2331,7 +2398,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "1f99e3ad-ea7e-4db8-8986-e1c46d1369e1")
+			(uuid "2abf71a2-6373-4cdb-9054-d371f3d60879")
 			(effects
 				(font
 					(size 1 1)
@@ -2344,7 +2411,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "737157b5-eb73-46f4-b6b8-aed41cc34ab1")
+			(uuid "067f4d19-6891-4c1c-a241-9b4689eb4321")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2356,7 +2423,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "05dfdb21-34fe-42cc-a806-8c39e5903974")
+			(uuid "69faed40-2fb6-42f4-8ddc-262fd92291ad")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2381,6 +2448,12 @@
 		(path "/0415d931-d75e-538f-b966-3911452e2289")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2477,7 +2550,7 @@
 		(property "Reference" "R25"
 			(at -3.5 0 90)
 			(layer "B.SilkS")
-			(uuid "fa5485e6-7c68-4367-9add-f61ff06f8fd1")
+			(uuid "ff9e1ca2-a8c9-4cae-bfd9-ccbf142fa1a0")
 			(effects
 				(font
 					(size 1 1)
@@ -2489,7 +2562,7 @@
 		(property "Value" "4k7"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "5dee67f7-6c01-416e-9abe-dc4bc8bb95da")
+			(uuid "3f7161a7-8759-49ff-9af1-64ded0d4e712")
 			(effects
 				(font
 					(size 1 1)
@@ -2502,7 +2575,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "2e1ab4ac-1120-4073-942f-42c9d339c724")
+			(uuid "02a6c73f-1887-4e94-acbb-14b138db5a68")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2514,7 +2587,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8d776160-7ede-4f6e-a69b-f748dcbf4a7d")
+			(uuid "57adeb5f-9dea-44d3-9abc-d8b93517bc1a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2539,6 +2612,12 @@
 		(path "/1c92f983-b9c9-51c4-bdd2-da175c86bfc1")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2609,7 +2688,7 @@
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
-			(net "Net-(J6-Pin_3)")
+			(net "Net-(R23-Pad2)")
 			(pintype "passive")
 			(uuid "c1597d28-0086-4281-bddc-8e5ed4c96b79")
 		)
@@ -2635,7 +2714,7 @@
 		(property "Reference" "J8"
 			(at -7.275 15.36 0)
 			(layer "B.SilkS")
-			(uuid "4157f99f-5117-460e-a4da-a0a18074f63b")
+			(uuid "cc165f3a-d2e0-4911-86f2-d4694f4c3e3e")
 			(effects
 				(font
 					(size 1 1)
@@ -2647,7 +2726,7 @@
 		(property "Value" "INB jack lead"
 			(at 0 -19 0)
 			(layer "B.Fab")
-			(uuid "4cb9f6ff-cfcd-45e7-8e09-f03ea1698ea3")
+			(uuid "229de471-b54b-4d0b-94e6-646c3e1b3b87")
 			(effects
 				(font
 					(size 1 1)
@@ -2660,7 +2739,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d4a541ac-a7a8-4c7d-b85d-6e415e5d7c27")
+			(uuid "b79e67ac-f7a1-4a36-8a45-f346524ff028")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2672,7 +2751,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1e1f7af9-004a-4859-8389-6755556f7b0d")
+			(uuid "024335c4-aeb6-47da-acfe-ab3f2489c2f1")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2698,6 +2777,12 @@
 		(path "/40f0de89-4df1-5e52-a559-301b444915ec")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2943,7 +3028,7 @@
 		(property "Reference" "J1"
 			(at 12.225 7.36 0)
 			(layer "B.SilkS")
-			(uuid "2d17efd4-fa18-44a5-baf1-0189f7e5d436")
+			(uuid "b8fdaa70-657a-4902-8038-e2898dc474a0")
 			(effects
 				(font
 					(size 1 1)
@@ -2955,7 +3040,7 @@
 		(property "Value" "INA jack lead"
 			(at 0.5 -19 0)
 			(layer "B.Fab")
-			(uuid "dc6f6754-0e31-48fc-9858-5f5498de02c2")
+			(uuid "da5704f7-ed27-40db-bd00-3e7d1b1a23ca")
 			(effects
 				(font
 					(size 1 1)
@@ -2968,7 +3053,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "dfa0fea4-59bf-446d-82e3-2258abe9344c")
+			(uuid "3a47fd00-e0c3-4dba-a510-70a64ec7c317")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2980,7 +3065,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "12df440a-da9b-4c4a-bd3b-5ab268f17c9f")
+			(uuid "c49bc2bc-e4dc-493e-a0cd-e4228e9f6b71")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3006,6 +3091,12 @@
 		(path "/b131c22b-5820-51ae-b53c-f6d5fac45ba2")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3251,7 +3342,7 @@
 		(property "Reference" "TP1"
 			(at 0 1.648 180)
 			(layer "B.SilkS")
-			(uuid "ee825282-2974-42ea-80ca-b39a86084915")
+			(uuid "9c29d361-9de5-429e-bb9d-6c17c047b776")
 			(effects
 				(font
 					(size 1 1)
@@ -3263,7 +3354,7 @@
 		(property "Value" "IN1_TIP"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "a6e595ba-7e35-4a24-9744-8dbfa248766f")
+			(uuid "44cc94e5-0cd8-43f4-a2ae-9bbdb5f846a8")
 			(effects
 				(font
 					(size 1 1)
@@ -3277,7 +3368,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a9e02e75-c100-4e12-a44c-ca1da018a7eb")
+			(uuid "da3d0b16-c960-49df-a5c6-4faa9021b877")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3291,7 +3382,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0f6ae1cd-3cf3-40d3-9669-9b4b3ef04e68")
+			(uuid "186a833b-2f71-4f8a-a62d-177ce84e6d26")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3304,6 +3395,12 @@
 		(path "/26a072be-49e5-5118-9feb-36cd5d269f4f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -3359,7 +3456,7 @@
 		(property "Reference" "C20"
 			(at 3 0 90)
 			(layer "B.SilkS")
-			(uuid "90adeb17-ed8b-4978-b937-edc15678ab37")
+			(uuid "ec130906-f4a9-4581-9b9a-2c80e49f2aca")
 			(effects
 				(font
 					(size 1 1)
@@ -3371,7 +3468,7 @@
 		(property "Value" "100p"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "0ea3404a-9afb-4a9a-9321-820644a4d851")
+			(uuid "a42d0642-eee9-4b23-9235-5569975665e9")
 			(effects
 				(font
 					(size 1 1)
@@ -3384,7 +3481,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "52f862b4-0e85-4238-848d-0accd7199508")
+			(uuid "91b1a8c8-a3b1-497e-8d1d-2d210956a1bd")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3396,7 +3493,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5429c6ff-6e34-46d5-826b-97d2a9835299")
+			(uuid "c4631289-899f-457a-bfd6-a2be3059374f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3421,6 +3518,12 @@
 		(path "/28b71485-6b1a-5100-969b-7d8735ea2fc6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3517,7 +3620,7 @@
 		(property "Reference" "C3"
 			(at 2.8625 0 90)
 			(layer "B.SilkS")
-			(uuid "8bb5a56c-ceb0-4b20-93e8-ac5d1a8fd581")
+			(uuid "ce3d001d-0f91-4de4-918f-dc9f8976d487")
 			(effects
 				(font
 					(size 1 1)
@@ -3529,7 +3632,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "428de2a1-804f-40b2-824d-80123eedc62a")
+			(uuid "ab915a41-2b62-42d6-8a55-f9f9887f1c0b")
 			(effects
 				(font
 					(size 1 1)
@@ -3542,7 +3645,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "83103c09-2dc5-4d5a-8974-43317f41956b")
+			(uuid "0a441a3f-16e9-45f4-a16e-0d86d6b54eb4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3554,7 +3657,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8ca877ad-d678-4dc2-b85d-9b9c6335b62b")
+			(uuid "63a5c7e3-7a6a-40c0-8a57-0625a04b30f4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3579,6 +3682,12 @@
 		(path "/652ac793-92af-5aed-9f10-91de874ac55a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -3675,7 +3784,7 @@
 		(property "Reference" "U1"
 			(at 0 5.365 90)
 			(layer "B.SilkS")
-			(uuid "d67cdc7f-a853-4040-a2e2-11aa92947c41")
+			(uuid "c17491c7-c068-4a64-abd6-adfd879b3820")
 			(effects
 				(font
 					(size 1 1)
@@ -3687,7 +3796,7 @@
 		(property "Value" "OPA1642AIDR"
 			(at 0.422024 -3.595 90)
 			(layer "B.Fab")
-			(uuid "5edb1db9-a10b-410c-9650-1b21128bfe2c")
+			(uuid "bb57532b-6dba-418a-b960-6bb08554874f")
 			(effects
 				(font
 					(size 1 1)
@@ -3700,7 +3809,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7f10441c-e928-4c08-bd4a-c66998e68ad1")
+			(uuid "3c1b92f4-b7e8-4ac3-8b8b-8ae2cc5d27f3")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3712,7 +3821,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "bae049a3-912e-4c14-9ab7-d4cc17c3f790")
+			(uuid "c92d47dc-518c-4af9-8213-1eef39389e09")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3762,9 +3871,23 @@
 			)
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm* DIP*W7.62mm* TO*99* OnSemi*Micro8* TSSOP*3x3mm*P0.65mm* TSSOP*4.4x3mm*P0.65mm* MSOP*3x3mm*P0.65mm* SSOP*3.9x4.9mm*P0.635mm* LFCSP*2x2mm*P0.5mm* *SIP* SOIC*5.3x6.2mm*P1.27mm*")
-		(path "/60109c78-6f0d-5f19-9d83-d93dfd3315d6")
+		(path "/b7e457df-effe-5e00-8492-844c08953329")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "3" "2" "1")
+			)
+			(unit
+				(name "B")
+				(pins "5" "6" "7")
+			)
+			(unit
+				(name "C")
+				(pins "8" "4")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4083,7 +4206,7 @@
 		(property "Reference" "R6"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "38553a84-a93a-45ef-b48d-4e0bd330f2b5")
+			(uuid "f33f916f-e32b-4cfc-bf21-f01b97214b49")
 			(effects
 				(font
 					(size 1 1)
@@ -4095,7 +4218,7 @@
 		(property "Value" "10k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "5f16714c-9d41-4376-9c76-95774fe75829")
+			(uuid "63c63dd4-f8c0-4aa5-bbff-4071a8d2b292")
 			(effects
 				(font
 					(size 1 1)
@@ -4108,7 +4231,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5814447f-bf4c-4251-9629-da79c7909359")
+			(uuid "dca8d38c-bfad-4f7b-af03-995b4ba619bb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4120,7 +4243,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0f0ba340-296c-4a41-af9d-c14bf0fa9052")
+			(uuid "633162ea-208d-489f-9dcb-a98ac5d54824")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4145,6 +4268,12 @@
 		(path "/4a597640-920e-5926-9691-9b5de4caee8e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4241,7 +4370,7 @@
 		(property "Reference" "C2"
 			(at 2.8625 0 90)
 			(layer "B.SilkS")
-			(uuid "b82d3104-f9cb-4981-87bc-dd39827490dd")
+			(uuid "9737b163-49bc-40a4-8d2f-fcf27439152b")
 			(effects
 				(font
 					(size 1 1)
@@ -4253,7 +4382,7 @@
 		(property "Value" "10u"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "f955a865-a88b-4d55-ab48-9da93a7659f5")
+			(uuid "0da1803c-ed44-444e-92cf-62511ed7e910")
 			(effects
 				(font
 					(size 1 1)
@@ -4266,7 +4395,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b3754997-9ddc-46ba-9636-a0972f1d8e20")
+			(uuid "4fea9f24-ccf0-41fb-8e97-f4a7e2d413ec")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4278,7 +4407,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "202ce66b-4335-4eda-bf45-7aeeeeba6f2c")
+			(uuid "60c5abc5-b5ed-455f-b473-80d9c81217e5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4303,6 +4432,12 @@
 		(path "/305bf047-cccf-5cf0-aab4-98a95782f425")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4399,7 +4534,7 @@
 		(property "Reference" "R20"
 			(at 0 1.65 90)
 			(layer "B.SilkS")
-			(uuid "49e3a03a-afcb-4e5e-a417-77f25222caa4")
+			(uuid "2462b599-6fce-4fdc-9c45-71f4f7fd9646")
 			(effects
 				(font
 					(size 1 1)
@@ -4411,7 +4546,7 @@
 		(property "Value" "0R (18k = +7 dB)"
 			(at 0 -1.5 90)
 			(layer "B.Fab")
-			(uuid "60dff9b8-0f3a-4167-a65a-fc8d504e7ba4")
+			(uuid "68127d2f-0011-420a-a603-bd55f8c714f3")
 			(effects
 				(font
 					(size 1 1)
@@ -4424,7 +4559,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "4bfb22c9-18d6-493e-95a0-926a177bda5b")
+			(uuid "a52f77b6-2fcf-4e3d-aa3b-e1bb1ea13a6d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4436,7 +4571,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "2e382637-18a2-4995-9687-f6fbe5ff88c5")
+			(uuid "356d6713-a73d-4dfa-ab62-d289424f1b58")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4475,6 +4610,12 @@
 		(path "/a4fa33a1-ec3f-5217-a831-7cb0cfb8c49e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4571,7 +4712,7 @@
 		(property "Reference" "R19"
 			(at 3 0 90)
 			(layer "B.SilkS")
-			(uuid "8a8d10e3-28ee-4500-b598-fbdc05fbd7a6")
+			(uuid "c2579fe5-c4ba-4a40-8ee8-6e38120faf5d")
 			(effects
 				(font
 					(size 1 1)
@@ -4583,7 +4724,7 @@
 		(property "Value" "15k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "f8d4df16-2934-4811-b351-178c52245871")
+			(uuid "36d13459-41a3-45c9-a9c6-839d9f86263e")
 			(effects
 				(font
 					(size 1 1)
@@ -4596,7 +4737,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "bb803f35-f8ed-473b-ba2e-77e5064d41d2")
+			(uuid "c7bb921d-3f35-4941-a351-e9d5e00e01ea")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4608,7 +4749,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8ed4eeef-7697-4c4c-88cf-f386a19d4394")
+			(uuid "44bfc8d3-0942-41c9-b5f2-d3f988097673")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4633,6 +4774,12 @@
 		(path "/5e86d8c9-7134-55fa-b108-6856abe01933")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4729,7 +4876,7 @@
 		(property "Reference" "C12"
 			(at 0 -1.5 0)
 			(layer "B.SilkS")
-			(uuid "fd6b74a0-e0af-431a-b969-032c00b5022e")
+			(uuid "78bdd78b-52e1-49e3-bc71-28cc3a83d600")
 			(effects
 				(font
 					(size 1 1)
@@ -4741,7 +4888,7 @@
 		(property "Value" "100p"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "09094f92-c7f5-49db-b058-1d87feb7d504")
+			(uuid "06dd2dcc-2236-4711-ab26-c9da48cf4912")
 			(effects
 				(font
 					(size 1 1)
@@ -4754,7 +4901,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0a764112-c715-43f9-8962-7b6c4765f7d3")
+			(uuid "86d895bf-b794-4840-988d-0fa4090e6bda")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4766,7 +4913,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "21ce4fb5-d732-48a2-9d68-85c80436f95c")
+			(uuid "96390f9f-1d1b-4a7f-8197-419b6c1fae91")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4791,6 +4938,12 @@
 		(path "/2a00a4b8-416f-5a47-97f6-be65a441ae51")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -4960,9 +5113,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/22344f19-b4fd-5618-9d64-08e40b303272")
+		(path "/bf395a93-f481-50a7-8df9-ddeea3e0d775")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5059,7 +5218,7 @@
 		(property "Reference" "J2"
 			(at 0 15.36 0)
 			(layer "B.SilkS")
-			(uuid "844cacc0-e431-4b4f-8c75-fee0caa8b01b")
+			(uuid "8c4597e6-d8cd-4aef-b3db-1ca7bb9d0430")
 			(effects
 				(font
 					(size 1 1)
@@ -5071,7 +5230,7 @@
 		(property "Value" "OUT jack lead"
 			(at 0 -18 0)
 			(layer "B.Fab")
-			(uuid "34b387db-97cd-41d5-a6fb-259124a8c256")
+			(uuid "555b712e-83f8-459d-ab1e-1e4ddfb93d3f")
 			(effects
 				(font
 					(size 1 1)
@@ -5084,7 +5243,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "fa497b8d-1e75-4ea5-b944-3c8eadedf567")
+			(uuid "a947d962-99aa-466e-9460-7b51219cd0dc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5096,7 +5255,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "bec9bbf6-48d0-43cd-a659-462a09984bfd")
+			(uuid "6776ccd1-390a-429f-a88a-d729d05c8d68")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5122,6 +5281,12 @@
 		(path "/374fd274-167d-5b8b-a3cb-78bb67b33053")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5426,9 +5591,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/72ba16ac-8c00-5b69-a5e4-82294f9e87a9")
+		(path "/dc225086-ef64-5db2-a2c5-3e710552e729")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5525,7 +5696,7 @@
 		(property "Reference" "C11"
 			(at -3.05 0 90)
 			(layer "B.SilkS")
-			(uuid "c4ffa378-c4dd-4ed5-85ce-3c0b1054a8ae")
+			(uuid "35917da4-bfa9-41ce-a15b-5ffe8fefa330")
 			(effects
 				(font
 					(size 1 1)
@@ -5537,7 +5708,7 @@
 		(property "Value" "330n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "266baa72-e1d2-4296-adac-62e81389e093")
+			(uuid "286a5524-a888-4b3e-9dab-b677b777fa01")
 			(effects
 				(font
 					(size 1 1)
@@ -5550,7 +5721,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "de97078a-ac24-4123-aca8-510542b3ea65")
+			(uuid "5b563901-9574-4c83-a338-f9b30371064c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5562,7 +5733,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6da9ae13-d2e8-4159-97c7-6a01cb3daa7c")
+			(uuid "a4caa10b-b54e-46dc-ac5c-1b500123f08a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5601,6 +5772,12 @@
 		(path "/a5fc5562-b76c-5bcf-b7e6-2ae2d5a57e81")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5756,9 +5933,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/a0a3cf74-8174-5124-8ab2-4802998dfb4d")
+		(path "/fd2e4d6c-1a71-5dce-a160-dd99f27e651b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -5855,7 +6038,7 @@
 		(property "Reference" "C15"
 			(at -2.9 -0.5 0)
 			(layer "B.SilkS")
-			(uuid "b5e570da-04e2-4965-8000-4153415fa9a7")
+			(uuid "4aad21a0-7bb6-4f5d-9263-410d3ce5de9b")
 			(effects
 				(font
 					(size 1 1)
@@ -5867,7 +6050,7 @@
 		(property "Value" "330p"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "a46b63b8-6278-460d-980e-1c105130d7d8")
+			(uuid "253cb9d1-547f-4e8a-a957-a3a9fa1d9027")
 			(effects
 				(font
 					(size 1 1)
@@ -5880,7 +6063,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "88f5dc6c-4f47-4f0e-a57b-7640302fdb4b")
+			(uuid "51ef8fc6-d530-4ad0-bf1a-bbc211912b71")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5892,7 +6075,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ae8ffa50-86f4-4698-b153-29025c8bcceb")
+			(uuid "6f465b0f-4c38-4faf-8b26-469cdbc7cee1")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5917,6 +6100,12 @@
 		(path "/7dea7dd7-6e71-5312-bc4a-c55f650398c9")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6013,7 +6202,7 @@
 		(property "Reference" "C5"
 			(at 0.9375 -2 90)
 			(layer "B.SilkS")
-			(uuid "c261c6aa-3b06-4ae8-ac01-e013aa4cdd14")
+			(uuid "72635be5-79a8-4bcb-beea-9537a5170ef5")
 			(effects
 				(font
 					(size 1 1)
@@ -6025,7 +6214,7 @@
 		(property "Value" "330n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "5a86fff6-4d76-472b-8cb4-0ddb98e6f931")
+			(uuid "bdc47bb8-9d50-4ead-ac08-54bef6ec9339")
 			(effects
 				(font
 					(size 1 1)
@@ -6038,7 +6227,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7acef1c1-789b-4e42-b2b5-8b1d5009bd1f")
+			(uuid "0e821aa3-c6e6-4bca-817b-f99cd74040ed")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6050,7 +6239,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9d2b0b61-1ee6-4728-b9c0-83cb07740ce7")
+			(uuid "ec2493d7-2d24-47aa-b562-7534f50a1c01")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6089,6 +6278,12 @@
 		(path "/377b6fa6-7349-5d87-a0a9-e0dac5b1178e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6185,7 +6380,7 @@
 		(property "Reference" "R9"
 			(at 2.5 -0.5 90)
 			(layer "B.SilkS")
-			(uuid "56e5f115-56b0-49bb-91a5-1b06cc1e7d04")
+			(uuid "ba0b047b-b0dc-47d5-8723-850991f78c3d")
 			(effects
 				(font
 					(size 1 1)
@@ -6197,7 +6392,7 @@
 		(property "Value" "1M"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "74c36eac-e32d-49b7-b759-e510b3a1272a")
+			(uuid "d5b851c5-0576-451b-b04c-6f7312a319dc")
 			(effects
 				(font
 					(size 1 1)
@@ -6210,7 +6405,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "19a98641-75be-4ca9-96a2-f6df6c2929c9")
+			(uuid "988e6913-7263-4374-80c5-ccdb0fa9b2ef")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6222,7 +6417,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "072c41a0-4b70-477c-8546-15988444f110")
+			(uuid "297ca876-129f-49ba-ab17-95b0d560befc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6247,6 +6442,12 @@
 		(path "/1071245f-0f32-5218-8f66-f7a62ee52c65")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6402,9 +6603,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/af0b1efe-ae46-5a91-bdfb-90044935ffaf")
+		(path "/97c03367-4996-513f-a4d7-64aa2c5b7332")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6501,7 +6708,7 @@
 		(property "Reference" "C14"
 			(at 4.025 0 0)
 			(layer "B.SilkS")
-			(uuid "81592a0b-4421-491f-bd09-b005d2364668")
+			(uuid "ff1093ea-5e9d-4018-b25a-f314229f2560")
 			(effects
 				(font
 					(size 1 1)
@@ -6513,7 +6720,7 @@
 		(property "Value" "1u"
 			(at 0 -2.3 0)
 			(layer "B.Fab")
-			(uuid "b207516f-486b-4032-b30b-27e98efa3e74")
+			(uuid "1acd1d1e-661a-4af3-aba0-e6d02b95f7ab")
 			(effects
 				(font
 					(size 1 1)
@@ -6526,7 +6733,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8a9095e8-f379-4f51-a111-46d003c47f76")
+			(uuid "d6a669b2-21c8-4e89-abee-b55ebc86f25d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6538,7 +6745,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9b6f3471-bae8-4109-98ec-b63c4de86ae2")
+			(uuid "b1721c12-8f79-4a55-aaed-86e17003b3c9")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6577,6 +6784,12 @@
 		(path "/5b62e516-3cca-5e00-95d4-e60fc2c983f6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -6673,7 +6886,7 @@
 		(property "Reference" "TP6"
 			(at -2.5 0 180)
 			(layer "B.SilkS")
-			(uuid "0f6cc827-ff28-441c-8adb-9fde0466bdcc")
+			(uuid "562488b4-57e4-48cb-bea9-1a2d0d6f2574")
 			(effects
 				(font
 					(size 1 1)
@@ -6685,7 +6898,7 @@
 		(property "Value" "AIN2"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "8cea73be-9dea-4b3c-b048-ec3dbc922ae9")
+			(uuid "4518cd8a-6b9b-4a2e-b840-c670e3d6196b")
 			(effects
 				(font
 					(size 1 1)
@@ -6699,7 +6912,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c853f182-31e7-4c20-872c-dea220a98887")
+			(uuid "57e8637e-feee-44a1-ad3b-34cddc08de83")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6713,7 +6926,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9dfd0e8b-8362-419a-bab5-38beae72c59d")
+			(uuid "e66788b1-0f13-4761-952d-2e74fd89c7b5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6726,6 +6939,12 @@
 		(path "/8e2f2d8c-2e8a-5e18-95e6-2300261553d5")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -6781,7 +7000,7 @@
 		(property "Reference" "TP7"
 			(at 0 2 180)
 			(layer "B.SilkS")
-			(uuid "4abeead3-8690-4152-ae81-31dc5928a696")
+			(uuid "722f6a7b-651c-4488-a62f-e8296268d58a")
 			(effects
 				(font
 					(size 1 1)
@@ -6793,7 +7012,7 @@
 		(property "Value" "VREF"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "c3aaf020-0b88-4b11-9511-a18c2231796a")
+			(uuid "23b1364a-3c23-4646-a44b-be502ca8f212")
 			(effects
 				(font
 					(size 1 1)
@@ -6807,7 +7026,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "23b20962-710d-4c4d-a842-ceb67496c927")
+			(uuid "70b89f9e-4bed-4244-98cc-e6dceaccff40")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6821,7 +7040,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b69330c2-0bba-4edb-b6cd-7d9bca85af7f")
+			(uuid "a08beba8-bda1-4254-8cd1-a50265208bab")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6834,6 +7053,12 @@
 		(path "/d444c6d6-95a3-56fb-9236-0eb4c10f421f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -6889,7 +7114,7 @@
 		(property "Reference" "TP9"
 			(at 2.5 0 180)
 			(layer "B.SilkS")
-			(uuid "2416a3a6-6799-4b54-a837-ab5f72635255")
+			(uuid "6749ec7c-fb2a-4dcc-af06-f17688c037bd")
 			(effects
 				(font
 					(size 1 1)
@@ -6901,7 +7126,7 @@
 		(property "Value" "VIN"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "3f42d058-a212-4664-a76f-edc1955fd324")
+			(uuid "2d3384b4-e572-4b04-9b9a-21037f723aa0")
 			(effects
 				(font
 					(size 1 1)
@@ -6915,7 +7140,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "52f50483-5b84-4c9e-8ff4-c45d794dbb1c")
+			(uuid "a135495b-b030-4b35-8151-562f76b055a5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6929,7 +7154,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a017956e-44a7-4b0b-9639-a27b18688aca")
+			(uuid "cf7cd68a-f98e-4c3f-a4c0-eee96275aae2")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6939,9 +7164,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/7efa6f12-9cb3-59d7-a676-912763ceaa8b")
+		(path "/10577ace-4606-5867-944d-458cb364789e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -6997,7 +7228,7 @@
 		(property "Reference" "R8"
 			(at 0 -1.525 0)
 			(layer "B.SilkS")
-			(uuid "292be726-ae97-401c-949b-fc62017ae21a")
+			(uuid "d27be37f-9311-43a0-a945-c64148914bf5")
 			(effects
 				(font
 					(size 1 1)
@@ -7009,7 +7240,7 @@
 		(property "Value" "100R"
 			(at 0 -1.65 0)
 			(layer "B.Fab")
-			(uuid "d0135aae-0d2f-4d3c-918d-fd974025b420")
+			(uuid "a87aec99-d3c4-4fe8-8d52-73010d71a3a3")
 			(effects
 				(font
 					(size 1 1)
@@ -7022,7 +7253,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "559b66c9-d58b-4f4d-b43e-ef5be4646860")
+			(uuid "00802469-8ca4-4fc4-9c66-f4f5a7db4c79")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7034,7 +7265,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5dbefada-0632-45af-9d66-a4f258cd72e3")
+			(uuid "a037fe3d-d878-4772-ac5b-88f4f4f19a06")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7059,6 +7290,12 @@
 		(path "/2f529b83-f407-5d7e-aa42-f6f30217291a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7155,7 +7392,7 @@
 		(property "Reference" "R11"
 			(at -0.5 1.65 0)
 			(layer "B.SilkS")
-			(uuid "cb55f692-9ce0-4e76-9133-84a44171ef8b")
+			(uuid "f9798c1d-9224-4ea2-8825-1bb8f805940a")
 			(effects
 				(font
 					(size 1 1)
@@ -7167,7 +7404,7 @@
 		(property "Value" "3k3"
 			(at 0 -1.65 0)
 			(layer "B.Fab")
-			(uuid "41bb7704-cc61-4af8-9f3b-2a9d0d49974c")
+			(uuid "e4fb24ca-032b-4abe-8eb4-f4999d3fd773")
 			(effects
 				(font
 					(size 1 1)
@@ -7180,7 +7417,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e1054e7d-a817-4eec-9f52-7caa69e744be")
+			(uuid "fce7beff-baa3-413d-bccb-6384e0610550")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7192,7 +7429,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "395573bb-c5b0-4722-af3e-ef2385860190")
+			(uuid "9a241f0f-5f6f-4bc9-ae66-7e5af0bc07db")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7217,6 +7454,12 @@
 		(path "/3fb37461-ed79-59bf-bedf-57f06e7db2cb")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7313,7 +7556,7 @@
 		(property "Reference" "TP12"
 			(at 3 0 180)
 			(layer "B.SilkS")
-			(uuid "204362bb-a963-4a18-8a33-43405d2f3195")
+			(uuid "0ba8d19d-d663-44e4-9435-0ca7cb827cb5")
 			(effects
 				(font
 					(size 1 1)
@@ -7325,7 +7568,7 @@
 		(property "Value" "+3V3A"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "49a13909-e3fd-4915-8479-58ccb1d372dd")
+			(uuid "b74d1adb-fc1b-40ba-a29c-3709f349b439")
 			(effects
 				(font
 					(size 1 1)
@@ -7339,7 +7582,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c6afe0d9-50c4-4350-bd65-2f2955eb03aa")
+			(uuid "bd89e5cc-9f99-4254-8187-ab93f1e56c48")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7353,7 +7596,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "60c26d86-1fe3-49c7-9711-ed4881ce9d2a")
+			(uuid "cf8e44c1-0595-4fe2-abc5-3f687a2b5798")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7363,9 +7606,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/4af1ebb5-c413-5edd-a6c5-b6653c7c85e0")
+		(path "/9e7c55c5-c345-58b9-82d6-7e3453a7da76")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7421,7 +7670,7 @@
 		(property "Reference" "TP11"
 			(at 3 0 0)
 			(layer "B.SilkS")
-			(uuid "5ec9269c-cd8f-4021-879e-1dae0b1a3e5f")
+			(uuid "b6fc2eea-ede1-4c65-903f-dce51a01f8a1")
 			(effects
 				(font
 					(size 1 1)
@@ -7433,7 +7682,7 @@
 		(property "Value" "+3V3D"
 			(at 0 -1.75 0)
 			(layer "B.Fab")
-			(uuid "232beddf-ef64-4aad-95a3-fdfdd109d971")
+			(uuid "c71f15b9-cd22-49c9-867c-9c5ff296ebc4")
 			(effects
 				(font
 					(size 1 1)
@@ -7447,7 +7696,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "96b41101-d50d-47f5-b07f-938420963c43")
+			(uuid "81765880-94af-42b3-aed7-ef92df6e4fba")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7461,7 +7710,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "19a384f7-4cd9-4eed-8b55-8527e5bc0bed")
+			(uuid "c96ae7c6-eb71-436d-b82c-bb84b4a397ac")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7471,9 +7720,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/9e7c55c5-c345-58b9-82d6-7e3453a7da76")
+		(path "/af3c56ca-2a23-5a04-8eec-86a618fca002")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -7588,9 +7843,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/6d08bab5-3fe7-58c6-92f6-c94c07220373")
+		(path "/cc3ca405-b3c0-5250-aebe-d8f16854f9a4")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7687,7 +7948,7 @@
 		(property "Reference" "C22"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "87fae1c9-beb5-4753-8e90-ff1d78619026")
+			(uuid "2cdc662a-77cb-4d2f-b356-3b262528565d")
 			(effects
 				(font
 					(size 1 1)
@@ -7699,7 +7960,7 @@
 		(property "Value" "100n"
 			(at 0 -0.0925 90)
 			(layer "B.Fab")
-			(uuid "ec6769bd-99aa-487c-bed4-1ce045371477")
+			(uuid "eabef459-aa55-418d-a853-30ddda9b2aa7")
 			(effects
 				(font
 					(size 1 1)
@@ -7712,7 +7973,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "fa15c80d-ac8e-4a66-8f94-2df047cb9926")
+			(uuid "fa20609f-7946-40a1-a9f6-5488d4f7d517")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7724,7 +7985,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e47c206f-c109-490e-a9b1-86d226daa313")
+			(uuid "fc8b534b-be9f-4b21-89f9-21c49557ec37")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7749,6 +8010,12 @@
 		(path "/94f25e83-4fb9-58e7-9e31-ad05146f8840")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -7845,7 +8112,7 @@
 		(property "Reference" "R1"
 			(at 2.8625 0 90)
 			(layer "B.SilkS")
-			(uuid "27f32712-3964-4c07-98cc-4f2164a975bd")
+			(uuid "15e51059-0207-4d6f-a329-68cfed2cc782")
 			(effects
 				(font
 					(size 1 1)
@@ -7857,7 +8124,7 @@
 		(property "Value" "100R"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "50782054-3a3d-4373-b764-45416c6104e9")
+			(uuid "16e475d1-2a81-4c06-a1bc-d0e21e8f7b17")
 			(effects
 				(font
 					(size 1 1)
@@ -7870,7 +8137,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1e537fc5-49e0-4745-801a-927d3d07124b")
+			(uuid "ac208943-c5d4-49bd-b731-d3f4b4038d8a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7882,7 +8149,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e354f7e0-8684-4ea8-af28-0577fb873731")
+			(uuid "427ca39d-982e-4382-abcf-7f23dc865810")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7907,6 +8174,12 @@
 		(path "/8b228f49-b5ff-59e5-9a44-442136722384")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8003,7 +8276,7 @@
 		(property "Reference" "C19"
 			(at 0 2.3 0)
 			(layer "B.SilkS")
-			(uuid "37fdfbbe-6894-4aed-8cad-a9c361ce2b6b")
+			(uuid "0cdc6d92-41ed-4aa0-a2c1-1e88875abd94")
 			(effects
 				(font
 					(size 1 1)
@@ -8015,7 +8288,7 @@
 		(property "Value" "1u"
 			(at 0 -2.3 0)
 			(layer "B.Fab")
-			(uuid "3d2d848e-6e15-46b4-9b6a-db002680d8c1")
+			(uuid "da754878-98ab-4f3f-99f8-8fc9a62c3c57")
 			(effects
 				(font
 					(size 1 1)
@@ -8028,7 +8301,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "cb89fea7-fdcc-49ae-8aad-ef75ee7ca53f")
+			(uuid "28ff9693-4079-4d80-86ae-36b90360ed1d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8040,7 +8313,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b004c11e-197d-4dfc-9d27-f304acae465c")
+			(uuid "635812cb-4313-43c1-bf5c-2a51dd76eecf")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8079,6 +8352,12 @@
 		(path "/6e862c28-dd07-524f-bf83-21e34d0f57f5")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8175,7 +8454,7 @@
 		(property "Reference" "F1"
 			(at 0 2.65 90)
 			(layer "B.SilkS")
-			(uuid "e39c41ea-2d55-45ef-b342-6bf0a9fdd45f")
+			(uuid "38684956-b73a-47c9-bd97-fbe64a85b7a1")
 			(effects
 				(font
 					(size 1 1)
@@ -8187,7 +8466,7 @@
 		(property "Value" "500mA"
 			(at 0 -2.65 90)
 			(layer "B.Fab")
-			(uuid "0092c719-de20-40a6-8f3b-44fbfff9a56c")
+			(uuid "e104248b-99ef-4066-9f6a-6da947143c47")
 			(effects
 				(font
 					(size 1 1)
@@ -8200,7 +8479,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "534c7e61-4732-48c0-8e87-c593e35fedb1")
+			(uuid "3919f1dc-0c2a-407d-96e3-e381f4f8cf75")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8212,7 +8491,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e69e1913-9ceb-431e-817f-324cd69183be")
+			(uuid "ab368bb1-7b7c-478d-b22e-4d632d8e58eb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8265,6 +8544,12 @@
 		(path "/373ad3a1-6a00-57f0-90ae-ed181dabb223")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8361,7 +8646,7 @@
 		(property "Reference" "C13"
 			(at 0 1.5 90)
 			(layer "B.SilkS")
-			(uuid "6f951107-ff0e-46e5-bc8e-e6977c65772c")
+			(uuid "04fc4a79-0e96-4a8f-8001-fbde12df50b6")
 			(effects
 				(font
 					(size 1 1)
@@ -8373,7 +8658,7 @@
 		(property "Value" "1n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "7886a162-9b04-4bc7-9d9b-366d2c4ff80a")
+			(uuid "83123a78-f632-401c-ac40-9b54c2acf179")
 			(effects
 				(font
 					(size 1 1)
@@ -8386,7 +8671,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "23f9ac1c-f216-4de7-8512-d2004b610266")
+			(uuid "7eb83434-eacc-4b4a-929a-8d55c82dfee8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8398,7 +8683,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "597018c8-7706-441f-b79b-fc4e8333a2d1")
+			(uuid "207b581e-218d-41e1-bb6e-477b31835469")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8423,6 +8708,12 @@
 		(path "/a9fb3275-a7e1-5148-afdb-d8a7922a7ef1")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8519,7 +8810,7 @@
 		(property "Reference" "C6"
 			(at 0 -1.475 0)
 			(layer "B.SilkS")
-			(uuid "0e32d18d-6649-423a-b9d8-6deda71cd406")
+			(uuid "46ca8b4b-7bcc-4cdf-8d55-5a7e9366a518")
 			(effects
 				(font
 					(size 1 1)
@@ -8531,7 +8822,7 @@
 		(property "Value" "100p"
 			(at -0.052976 -2 0)
 			(layer "B.Fab")
-			(uuid "6d628e59-7957-4304-abb0-38ae8763c497")
+			(uuid "c7d4f415-c439-4798-9d48-06ac3dfe35ac")
 			(effects
 				(font
 					(size 1 1)
@@ -8544,7 +8835,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e51b0794-4fee-4afb-a0e7-ddcb54dd1ba9")
+			(uuid "bf945711-fa90-48b1-8fc1-453b9b45d193")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8556,7 +8847,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7239f5e3-e131-4913-a9de-e7a484728a87")
+			(uuid "2fa11e0a-b0dc-4e5b-8663-287588a9b125")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8581,6 +8872,12 @@
 		(path "/d6d322fd-4911-5a80-954c-809f566921be")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8727,9 +9024,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/b0c72c86-aa49-5d3f-86b6-b7148863c166")
+		(path "/fef419e8-66d6-56be-8d94-6e3c35803903")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -8785,7 +9088,7 @@
 		(property "Reference" "C23"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "d191208d-4cf7-44d6-aa18-91b59917272d")
+			(uuid "74da1d06-e823-4e6e-97d3-19a9c995f6ce")
 			(effects
 				(font
 					(size 1 1)
@@ -8797,7 +9100,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "05dbc8ae-5525-4849-8f10-169aef7d0e16")
+			(uuid "db7c5014-61ab-44a8-88b1-f6f0df4b3b8d")
 			(effects
 				(font
 					(size 1 1)
@@ -8810,7 +9113,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f5b968ba-bed2-46bf-b807-64f4c4cec6c8")
+			(uuid "452866b0-147b-4b6b-bfd1-8abe37a1e7c4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8822,7 +9125,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b4185d83-15d4-42d0-ba7e-2020c95ddb5a")
+			(uuid "71b27901-7235-4bbf-a57d-0511e6166a80")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8847,6 +9150,12 @@
 		(path "/4507dddc-b81f-5110-b657-ddb2806548f0")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -8943,7 +9252,7 @@
 		(property "Reference" "R13"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "65f92b9a-7910-4c5b-96c3-9f45fae38aa0")
+			(uuid "6b0ce272-37f7-4663-b241-e511636a7433")
 			(effects
 				(font
 					(size 1 1)
@@ -8955,7 +9264,7 @@
 		(property "Value" "10k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "c5bd9d7e-8a4d-452b-8320-957f56228848")
+			(uuid "eaf8a480-ce6c-41df-bbac-2110fd909e34")
 			(effects
 				(font
 					(size 1 1)
@@ -8968,7 +9277,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6077abb2-53ac-4a8d-b89e-f8bd8cf1a003")
+			(uuid "3e83c6e7-b0b6-49c9-a294-12778ab66a98")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8980,7 +9289,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a1db7f13-cc78-4d78-98e6-831a084e534a")
+			(uuid "3d28fb15-4dd5-4584-8322-3f679696bb02")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9005,6 +9314,12 @@
 		(path "/888e171a-4bfc-52fb-9217-79e0a86b5e45")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9101,7 +9416,7 @@
 		(property "Reference" "R15"
 			(at 0.05 -1.5 0)
 			(layer "B.SilkS")
-			(uuid "54315e4d-da78-4c1f-97a5-d7515ee59770")
+			(uuid "62d1c4b0-b763-4bba-9d8a-62945f69ac4a")
 			(effects
 				(font
 					(size 1 1)
@@ -9113,7 +9428,7 @@
 		(property "Value" "100R"
 			(at 0 -1.5 0)
 			(layer "B.Fab")
-			(uuid "29d5e21f-3b1c-4430-84f4-e81d704fcc79")
+			(uuid "a2468587-c017-49fb-90eb-f6bcc5597b69")
 			(effects
 				(font
 					(size 1 1)
@@ -9126,7 +9441,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e75aeb38-54bb-4d8c-922a-5a0e2601c6b1")
+			(uuid "77763e46-dcad-41e2-ade5-31907057725b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9138,7 +9453,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "dede547e-81dc-4727-b1ba-42d9f2e6ae6d")
+			(uuid "70f19178-5b30-48e3-b7dc-9bf7ea071a46")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9163,6 +9478,12 @@
 		(path "/10f60d61-5ee9-5bce-a89d-c1f15526fa24")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9259,7 +9580,7 @@
 		(property "Reference" "TP4"
 			(at 3 0 180)
 			(layer "B.SilkS")
-			(uuid "c525969b-0fba-499e-be6c-8cfbd196c9f0")
+			(uuid "affae2f4-ef60-4016-bbf0-5b92cbe09052")
 			(effects
 				(font
 					(size 1 1)
@@ -9271,7 +9592,7 @@
 		(property "Value" "IN2_TIP"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "52edade7-19c4-44bb-b294-31501df23be5")
+			(uuid "e286d2a9-cadf-4c35-bc1e-d686dd4a92e9")
 			(effects
 				(font
 					(size 1 1)
@@ -9285,7 +9606,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1d92216b-7dc9-44c3-b5c2-285a88264d35")
+			(uuid "3ad08a9f-37cf-4601-8be5-b4d456cf1220")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9299,7 +9620,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "718139eb-3119-4f63-8082-842785e675aa")
+			(uuid "2df1b0a1-e36a-409a-9ffa-65d5f05f3cc4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9312,6 +9633,12 @@
 		(path "/3ea72680-9910-504b-a971-28b212364f62")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9367,7 +9694,7 @@
 		(property "Reference" "C18"
 			(at -3.5 0 90)
 			(layer "B.SilkS")
-			(uuid "2fe39936-ff91-4ec8-8ef9-b1e43d1c39f0")
+			(uuid "39477c13-22bf-4386-bc2e-a28ecc5f2349")
 			(effects
 				(font
 					(size 1 1)
@@ -9379,7 +9706,7 @@
 		(property "Value" "10u"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "f7cec6f2-d8d2-4ae9-9318-04990fb4095c")
+			(uuid "836e2be7-8dc1-4c38-897a-a985051fbbae")
 			(effects
 				(font
 					(size 1 1)
@@ -9392,7 +9719,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d928d989-592c-4d0a-a267-434f734feadc")
+			(uuid "863cfade-2dfc-43df-beb7-37c7f166ca49")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9404,7 +9731,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5b0aa7e0-0e7b-4a8a-b91e-d67137864cab")
+			(uuid "00703ef1-ae33-4d66-bb87-a216ece3ea33")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9429,6 +9756,12 @@
 		(path "/1d063b11-c45f-5b5b-91e5-c0543692aa82")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9525,7 +9858,7 @@
 		(property "Reference" "TP5"
 			(at 0 2.5 180)
 			(layer "B.SilkS")
-			(uuid "c5172aa4-363d-4014-9f4b-6dfe2dcc51e2")
+			(uuid "7cb5a333-2ae4-4353-9f4b-64f543bd87ae")
 			(effects
 				(font
 					(size 1 1)
@@ -9537,7 +9870,7 @@
 		(property "Value" "AB_OUT"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "73d86a12-ff37-46c2-b95f-fb44db1625e5")
+			(uuid "5b393b94-a2e0-4c20-8303-d5e09297fe9c")
 			(effects
 				(font
 					(size 1 1)
@@ -9551,7 +9884,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a051fe8b-6a2d-4a31-9776-e21eaeefe6c4")
+			(uuid "13cff92e-bbe2-446f-90c9-420cbbc01c87")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9565,7 +9898,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c8ad09fc-4278-4635-858c-20456c0f145c")
+			(uuid "b90703f0-7ee6-4ba1-be16-bf2795d9d307")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9578,6 +9911,12 @@
 		(path "/cb464e5d-be84-598c-bdfb-f09e4bb3f5c6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -9633,7 +9972,7 @@
 		(property "Reference" "R14"
 			(at 0 -1.5 0)
 			(layer "B.SilkS")
-			(uuid "8deeb919-20fe-4e87-9d4c-501c29eebb75")
+			(uuid "4f46cec8-6c68-4b70-a86d-0a46615f3396")
 			(effects
 				(font
 					(size 1 1)
@@ -9645,7 +9984,7 @@
 		(property "Value" "10k"
 			(at 0 -1.65 0)
 			(layer "B.Fab")
-			(uuid "af0aca1b-2ce4-43b3-9be7-6325fb606c16")
+			(uuid "5c491962-44a7-4380-b92f-51795ef5c006")
 			(effects
 				(font
 					(size 1 1)
@@ -9658,7 +9997,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "937e0e8a-e2c4-4420-8edd-427b2041dbbb")
+			(uuid "83e3d343-c8bd-450a-b715-9082ebd4e34c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9670,7 +10009,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "999e8601-a3ef-4883-bac0-374f9e5a77a3")
+			(uuid "b40ecd07-7a7e-4ca7-8948-c180ce38db8d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9695,6 +10034,12 @@
 		(path "/974377da-7441-50c7-9d0f-e128a1992d1b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -9791,7 +10136,7 @@
 		(property "Reference" "D1"
 			(at 4.5 0.1375 0)
 			(layer "B.SilkS")
-			(uuid "9957e221-4e73-4cff-9cc4-8565ea07e78d")
+			(uuid "2824b0d0-cbc9-4e9e-a38e-3d8252cc7aa5")
 			(effects
 				(font
 					(size 1 1)
@@ -9803,7 +10148,7 @@
 		(property "Value" "SS34"
 			(at 0 -2.6 0)
 			(layer "B.Fab")
-			(uuid "0c024873-5750-485a-98ad-8e5110a75542")
+			(uuid "3523b58a-7b9e-4d5b-87e5-293f9f5171fa")
 			(effects
 				(font
 					(size 1 1)
@@ -9817,7 +10162,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8d97681c-78aa-46f2-b048-0ce3cc3deedd")
+			(uuid "0f6f54b5-16b3-4d86-8d47-93b777ac8454")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9831,7 +10176,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a2664c7a-b02d-45a3-be67-c5ae31b835d8")
+			(uuid "61e90e3f-5d12-461f-828f-2321823e77dc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9872,6 +10217,12 @@
 		(path "/b3611669-6ffe-5bb2-9443-28a8ca56b774")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10098,7 +10449,7 @@
 		(property "Reference" "C16"
 			(at -3.05 0 0)
 			(layer "B.SilkS")
-			(uuid "8bd0a7cf-9e64-40f2-8cc5-5f113f973030")
+			(uuid "34982446-a4a9-40b8-b5d7-a65bd8b6a797")
 			(effects
 				(font
 					(size 1 1)
@@ -10110,7 +10461,7 @@
 		(property "Value" "33n"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "17f780a9-3ce4-4b70-871f-ea886e3f49d5")
+			(uuid "75f5cd72-2ee9-42a5-a4e0-9a5a18b5f87c")
 			(effects
 				(font
 					(size 1 1)
@@ -10123,7 +10474,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f82b75cb-02b7-4bb2-a4f7-f7ee4afb2c06")
+			(uuid "e0f3e35c-4377-4d04-a827-06b681bca2bb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10135,7 +10486,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "7f4c9ed7-91aa-4d8f-8fbb-a52e9d83f93a")
+			(uuid "b910977d-11fc-4a22-9762-3cb192a5d427")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10160,6 +10511,12 @@
 		(path "/c8261b77-2a3b-56a1-af1e-869d757926c8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10256,7 +10613,7 @@
 		(property "Reference" "R23"
 			(at 3.0875 0 90)
 			(layer "B.SilkS")
-			(uuid "d735157d-2b9e-46bb-8da9-bf00d994cc31")
+			(uuid "28bcc3ae-bd76-47f4-b69b-97327fa0116a")
 			(effects
 				(font
 					(size 1 1)
@@ -10268,7 +10625,7 @@
 		(property "Value" "33R"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "b6bb59ef-1a3b-4d36-9959-cfe4bbe7d299")
+			(uuid "392df28f-64a0-4839-a506-047745f1c62a")
 			(effects
 				(font
 					(size 1 1)
@@ -10281,7 +10638,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1a5982b5-0bb2-4809-a97e-a69cc5f85f99")
+			(uuid "351745cc-ec7b-4cb2-95c2-07f4e87dc565")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10293,7 +10650,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1b47a2c5-f410-43be-a61a-3fe315886643")
+			(uuid "abe31e47-6889-40b1-8860-bc255656c87c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10318,6 +10675,12 @@
 		(path "/583bf23a-7433-5b2f-aa10-55dff0e125f8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10388,7 +10751,7 @@
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
-			(net "Net-(J6-Pin_3)")
+			(net "Net-(R23-Pad2)")
 			(pintype "passive")
 			(uuid "1939d0dd-3155-4037-b005-869c1e0adde4")
 		)
@@ -10473,9 +10836,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/50d208b4-64ec-5506-aaf3-01b77f7af77f")
+		(path "/a0813683-ac4a-5e2d-af8c-042c885e9edd")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10572,7 +10941,7 @@
 		(property "Reference" "C9"
 			(at -2.5 -0.025 0)
 			(layer "B.SilkS")
-			(uuid "3675cbb6-df90-49f8-a4ee-ea7f187517c9")
+			(uuid "2aff67c1-9176-4af5-ad64-b0fe94ba747d")
 			(effects
 				(font
 					(size 1 1)
@@ -10584,7 +10953,7 @@
 		(property "Value" "330p"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "5cb862bf-0ad9-43af-8fe7-0a5dd6e550cf")
+			(uuid "6f8a2057-7802-4f6b-b17b-9ff661d1d580")
 			(effects
 				(font
 					(size 1 1)
@@ -10597,7 +10966,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "65139ebc-6099-49dd-8327-87ec33fac7d6")
+			(uuid "b335f9db-3989-43ea-8fd3-4474fca72d4f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10609,7 +10978,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c5cef6f1-682c-4f5c-836d-9e05e2f191de")
+			(uuid "b1c708c5-0f14-445a-80c5-0b4363e23ba7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10634,6 +11003,12 @@
 		(path "/14a3666e-2688-519c-9365-826ef62b074f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10730,7 +11105,7 @@
 		(property "Reference" "R16"
 			(at 3 -0.5 90)
 			(layer "B.SilkS")
-			(uuid "78eb1696-b4d3-462a-815a-676126262ea7")
+			(uuid "23a0b060-4985-4f5d-89f6-18c91a974dad")
 			(effects
 				(font
 					(size 1 1)
@@ -10742,7 +11117,7 @@
 		(property "Value" "1M"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "cf0c64e5-c4ce-4eac-8fe0-03a9c33b4939")
+			(uuid "3ae8d187-643e-4da6-baa2-6079614afbce")
 			(effects
 				(font
 					(size 1 1)
@@ -10755,7 +11130,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "768bef6e-90bd-4546-b049-81ff321f9518")
+			(uuid "3246e6be-3dec-4adb-9965-a18008556001")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10767,7 +11142,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d92e4565-2155-485c-be7f-74963b04459a")
+			(uuid "68557cfa-d516-429b-a60e-a57d70e684d4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10792,6 +11167,12 @@
 		(path "/437d0c72-b22e-5d92-9988-8eecad89bf41")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -10947,9 +11328,15 @@
 			)
 		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
-		(path "/999a5efb-b1b6-54ca-bce2-0ee476b36761")
+		(path "/8cdb9b16-3021-5352-81a8-bf31c30dbf9a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11234,9 +11621,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/a0813683-ac4a-5e2d-af8c-042c885e9edd")
+		(path "/e16022b5-ce81-5d04-a43e-4518a5472a0b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11333,7 +11726,7 @@
 		(property "Reference" "R7"
 			(at 0 -1.525 0)
 			(layer "B.SilkS")
-			(uuid "576db7bf-8e35-4313-b402-bc9eb9fe17d8")
+			(uuid "d2609696-745f-4eb4-af42-9d335eeb782b")
 			(effects
 				(font
 					(size 1 1)
@@ -11345,7 +11738,7 @@
 		(property "Value" "10k"
 			(at 0 -1.65 0)
 			(layer "B.Fab")
-			(uuid "0b3c5a67-845b-4a73-bacb-ebb464f88041")
+			(uuid "2a69782c-3c6b-4629-854d-efcf1c0ae5b6")
 			(effects
 				(font
 					(size 1 1)
@@ -11358,7 +11751,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5d546966-e504-45a7-8d82-52b4d055bb1d")
+			(uuid "b2023320-688a-4c5e-8b9a-edcaa04617b8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11370,7 +11763,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "33f52672-5765-4250-8d62-e3ed47381fd5")
+			(uuid "a7f5a748-bb3e-4397-9846-770d7ad0d516")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11395,6 +11788,12 @@
 		(path "/a061b0a4-3e30-5f4c-ae94-3d657d4cb05a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11550,9 +11949,15 @@
 			)
 		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
-		(path "/b7c4a61b-d3a4-5495-86f7-be01f516091d")
+		(path "/198b279f-7e60-5615-81f5-888585de62a4")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -11778,7 +12183,7 @@
 		(property "Reference" "U2"
 			(at 0 5.5 90)
 			(layer "B.SilkS")
-			(uuid "983b2d28-598a-4fdc-9f16-2d3a41c6bbc1")
+			(uuid "7fbeff06-fca3-45df-b0d2-56a42fc8f7f5")
 			(effects
 				(font
 					(size 1 1)
@@ -11790,7 +12195,7 @@
 		(property "Value" "OPA1642AIDR"
 			(at 0 -3.3125 90)
 			(layer "B.Fab")
-			(uuid "22bc5ac6-abee-4517-9d4b-3dd99c84f829")
+			(uuid "dce93ff6-8658-498d-a28f-852a9b63175f")
 			(effects
 				(font
 					(size 1 1)
@@ -11803,7 +12208,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b30880b8-84c7-4290-b623-56aa9f1eef0a")
+			(uuid "ab0680b9-34a5-4781-ade5-850456b8eef1")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11815,7 +12220,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ff05b6a0-2578-430b-ac93-57e55a068aa3")
+			(uuid "dc3176d5-b55c-4d22-a4b0-ef69f4fb40eb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11865,9 +12270,23 @@
 			)
 		)
 		(property ki_fp_filters "SOIC*3.9x4.9mm*P1.27mm* DIP*W7.62mm* TO*99* OnSemi*Micro8* TSSOP*3x3mm*P0.65mm* TSSOP*4.4x3mm*P0.65mm* MSOP*3x3mm*P0.65mm* SSOP*3.9x4.9mm*P0.635mm* LFCSP*2x2mm*P0.5mm* *SIP* SOIC*5.3x6.2mm*P1.27mm*")
-		(path "/cc75780d-e128-59b6-93ee-29bacef6a024")
+		(path "/ed3063ca-264a-513f-af96-b4ec1feb8b99")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "3" "2" "1")
+			)
+			(unit
+				(name "B")
+				(pins "5" "6" "7")
+			)
+			(unit
+				(name "C")
+				(pins "8" "4")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12186,7 +12605,7 @@
 		(property "Reference" "TP13"
 			(at -0.5 2.5 180)
 			(layer "B.SilkS")
-			(uuid "445bc15f-946a-4bb6-85c9-3cf62a66b834")
+			(uuid "431a30bc-2277-429d-b890-1e5b6d4a8475")
 			(effects
 				(font
 					(size 1 1)
@@ -12198,7 +12617,7 @@
 		(property "Value" "GNDA"
 			(at 0 -2 180)
 			(layer "B.Fab")
-			(uuid "5be43a18-9e16-4335-a55a-472d6a3e09a6")
+			(uuid "dc93bf6e-6438-4ab6-a858-d759e0edb2fb")
 			(effects
 				(font
 					(size 1 1)
@@ -12212,7 +12631,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "592f21f4-f978-4b20-a56c-d9d6d7fd4d2c")
+			(uuid "80d6ab9f-48b0-4291-ab54-fee2999a7166")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12226,7 +12645,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ae6ad51c-63a3-40a6-a678-1a6e2e902516")
+			(uuid "66f8216a-f77c-47b8-a808-258c90abcc68")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12236,9 +12655,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/fef419e8-66d6-56be-8d94-6e3c35803903")
+		(path "/4af1ebb5-c413-5edd-a6c5-b6653c7c85e0")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -12294,7 +12719,7 @@
 		(property "Reference" "R26"
 			(at -3.5875 0 90)
 			(layer "B.SilkS")
-			(uuid "2a0e3ce5-4d36-48b3-993c-47074aced5b8")
+			(uuid "bfaa266a-1b4b-4179-b030-51e1a1d0d43a")
 			(effects
 				(font
 					(size 1 1)
@@ -12306,7 +12731,7 @@
 		(property "Value" "4k7"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "0f9034b1-3d52-4589-b602-7e48352b99f4")
+			(uuid "c3e0953b-e55a-4ece-8463-114932efee52")
 			(effects
 				(font
 					(size 1 1)
@@ -12319,7 +12744,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a2ed1292-55e5-4661-b4c0-7aff9f18a52c")
+			(uuid "b32fcacd-2a7f-4be2-b7fa-03f53f161dfe")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12331,7 +12756,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "dadd1e40-41f8-467e-92ad-f48d818e0275")
+			(uuid "66998564-de0b-40a0-91e5-4c209eb0f6d8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12356,6 +12781,12 @@
 		(path "/5d2eee6c-7283-53f1-87ff-817ae6498872")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12426,7 +12857,7 @@
 			(size 1.025 1.4)
 			(layers "B.Cu" "B.Mask" "B.Paste")
 			(roundrect_rratio 0.243902)
-			(net "Net-(J6-Pin_4)")
+			(net "Net-(J6-Pin_3)")
 			(pintype "passive")
 			(uuid "1b82c213-acf6-4291-bd1c-5bb1c3654f08")
 		)
@@ -12452,7 +12883,7 @@
 		(property "Reference" "J3"
 			(at 6 -0.5 0)
 			(layer "B.SilkS")
-			(uuid "08d610ac-d775-4bcd-8d47-155e216310ca")
+			(uuid "b7b1872d-8f80-4310-95d6-146e8577e1dd")
 			(effects
 				(font
 					(size 1 1)
@@ -12464,7 +12895,7 @@
 		(property "Value" "DC 2.1mm lead"
 			(at 1.25 -4.6 0)
 			(layer "B.Fab")
-			(uuid "13cd9497-baf5-474f-a18d-0d07495241b1")
+			(uuid "eb466842-33e0-4afb-95dc-aa8efc62cd86")
 			(effects
 				(font
 					(size 1 1)
@@ -12477,7 +12908,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c5b6a846-ea04-4897-b6d8-61fc1400df34")
+			(uuid "45658c35-d44c-444a-b653-35b83ee96fee")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12489,7 +12920,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d5392140-f0fe-4c3f-b7f9-89eb93dca40d")
+			(uuid "03d9b057-a0ba-4762-b02f-90d0eda7898d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12528,6 +12959,12 @@
 		(path "/a7b7d4ae-1680-5a19-a27c-89c74879ab69")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -12753,7 +13190,7 @@
 		(property "Reference" "U4"
 			(at 7.62 3.6 90)
 			(layer "B.SilkS")
-			(uuid "1ed7c976-8688-48ed-9685-2e6ba365fc5a")
+			(uuid "584a5c2a-9020-4196-abac-29125d736bab")
 			(effects
 				(font
 					(size 1 1)
@@ -12765,7 +13202,7 @@
 		(property "Value" "Daisy Seed3"
 			(at 7.5 0.02 90)
 			(layer "B.Fab")
-			(uuid "751d4aa6-f36a-4cca-84b3-64afdcfcb8fd")
+			(uuid "2f37dfc7-dfa4-4fd2-8087-8b86d31e6e28")
 			(effects
 				(font
 					(size 1 1)
@@ -12779,7 +13216,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "deac24a6-2251-4655-a08f-d806dcbb64bf")
+			(uuid "a130cea2-db03-48fa-8f8d-12acc00edcf1")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12793,7 +13230,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f39124d7-a7ce-4549-90dd-46fac63141ac")
+			(uuid "ad92f8e9-0b84-4f53-8d79-217ab99fb37b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12819,6 +13256,15 @@
 		(path "/536c743c-4cf5-5af5-a62a-e061b020120f")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15"
+					"16" "17" "18" "19" "20" "40" "39" "38" "37" "36" "35" "34" "33" "32"
+					"31" "30" "29" "28" "27" "26" "25" "24" "23" "22" "21"
+				)
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -13599,9 +14045,15 @@
 			)
 		)
 		(property ki_fp_filters "microSD*")
-		(path "/97c03367-4996-513f-a4d7-64aa2c5b7332")
+		(path "/09ef74f1-c372-5812-aeab-8a472a851c25")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3" "4" "5" "6" "7" "8" "10" "9" "SH")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -14362,7 +14814,7 @@
 		(property "Reference" "R10"
 			(at 3 0 90)
 			(layer "B.SilkS")
-			(uuid "1909ae20-dca5-4fa5-8dc0-da1ae1aeeb8f")
+			(uuid "59689476-f4d4-43e8-aeb9-262ac0580fe6")
 			(effects
 				(font
 					(size 1 1)
@@ -14374,7 +14826,7 @@
 		(property "Value" "100R"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "6c01ad3e-7c91-4f59-8a44-ab465b03e21c")
+			(uuid "1cfa2139-d3ea-46e5-ac38-c61e9bb95d94")
 			(effects
 				(font
 					(size 1 1)
@@ -14387,7 +14839,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "848f3118-8f0a-4763-8e9b-1d41336bf49a")
+			(uuid "fbf394be-1e84-4590-a382-745af0be0b34")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14399,7 +14851,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c923d723-2a6e-4328-9cee-6ce4c03d91fb")
+			(uuid "bbc44d0e-159f-4dd8-8fa5-86b5bc998efc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14424,6 +14876,12 @@
 		(path "/fef3e640-10d9-53e2-89d3-79d21c5c4d15")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -14520,7 +14978,7 @@
 		(property "Reference" "C7"
 			(at 0 1.5 90)
 			(layer "B.SilkS")
-			(uuid "1980cc43-2154-4df0-890e-112221667b3c")
+			(uuid "f09cda05-5ed0-47af-ad46-64da03d732c7")
 			(effects
 				(font
 					(size 1 1)
@@ -14532,7 +14990,7 @@
 		(property "Value" "1n"
 			(at 0 -1.5 90)
 			(layer "B.Fab")
-			(uuid "4ba6ab11-cb72-4b2f-9b72-324f099ad3a4")
+			(uuid "4374f1f0-18c7-44ba-a71e-786207518023")
 			(effects
 				(font
 					(size 1 1)
@@ -14545,7 +15003,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a97884d0-5b91-4ef3-92e3-db68184cd43c")
+			(uuid "b77c52be-e993-45df-a3fd-31bf1e720737")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14557,7 +15015,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "15c2c988-fb3d-431a-8bef-ad657af01d05")
+			(uuid "9f3050f3-a282-4e48-8d9a-67ffcf6efa0a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14582,6 +15040,12 @@
 		(path "/dcdf3240-4cb3-56d2-9577-e035372cf959")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -14678,7 +15142,7 @@
 		(property "Reference" "R3"
 			(at 3.0625 0.135 90)
 			(layer "B.SilkS")
-			(uuid "88396995-a5eb-4d56-a46d-bde53b9c192a")
+			(uuid "d108684d-b09d-4393-8c54-fe557f5bf654")
 			(effects
 				(font
 					(size 1 1)
@@ -14690,7 +15154,7 @@
 		(property "Value" "100R"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "bf7da201-0250-4a39-b0c7-1a6243867595")
+			(uuid "9e08c005-7b4d-4786-b88e-978d4ea4ba2b")
 			(effects
 				(font
 					(size 1 1)
@@ -14703,7 +15167,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "49f5b32d-3346-417d-8aa1-2e189505120f")
+			(uuid "615040ca-a2f3-450c-aa35-11631424ed68")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14715,7 +15179,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a2226ecc-3c7b-4f49-bdb0-8531e3c79d52")
+			(uuid "0171385a-bf91-4c68-aa45-42bc60bb0c04")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14740,6 +15204,12 @@
 		(path "/9f38e3f7-3314-5415-9f4a-eda2af1c0439")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -14836,7 +15306,7 @@
 		(property "Reference" "C17"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "2a3a5923-cee5-4bc0-9b11-1df0d22b2abd")
+			(uuid "ba9aee25-f6dc-469e-be5c-276b18433041")
 			(effects
 				(font
 					(size 1 1)
@@ -14848,7 +15318,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "82c0664c-1821-4002-bdb7-b36741297d9f")
+			(uuid "cae14cc9-46b6-422d-9624-25fecc24e8f2")
 			(effects
 				(font
 					(size 1 1)
@@ -14861,7 +15331,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "81605a5c-55aa-41d4-bf79-2d62709e0d1c")
+			(uuid "d591c758-c6ac-4910-8cd3-2a3decb65a80")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14873,7 +15343,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "32a6f23f-30e3-4213-ae75-7cbe3e904633")
+			(uuid "0640534e-e155-4605-9470-85dfe2edee3f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14898,6 +15368,12 @@
 		(path "/dd3f7102-8619-5f11-8b2c-8882f9202af6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15053,9 +15529,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/5612715b-cbb2-575d-a993-f9fb3f7ad90b")
+		(path "/1bac2485-5e91-5815-8bf1-cab725e01cf5")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15152,7 +15634,7 @@
 		(property "Reference" "R18"
 			(at -3 0 90)
 			(layer "B.SilkS")
-			(uuid "39bd383c-bfcb-4bd1-a7c1-63b3bc32e908")
+			(uuid "0d774b2a-07e0-42c2-a2b4-8ff80dc3505d")
 			(effects
 				(font
 					(size 1 1)
@@ -15164,7 +15646,7 @@
 		(property "Value" "15k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "e5edc252-d2bf-4fc3-8faa-b36a68dbc167")
+			(uuid "5c035488-2248-407f-922c-df145a0fdbfb")
 			(effects
 				(font
 					(size 1 1)
@@ -15177,7 +15659,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d7dfb0e4-aef2-430a-9aac-4d4a9665f12f")
+			(uuid "fd56ae9d-bd45-4f76-9aa4-c1e45e8866e3")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15189,7 +15671,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b8c54542-5608-424a-a216-d8a9bd0dd829")
+			(uuid "f9caf1e3-ed33-48d9-82a8-443e695ebbb8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15214,6 +15696,12 @@
 		(path "/c59f3e95-d2a8-535f-bc99-e74a2c487552")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15310,7 +15798,7 @@
 		(property "Reference" "TP3"
 			(at -2.5 0 180)
 			(layer "B.SilkS")
-			(uuid "4eff2022-d47b-42ab-87ab-0a3e9f402467")
+			(uuid "b69522c7-3fdb-467c-bfa8-210377e62d35")
 			(effects
 				(font
 					(size 1 1)
@@ -15322,7 +15810,7 @@
 		(property "Value" "AIN1"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "3c0ccc97-c545-4545-82ec-370d69d690c2")
+			(uuid "d9494333-58ba-4d45-a1f1-741394509b41")
 			(effects
 				(font
 					(size 1 1)
@@ -15336,7 +15824,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9d98be3d-c649-4239-8ad7-df345dbaa9c6")
+			(uuid "2645a2eb-c611-4e30-ad1d-e464a640c071")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15350,7 +15838,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "1d11d5ae-7077-4bb7-a714-ec7ae47481a3")
+			(uuid "d694fa41-24ef-47f1-8484-8e1ec1287ffd")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15363,6 +15851,12 @@
 		(path "/85496bdd-8062-5c40-ae3d-5f7fd3ea7562")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -15418,7 +15912,7 @@
 		(property "Reference" "TP10"
 			(at 0 1.648 180)
 			(layer "B.SilkS")
-			(uuid "e2c0d23f-f4b2-4e78-9dfd-2efd428d4421")
+			(uuid "e16f2f95-b972-4880-9221-5991974d8e13")
 			(effects
 				(font
 					(size 1 1)
@@ -15430,7 +15924,7 @@
 		(property "Value" "+9VA"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "0c4ee972-a477-445b-ab9a-8c6d7ba9e313")
+			(uuid "1cb4ce69-f9a3-490d-af50-91e9fc481efa")
 			(effects
 				(font
 					(size 1 1)
@@ -15444,7 +15938,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "975345d1-259f-4b5f-b7e2-67c314f2e281")
+			(uuid "984dd8c5-9a12-482c-9cde-206bc1d4dd55")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15458,7 +15952,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e412e608-7680-40ad-93a7-dcf62a87c6b4")
+			(uuid "e675e7f6-3d8f-4038-a331-bd7a533363df")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15468,9 +15962,15 @@
 			)
 		)
 		(property ki_fp_filters "Pin* Test*")
-		(path "/af3c56ca-2a23-5a04-8eec-86a618fca002")
+		(path "/7efa6f12-9cb3-59d7-a676-912763ceaa8b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -15526,7 +16026,7 @@
 		(property "Reference" "C10"
 			(at -2.95 0.025 0)
 			(layer "B.SilkS")
-			(uuid "9d5c7dfc-c76e-47e4-a3d3-2c278f89690d")
+			(uuid "8634ac41-6d51-48a9-a03a-010ac8ad80ca")
 			(effects
 				(font
 					(size 1 1)
@@ -15538,7 +16038,7 @@
 		(property "Value" "33n"
 			(at 0 -1.68 0)
 			(layer "B.Fab")
-			(uuid "f93b3af7-93dc-4c03-9573-0b05f03be78b")
+			(uuid "e1af2d69-1386-4b81-973f-13037e91505f")
 			(effects
 				(font
 					(size 1 1)
@@ -15551,7 +16051,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "06d30fa3-5406-4cfc-a497-92a76086dc81")
+			(uuid "9660e079-d733-493f-82a3-b19de47d44cc")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15563,7 +16063,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "76b9fa0d-a14e-4518-9479-b23e07b7aaa1")
+			(uuid "e30a545f-1095-476e-a2aa-11891dea2668")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15588,6 +16088,12 @@
 		(path "/5390d28b-7327-59ed-82a4-4aa5c8ebd66e")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -15684,7 +16190,7 @@
 		(property "Reference" "J5"
 			(at 1.25 -5.025 0)
 			(layer "B.SilkS")
-			(uuid "cbc7f306-8d61-4b82-9dd1-157c54bd1a62")
+			(uuid "e1bd94d9-e678-42e2-885b-5f98eb4324cf")
 			(effects
 				(font
 					(size 1 1)
@@ -15696,7 +16202,7 @@
 		(property "Value" "Enclosure bond"
 			(at 1.25 -4.6 0)
 			(layer "B.Fab")
-			(uuid "e9f5348d-3d73-4948-b0d8-ed4a667459c3")
+			(uuid "08befcad-872e-444b-8cef-dcda419605d5")
 			(effects
 				(font
 					(size 1 1)
@@ -15709,7 +16215,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b37bbe26-dfac-470a-80e3-4ef113483a12")
+			(uuid "38e2762b-83ab-4deb-85b5-c8ad49190a9d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15721,7 +16227,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "eca8833f-2f20-45db-82ae-a137c5c5be54")
+			(uuid "c6380f44-b950-468a-bfb2-26c1eeda5d7f")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15760,6 +16266,12 @@
 		(path "/8a690f60-3b9b-568d-ae38-21bb74c559fc")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16044,9 +16556,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/7250ae7d-0a79-5125-9beb-353ad237501d")
+		(path "/ebf8aa6b-28c2-5f09-b196-d6f84ab591a8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16143,7 +16661,7 @@
 		(property "Reference" "R12"
 			(at 0 1.65 90)
 			(layer "B.SilkS")
-			(uuid "7a964342-f8a9-4342-b1bd-dcc9299c451e")
+			(uuid "350e20c5-e410-4062-935d-6e85e8f43200")
 			(effects
 				(font
 					(size 1 1)
@@ -16155,7 +16673,7 @@
 		(property "Value" "4k7 (DNP=no pad)"
 			(at 5 -2.5 270)
 			(layer "B.Fab")
-			(uuid "c802f757-b740-43e4-8117-d5b04bc47520")
+			(uuid "605d42ee-ffe5-42e9-b7b6-5a0bb250f3c3")
 			(effects
 				(font
 					(size 1 1)
@@ -16168,7 +16686,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "20f27976-c191-492d-bdea-d85cebe35e54")
+			(uuid "3d3952ce-b689-41cb-b4b2-5a48a0451584")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16180,7 +16698,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "e0f52509-db12-45bf-856b-9aaa4f0b270e")
+			(uuid "16edde4a-46de-4580-b040-173c00b19517")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16219,6 +16737,12 @@
 		(path "/39079ea2-5275-56dd-a85e-8bd90f38329a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16315,7 +16839,7 @@
 		(property "Reference" "C32"
 			(at -3 0 90)
 			(layer "B.SilkS")
-			(uuid "85bbcc02-acb3-44d0-8315-fb5efd20bfdd")
+			(uuid "66dfce08-4649-4339-9c26-cfb3a3d7d164")
 			(effects
 				(font
 					(size 1 1)
@@ -16327,7 +16851,7 @@
 		(property "Value" "100n"
 			(at 0 -1.68 90)
 			(layer "B.Fab")
-			(uuid "e8810d1c-d34b-42c5-8556-a23a8df46623")
+			(uuid "9e59a8b9-ebb6-47fa-bdc0-0528804fca16")
 			(effects
 				(font
 					(size 1 1)
@@ -16340,7 +16864,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6571ee1a-7ae3-475c-b8ee-43c8893e2e69")
+			(uuid "04932b29-d26e-467d-86be-31f3ae01b795")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16352,7 +16876,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8803edae-7ff9-4a65-93fe-39b025f2293b")
+			(uuid "56247516-e1dc-44d4-bc5a-7038aa42ca27")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16388,9 +16912,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/bf395a93-f481-50a7-8df9-ddeea3e0d775")
+		(path "/b0c72c86-aa49-5d3f-86b6-b7148863c166")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16488,7 +17018,7 @@
 			(at 0 1.2 180)
 			(layer "B.SilkS")
 			(hide yes)
-			(uuid "98fff74b-0429-4bf6-a4f6-f23df8226bdf")
+			(uuid "742938dd-c29f-49d3-bfc1-1b5f1d8dc021")
 			(effects
 				(font
 					(size 1 1)
@@ -16501,7 +17031,7 @@
 			(at 0 -1.2 180)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "3eb8bb27-b82c-4637-9c9f-7bb07a3086a5")
+			(uuid "0ddb4ed2-d2b2-432f-b533-9aa5891e9382")
 			(effects
 				(font
 					(size 1 1)
@@ -16515,7 +17045,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a96c0f4a-97a4-4402-bdee-9da2df71b912")
+			(uuid "cf01da57-719f-416a-adc1-bae259befbd7")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16529,7 +17059,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f68b08e9-27eb-41fa-b4a0-cb90e5f634eb")
+			(uuid "92698122-8188-4ca1-bb61-aa0e404fccf5")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16556,6 +17086,12 @@
 		(path "/4e424239-958b-5bb9-8b27-f8cf90380ec8")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr allow_missing_courtyard)
 		(net_tie_pad_groups "1, 2")
 		(duplicate_pad_numbers_are_jumpers no)
@@ -16659,9 +17195,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/acd3d6bc-f822-5313-86db-9d757be6e66b")
+		(path "/a8e987a4-9345-5098-a8db-83877e131e81")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -16758,7 +17300,7 @@
 		(property "Reference" "C4"
 			(at -3 0 0)
 			(layer "B.SilkS")
-			(uuid "f0f77293-d907-4a58-b104-99e982f75090")
+			(uuid "675b2af9-baa3-48ad-8eff-7ab0e5993f9f")
 			(effects
 				(font
 					(size 1 1)
@@ -16770,7 +17312,7 @@
 		(property "Value" "100u/25V"
 			(at 0.75 -3.5375 90)
 			(layer "B.Fab")
-			(uuid "7e980ec9-3442-41aa-8e07-5165d90a1e87")
+			(uuid "c305fe79-2371-4a82-b156-e91b72205a35")
 			(effects
 				(font
 					(size 1 1)
@@ -16783,7 +17325,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "4a188280-6821-4019-a69e-2a7bab75394d")
+			(uuid "a7418a24-ae61-49be-bc7c-a2aa6a7d35de")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16795,7 +17337,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "32a347eb-dc7e-4315-a138-914985364a8c")
+			(uuid "6fa2b1a6-6935-4388-a1f6-11117fbd429b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16820,6 +17362,12 @@
 		(path "/599a3ba1-d70c-5a82-a01f-80926dc4bfa3")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18290,7 +18838,7 @@
 		(property "Reference" "R21"
 			(at 3 0 90)
 			(layer "B.SilkS")
-			(uuid "4914cca1-e587-45fb-a636-417209d99953")
+			(uuid "20d05489-1d13-4963-8123-60eac936645d")
 			(effects
 				(font
 					(size 1 1)
@@ -18302,7 +18850,7 @@
 		(property "Value" "100R"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "40f1ac03-f38f-46ac-b1fe-05f4f1ecad6c")
+			(uuid "283fdfe6-5872-4122-81a7-e79820632476")
 			(effects
 				(font
 					(size 1 1)
@@ -18315,7 +18863,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "d3b3aa16-9531-4c2f-9416-a8786c6ad375")
+			(uuid "01d366e3-1b0d-49ba-8e20-1bdf277d7a7d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18327,7 +18875,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ef4b8bf1-53b0-4277-8576-8063e569316d")
+			(uuid "51c24541-1013-4492-887f-418bd7e0887d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18352,6 +18900,12 @@
 		(path "/b3bdcca3-d961-53bb-8c8f-f62104514877")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18448,7 +19002,7 @@
 		(property "Reference" "R17"
 			(at 0 1.5 90)
 			(layer "B.SilkS")
-			(uuid "faedfd64-ba67-42d6-b96f-a4bf609ba9fc")
+			(uuid "273b07e8-e51b-43de-a23e-dc437df9384c")
 			(effects
 				(font
 					(size 1 1)
@@ -18460,7 +19014,7 @@
 		(property "Value" "470k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "3d562395-20b9-4968-bfcf-c7a326e0df0f")
+			(uuid "2dde5660-d8b2-4586-a1e5-f0e0353f998e")
 			(effects
 				(font
 					(size 1 1)
@@ -18473,7 +19027,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "37088147-5f28-4abb-860b-dcea85949af5")
+			(uuid "5c71ff8e-0969-4ef7-a8f2-eb92ea2b5050")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18485,7 +19039,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "cfd1d4ca-586a-4f69-9261-f943ebca8174")
+			(uuid "2bf7251b-2328-44a6-853c-3bb437ac477a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18510,6 +19064,12 @@
 		(path "/09f158bd-04e0-5a0c-a266-4b942869719b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18665,9 +19225,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/70d63201-5398-51ef-9f6d-58057b174312")
+		(path "/7250ae7d-0a79-5125-9beb-353ad237501d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18823,9 +19389,15 @@
 			)
 		)
 		(property ki_fp_filters "C_*")
-		(path "/f15ee391-13f2-554c-84ff-2b0f14758a2a")
+		(path "/167a72a6-de51-55b4-80d0-0266bcd14ff9")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -18922,7 +19494,7 @@
 		(property "Reference" "TP8"
 			(at 0 1.648 0)
 			(layer "B.SilkS")
-			(uuid "5fbb3dd3-3850-4ed2-93a4-0537a351beb9")
+			(uuid "11ca49b3-160e-42c2-a6ea-17bd66a880bd")
 			(effects
 				(font
 					(size 1 1)
@@ -18934,7 +19506,7 @@
 		(property "Value" "OUT_TIP"
 			(at 0 -1.75 0)
 			(layer "B.Fab")
-			(uuid "2bed748f-d427-4305-943e-7594c6d878d9")
+			(uuid "95e6c578-e1d8-468c-b700-40dd9dc369b9")
 			(effects
 				(font
 					(size 1 1)
@@ -18948,7 +19520,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "cd09e322-8c31-4f39-88eb-4c16b70be590")
+			(uuid "ce307521-59e3-4dc5-9fd6-3411c028f101")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18962,7 +19534,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "8fb594e9-7943-423e-bb29-02aadd720966")
+			(uuid "82d441e8-d087-40b5-bf39-1e3edad98de8")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18975,6 +19547,12 @@
 		(path "/49a24d1a-e53a-5a33-b61c-94fca24a44a6")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -19030,7 +19608,7 @@
 		(property "Reference" "U3"
 			(at 0.025 3.4 0)
 			(layer "B.SilkS")
-			(uuid "c71edf03-394a-41e2-9999-424fa55e597b")
+			(uuid "306a633b-d864-4d3d-a557-db01e3f659e7")
 			(effects
 				(font
 					(size 1 1)
@@ -19042,7 +19620,7 @@
 		(property "Value" "OPA1642AIDR"
 			(at 0 -3.4 0)
 			(layer "B.Fab")
-			(uuid "d3c2a79d-9af1-4570-b387-dc97d5fb2f20")
+			(uuid "e45ba1ea-8d01-4521-89bb-ca57bfe31116")
 			(effects
 				(font
 					(size 1 1)
@@ -19055,7 +19633,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "0e376fcb-fc9c-4237-8605-4e8ba53a413b")
+			(uuid "cb6d4305-30ce-4439-9c87-18dcab4dc364")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19067,7 +19645,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "10918d3a-64b0-4c40-977a-f4c96613ffb4")
+			(uuid "3860ea1f-1ee3-4a95-9a64-0286e6556524")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19120,6 +19698,20 @@
 		(path "/f696b005-f262-5a66-afef-769ffa1925f3")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "3" "2" "1")
+			)
+			(unit
+				(name "B")
+				(pins "5" "6" "7")
+			)
+			(unit
+				(name "C")
+				(pins "8" "4")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19438,7 +20030,7 @@
 		(property "Reference" "C21"
 			(at -3.5 0 90)
 			(layer "B.SilkS")
-			(uuid "2b729b75-f7b4-47cf-9442-438b868880e7")
+			(uuid "78ab181f-afd7-4577-b2a7-2bdadc2d5151")
 			(effects
 				(font
 					(size 1 1)
@@ -19450,7 +20042,7 @@
 		(property "Value" "1u"
 			(at 0 -2.3 90)
 			(layer "B.Fab")
-			(uuid "d18c08bc-f5e6-4a1b-92d4-25366c7f3b0b")
+			(uuid "e9d3ae2d-be23-4d8a-a67e-11ffad740c84")
 			(effects
 				(font
 					(size 1 1)
@@ -19463,7 +20055,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ab004ed7-c84d-4981-b0c3-01ff5dfc0ec7")
+			(uuid "f2dff807-0b71-4b31-9464-a7b2520447bd")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19475,7 +20067,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "897396be-dcd9-4331-96f6-1a9c5aa343b2")
+			(uuid "f371d207-29d3-4ec8-abe9-cbee155b7bbf")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19514,6 +20106,12 @@
 		(path "/0b1cd861-3b5f-5c35-a2b7-a08f8d4b4f5d")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19610,7 +20208,7 @@
 		(property "Reference" "C8"
 			(at 0 2.3 90)
 			(layer "B.SilkS")
-			(uuid "32cd7a1b-022e-4752-8bba-5aa834fea241")
+			(uuid "5e66ae7b-516f-4d14-ae61-5dc782353610")
 			(effects
 				(font
 					(size 1 1)
@@ -19622,7 +20220,7 @@
 		(property "Value" "1u"
 			(at 0 -2.5 0)
 			(layer "B.Fab")
-			(uuid "f300bc70-af0a-4813-a5bc-2feb9ce9f73e")
+			(uuid "119491b7-0644-4345-b237-69a459a62ef5")
 			(effects
 				(font
 					(size 1 1)
@@ -19635,7 +20233,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "ee434390-a170-43b0-97be-175cf5228aaf")
+			(uuid "5060c0b8-1847-47ce-8cd8-39a5d17f5ae3")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19647,7 +20245,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "a4707cdd-ff1c-4e83-8de9-0a9615aac11f")
+			(uuid "08b654bb-b4a7-40a4-ab0e-0c13ef5eb057")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19686,6 +20284,12 @@
 		(path "/4aba001b-a53b-500c-b43b-1ba4a52db435")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19841,9 +20445,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/167a72a6-de51-55b4-80d0-0266bcd14ff9")
+		(path "/7e9bd91f-a57c-5fd7-9f78-3571c2763267")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -19940,7 +20550,7 @@
 		(property "Reference" "R5"
 			(at 0 1.65 90)
 			(layer "B.SilkS")
-			(uuid "36cb514f-fb5a-4088-a85f-7e2c16ac46bb")
+			(uuid "48daa312-cf73-4c9d-8392-058c633b93b9")
 			(effects
 				(font
 					(size 1 1)
@@ -19952,7 +20562,7 @@
 		(property "Value" "4k7 (DNP=no pad)"
 			(at 5 -2.5 90)
 			(layer "B.Fab")
-			(uuid "a8238afe-5408-46bb-aee3-d2b678be41b6")
+			(uuid "57ff5a1d-bc3e-4599-bebb-06cefe9262fd")
 			(effects
 				(font
 					(size 1 1)
@@ -19965,7 +20575,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "4e07a952-e1fa-4bf3-b845-20e4f3367fa5")
+			(uuid "76790d7d-7dfa-4dc4-b44e-b5a171da440b")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -19977,7 +20587,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "56b39c4c-c3a4-4542-bcbb-c12017eef3f5")
+			(uuid "b55837af-b2e1-4088-a6cd-4297dfc24c37")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20016,6 +20626,12 @@
 		(path "/d61a2d32-30c0-5b22-83d3-4d772a489830")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd exclude_from_bom dnp)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20171,9 +20787,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/dc225086-ef64-5db2-a2c5-3e710552e729")
+		(path "/acd3d6bc-f822-5313-86db-9d757be6e66b")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20329,9 +20951,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/ff995e20-b5cc-53a5-8dc5-81550aa45f53")
+		(path "/8a91aff5-22e6-5f5f-a6df-4d604bf488bc")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20428,7 +21056,7 @@
 		(property "Reference" "R22"
 			(at 0 -1.5 90)
 			(layer "B.SilkS")
-			(uuid "13818797-b73d-4d13-ae5c-9ae5c7424375")
+			(uuid "fd153b22-11b8-4215-8759-36326c20c87e")
 			(effects
 				(font
 					(size 1 1)
@@ -20440,7 +21068,7 @@
 		(property "Value" "10k"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "dfc5f373-9295-4a1e-826e-7b10cedbb134")
+			(uuid "44096efc-f748-42ab-b9d0-db6ba0a7d09b")
 			(effects
 				(font
 					(size 1 1)
@@ -20453,7 +21081,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b5ba9706-b3e0-4f58-a200-d7b147bb1db0")
+			(uuid "a6141840-79e1-426b-894a-9e6939512cd2")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20465,7 +21093,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "10b5a1a0-cad5-4677-970d-afaa179e2ec9")
+			(uuid "d9b530b3-7ebf-4fe8-838e-c5d95cc6c7fe")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20490,6 +21118,12 @@
 		(path "/0f08fdee-0ae6-5eca-ad35-434dc77e2673")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20586,7 +21220,7 @@
 		(property "Reference" "D2"
 			(at 4.5 0.1375 0)
 			(layer "B.SilkS")
-			(uuid "577186e1-cfa3-4041-b4d7-a25cfdfff567")
+			(uuid "f553fddb-39f3-44ba-8ffc-01a19f34b65a")
 			(effects
 				(font
 					(size 1 1)
@@ -20598,7 +21232,7 @@
 		(property "Value" "SS34"
 			(at 0 -2.6 0)
 			(layer "B.Fab")
-			(uuid "7b93122c-47c1-4173-bb4e-7f7adcee58ce")
+			(uuid "13f7196f-9fb0-4bcb-bc91-2e7d6ee0bf19")
 			(effects
 				(font
 					(size 1 1)
@@ -20612,7 +21246,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "34ab7787-0c4b-433c-b6ce-4801fff6e3d3")
+			(uuid "1abb8d34-d9f6-4c01-824f-430ae6214722")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20626,7 +21260,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "6c14889b-3fbe-4a51-a31d-f9e9ba15b343")
+			(uuid "0b31051e-5d41-4338-bf7e-139d07ad49fa")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20667,6 +21301,12 @@
 		(path "/09f63d49-2406-5708-b9ea-4916515afaaa")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -20893,7 +21533,7 @@
 		(property "Reference" "TP2"
 			(at 0 1.648 180)
 			(layer "B.SilkS")
-			(uuid "ce5acb89-1d56-45cb-ab98-6ecf98edfdc8")
+			(uuid "a3bc531f-31e5-4317-b221-53ef5fe817ad")
 			(effects
 				(font
 					(size 1 1)
@@ -20905,7 +21545,7 @@
 		(property "Value" "AA_OUT"
 			(at 0 -1.75 180)
 			(layer "B.Fab")
-			(uuid "2f8d5f22-92a4-4261-a315-23e604884dd2")
+			(uuid "5945fa67-2034-40c4-b5b3-ed6ebd67c323")
 			(effects
 				(font
 					(size 1 1)
@@ -20919,7 +21559,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "cc773fe1-e098-49ee-8216-ff32fc4765f1")
+			(uuid "2aea2308-eb2d-47eb-90b6-bd017a551079")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20933,7 +21573,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "888645a5-720e-4ace-9c64-bdf712ac0e1a")
+			(uuid "6fa9e9a5-94df-49b8-90fe-ef4925fc2ed3")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20946,6 +21586,12 @@
 		(path "/12775b04-e65c-5606-9630-d4253407ec61")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1")
+			)
+		)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -21001,7 +21647,7 @@
 		(property "Reference" "C1"
 			(at 1.25 4.4 180)
 			(layer "B.SilkS")
-			(uuid "5f7c3518-82c7-46df-86a5-f9e4546e4df3")
+			(uuid "35c0a0b9-5a0c-43d8-8181-6f7c6730af2b")
 			(effects
 				(font
 					(size 1 1)
@@ -21013,7 +21659,7 @@
 		(property "Value" "100u/25V"
 			(at 0.75 -3.5375 90)
 			(layer "B.Fab")
-			(uuid "a1218199-0b73-4512-a017-18ab9de94387")
+			(uuid "65642db2-643a-4a1f-8c17-007e44a260a8")
 			(effects
 				(font
 					(size 1 1)
@@ -21026,7 +21672,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "220749ef-9189-45eb-a010-8ee88c8e2def")
+			(uuid "a93d2cd9-be97-4503-8995-5400de8fe855")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -21038,7 +21684,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "030b00d3-d14e-45e2-9f91-ff5338c6baa7")
+			(uuid "fcc22b09-5c53-472c-87f9-18d3a161e534")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -21063,6 +21709,12 @@
 		(path "/7a6684fa-9f0c-5819-b66d-4e3c7fa83dd2")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -22592,9 +23244,15 @@
 			)
 		)
 		(property ki_fp_filters "R_*")
-		(path "/a8e987a4-9345-5098-a8db-83877e131e81")
+		(path "/f15ee391-13f2-554c-84ff-2b0f14758a2a")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -22691,7 +23349,7 @@
 		(property "Reference" "J4"
 			(at 6 -0.5 0)
 			(layer "B.SilkS")
-			(uuid "bb55fc90-0f60-49d0-8c38-edcfe02c6f21")
+			(uuid "3908ed95-9218-4c42-89e5-38fed6620c78")
 			(effects
 				(font
 					(size 1 1)
@@ -22703,7 +23361,7 @@
 		(property "Value" "Battery lead"
 			(at 1.25 -4.6 0)
 			(layer "B.Fab")
-			(uuid "36521785-8cd5-414d-b96e-752b19870b19")
+			(uuid "3cffb36b-79e2-4104-bc46-26731daa93f7")
 			(effects
 				(font
 					(size 1 1)
@@ -22716,7 +23374,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "f89d3501-2862-4512-b359-56ebd6372393")
+			(uuid "8bcbe9c4-9270-4407-a920-c4adf51e0a40")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22728,7 +23386,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "5900b4d2-037d-45d4-b2ed-b02e60c72b01")
+			(uuid "0d3b39e3-adb4-46a5-88a3-f49a20bafc82")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22767,6 +23425,12 @@
 		(path "/71a7cc7c-f714-5377-a109-7f79741698ab")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -22992,7 +23656,7 @@
 		(property "Reference" "R2"
 			(at 2.4375 -0.135 270)
 			(layer "B.SilkS")
-			(uuid "a265a3aa-af60-4ab8-96fa-b8c3380ed2a6")
+			(uuid "fb7570f4-cce2-48c3-89e2-ea3d9453b735")
 			(effects
 				(font
 					(size 1 1)
@@ -23004,7 +23668,7 @@
 		(property "Value" "1M"
 			(at 0 -1.65 90)
 			(layer "B.Fab")
-			(uuid "efbf9f3f-65dc-4f81-a3a6-509213bb221d")
+			(uuid "9f6a4d3b-bdad-414a-b393-2e3d92acb7d7")
 			(effects
 				(font
 					(size 1 1)
@@ -23017,7 +23681,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "9aff6f59-85bf-4ff9-8ee0-0240e42b0c9e")
+			(uuid "f8f913f9-c747-4328-a7ec-8858cb89dd1a")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -23029,7 +23693,7 @@
 			(at 0 0 90)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "366f693c-d711-4915-93c1-11b4e78eafd4")
+			(uuid "7f447f79-d5ba-49ba-a2d6-7e654df4fc4d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -23054,6 +23718,12 @@
 		(path "/dfa705af-6322-5742-9f1f-c3bc5c648a94")
 		(sheetname "/")
 		(sheetfile "tone_trixter.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
