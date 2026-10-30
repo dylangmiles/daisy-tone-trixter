@@ -545,7 +545,7 @@ S.wire(j_hp.pin(3), (j_hp.pin(3)[0] - G, j_hp.pin(3)[1])); gnd((j_hp.pin(3)[0] -
 # Fixed gain + DSP. Full spec: private/docs/daisy_xlr_mic_frontend_2026-10-29.md. Created LAST (refs/UUIDs after).
 FP["INA163"] = "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm"
 FP["LM2577"] = "Package_TO_SOT_SMD:TO-263-5_TabPin3"                        # ⚠ TO-263; place in a corner, 48 V node clearance
-FP["COMBO"]  = "Connector_Audio:Jack_Combo_Neutrik_NCJ9FI-H_Horizontal"    # ⚠ confirm exact combo part/footprint at layout
+FP["COMBO"]  = "Connector_Audio:Jack_XLR-6.35mm_Neutrik_NCJ9FI-H_Horizontal"  # NCJ9FI-H switching combo (LCSC C368504); TN=tip-normal switch; RN/SN pads unused
 FP["SOT23"]  = "Package_TO_SOT_SMD:SOT-23"
 FP["SOD123"] = "Diode_SMD:D_SOD-123"
 FP["IND"]    = "Inductor_SMD:L_12x12mm_H8mm"                                # ⚠ size to ~100 uH at the boost's light load
@@ -556,6 +556,10 @@ custom_ic("INA163", "INA163UA", [
 custom_ic("LM2577", "LM2577S-ADJ", [
     ("5", "VIN", "L", "power_in"), ("3", "GND", "L", "power_in"), ("1", "COMP", "L", "passive"),
     ("4", "VSW", "R", "output"), ("2", "FB", "R", "input"),
+])
+custom_ic("ComboJack", "NCJ9FI-H", [
+    ("1", "XLR1", "L", "passive"), ("2", "XLR2", "L", "passive"), ("3", "XLR3", "L", "passive"), ("G", "CHAS", "L", "passive"),
+    ("T", "TIP", "R", "passive"), ("TN", "TIPN", "R", "passive"), ("S", "SLV", "R", "passive"), ("R", "RING", "R", "passive"),
 ])
 S.text("XLR MIC FRONT-END + 48 V PHANTOM — CH2 combo: XLR mic (INA163, G=1+6k/RG, RG=120R≈+34 dB fixed + DSP) OR 1/4\" stomp-box/instrument via the combo's normalling switch. LM2577 boost → 48 V phantom, GPIO P-FET enable (default OFF). Single-supply off VIN (best at 12 V).", g(6, 133), 1.6)
 def xg(sym, num, net, d='L', k='g'):
@@ -572,11 +576,10 @@ def rc(kind, val, gx, gy, a, b, **f):
         else: xg(s, pin, spec, side)
     return s
 # --- combo jack J8 (replaces the old K3599 CH2 jack; drives IN2_TIP) ---
-j_combo = S.add(Sym("Connector", "Conn_01x06_Pin", "J8", "Combo XLR+1/4in (CH2)", g(158, 98), 0, footprint=FP["COMBO"],
-    fields={"Note": "Neutrik-type combo, CH2: p1 XLR shield/GND · p2 XLR hot · p3 XLR cold · p4 1/4in TIP · p5 1/4in TIP-switch (normal) · p6 1/4in SLEEVE/GND. A 1/4in plug breaks p4↔p5 → selects the stomp-box piezo over the mic preamp. THT hand-soldered, panel-mount."}))
-for num, net in (("1", "GNDA"), ("2", "XLR_HOT"), ("3", "XLR_COLD"), ("4", "IN2_TIP"), ("5", "MIC_OUT"), ("6", "GNDA")):
-    if net == "GNDA": xg(j_combo, num, "GNDA", 'L', 'gnd')
-    else: xg(j_combo, num, net, 'L')
+j_combo = S.add(Sym("TT", "ComboJack", "J8", "NCJ9FI-H combo (CH2)", g(158, 98), 0, footprint=FP["COMBO"],
+    fields={"LCSC": "C368504", "Note": "Neutrik NCJ9FI-H switching combo, CH2. XLR: 1 shield/GND · 2 hot · 3 cold. 1/4in: T tip · TN tip-normal · S sleeve/GND · R ring · G chassis. A 1/4in plug breaks T<->TN, so the tip (stomp-box piezo) drives IN2_TIP and the mic preamp (on TN) is disconnected; no plug normals TN->T so the mic preamp drives IN2_TIP. RN/SN unused. PCB-mount, horizontal."}))
+xg(j_combo, "1", "GNDA", 'L', 'gnd'); xg(j_combo, "2", "XLR_HOT", 'L'); xg(j_combo, "3", "XLR_COLD", 'L'); xg(j_combo, "G", "GNDA", 'L', 'gnd')
+xg(j_combo, "T", "IN2_TIP", 'R'); xg(j_combo, "TN", "MIC_OUT", 'R'); xg(j_combo, "S", "GNDA", 'R', 'gnd'); xg(j_combo, "R", "GNDA", 'R', 'gnd')
 # --- phantom feed (6k8 x2 matched, +48V → XLR 2/3) + DC-blocks (>=63 V) into the INA163 ---
 rc('R', "6k8", 186, 92, "P48V", "XLR_HOT", Note="phantom feed, matched 1% to its pair")
 rc('R', "6k8", 186, 98, "P48V", "XLR_COLD", Note="phantom feed, matched 1% to its pair")
