@@ -33719,6 +33719,18 @@
 			(justify mirror)
 		)
 	)
+	(gr_text "XLR"
+		(at 70.9 63 0)
+		(layer "B.SilkS")
+		(uuid "89a2caaa-1909-40e5-8ac2-869a156542bc")
+		(effects
+			(font
+				(size 1.6 1.6)
+				(thickness 0.25)
+			)
+			(justify mirror)
+		)
+	)
 	(gr_text "D5"
 		(at 77.5 31.5 0)
 		(layer "B.SilkS")
@@ -33771,6 +33783,18 @@
 		(at 116 80.5 0)
 		(layer "B.SilkS")
 		(uuid "89b36874-ab47-4077-9780-eafff5738d83")
+		(effects
+			(font
+				(size 1.6 1.6)
+				(thickness 0.25)
+			)
+			(justify mirror)
+		)
+	)
+	(gr_text "HP"
+		(at 184 54.5 0)
+		(layer "B.SilkS")
+		(uuid "9bb1ef16-18ac-4557-848e-70f63cc23c05")
 		(effects
 			(font
 				(size 1.6 1.6)
