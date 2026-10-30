@@ -40,7 +40,9 @@ Z_BRD_BOT  = Z_BRD_TOP - PCB_T
 BRD_Y0, BRD_Y1 = e.BRD_Y0, e.BRD_Y1   # board depth span (shared with enclosure.py)
 
 SEED_STACK = 16.5                # ✅ MEASURED (proto): mounting surface -> USB top = 16.5 (conservative)
-SEED_Y0, SEED_Y1 = 60.0, 95.0    # where the Seed sits (depth)
+SEED_Y0, SEED_Y1 = 61.0, 80.0    # Seed depth span -- from the U4 footprint bbox (enc_y 61.2..80.0), 2026-10-30.
+                                 #   (was 60..95 conservative; the module is crosswise so its LONG axis is X 44..97,
+                                 #    Y is the ~19 mm module width; USB-C faces player-LEFT in -X, not +Y.)
 
 OLED_GLASS_UNDER = 0.0           # ✅ glass at 8.24 above board (2x2.54 spacers) = the gap -> flush with the top-face inner
 Z_GLASS    = H_INT - OLED_GLASS_UNDER
@@ -139,9 +141,10 @@ s += _txt(DX(DEPTH)-e.COMBO_D/2-1, ZY(e.COMBO_Z)-e.COMBO_D/2-1, f"IN B combo O{e
 s += _txt(DX(DEPTH)-e.COMBO_D/2-1, ZY(e.COMBO_Z)-e.COMBO_D/2+2, "PROVISIONAL -- PCB-mount, straddles the board; confirm height+fit", 'dim', 'end')
 
 # --- HP jack on the LEFT wall, shown END-ON (its barrel runs in X, out of this section plane) ---
-s += _circ(DX(96), ZY(e.HP_Z), 6.5, stroke='#2a2', dash='2 1')
-s += _txt(DX(96)-5, ZY(e.HP_Z)-5.0, "HP (left wall, end-on)", 'dim', 'end')
-s += _txt(DX(96)-5, ZY(e.HP_Z)-2.5, f"O6.5 @ z{e.HP_Z:g}; just aft of the Seed (y95) -- verify clearance", 'dim', 'end')
+_hp_y = e.LEFT[0][2]
+s += _circ(DX(_hp_y), ZY(e.HP_Z), 6.5, stroke='#2a2', dash='2 1')
+s += _txt(DX(_hp_y)-5, ZY(e.HP_Z)-5.0, "HP (left wall, end-on)", 'dim', 'end')
+s += _txt(DX(_hp_y)-5, ZY(e.HP_Z)-2.5, f"O6.5 @ z{e.HP_Z:g}; y={_hp_y:g}, fwd of OUT TRS body (Seed y80 .. TRS y88 gap)", 'dim', 'end')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6

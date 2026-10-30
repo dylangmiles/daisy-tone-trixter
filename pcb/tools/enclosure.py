@@ -107,16 +107,27 @@ COMBO_Z = 17.0          # ⚠ PROVISIONAL barrel-axis height: deliberately highe
 REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
     ("J2",  "OUT",  24.2,  10.0,        "trs",  JACK_Z),
     (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead
-    ("J3",  "DC",   64.0,  12.0,        "dc",   JACK_Z),  # panel jack + flying lead -- x is a design choice
+    ("J3",  "DC",   64.0,  12.0,        "dc",   JACK_Z),  # panel jack + flying lead; x is a design choice. Ø12 = generic DC-022/099 (local). ⚠ DRILL-TIME FINALISE to the part actually used (Cliff FC681473 = ½"/M12.7 → Ø13).
     ("J8",  "IN B", 88.0,  COMBO_D,     "combo",COMBO_Z), # IN B = NCJ9FI-H combo (O24 + 2x M3, mark from part); x reverse-synced from the board (combo centre kicad 77.0, hard against IN A) 2026-10-30
     ("J1",  "IN A", 113.8, 10.0,        "trs",  JACK_Z),   # IN A outermost-right (primary guitar input)
 ]
 
 # LEFT wall holes (X=0 wall), viewed from outside. HP jack on a 3.5 mm panel socket + flying lead to J11.
 # Toward the REAR but FWD of the OUT jack body so it is clear in front of it.
-HP_Z = 16.5             # ⚠ mid-wall; verify internal clearance (board bottom ~23, under-board barrels/Seed)
+HP_Z = 16.5             # under-board; the barrel runs in +X from the left wall through the under-board space
+# ⚠ HP PART LOCKED 2026-10-30: RS PRO 907-5680 (Distrelec 304-05-122) -- 3.5 mm stereo switched jack,
+#   vertical-PCB + NUT, panel-mount. LOCAL: in stock at RS ZA (~R27/unit, the enclosure's own channel).
+#   M8x0.75 thread -> panel hole O8; 4.5 mm bushing; 13.0 mm body behind the panel (17.4 overall); O10 nut,
+#   ~2 mm front projection; 3-pole stereo + switch; flying leads solder to the PCB pins. Datasheet:
+#   electronics-inventory-private/datasheets/RS_PRO_907-5680_3.5mm_stereo_panel_jack.pdf (p3). IDENTICAL
+#   drawing to the Cliff FC681375VH (imported equivalent, same M8/O8/13mm). Lumberg KLB 4 (RS 505-1429,
+#   solder-lug type) is DISCONTINUED at RS ZA; Micro Robotics has no panel 3.5 mm socket.
 LEFT = [  # (board_ref, label, y_enclosure, dia, kind, z_axis)
-    ("J11", "HP", 96.0, 6.5, "hp", HP_Z),   # y=96 is FWD of the OUT body (JACK_Y 102.9); 3.5 mm -> O6.5
+    # ⚠ MOVED FWD 96 -> 84 (2026-10-30): clear the OUT TRS (J2) body in DEPTH, not vertically. J2 footprint
+    #   front is enc_y 88.3; at y=84 the 13.0 mm RS PRO body (y 80.75-87.25 barrel) sits in the Seed<->TRS gap,
+    #   fwd of the TRS body (~5-11 mm margin). The Seed (U4) is at enc_X 44-97, so the x0-13 barrel path
+    #   never reaches it. Hole O8 for the M8x0.75 thread (was O6.5 for a generic 3.5 mm).
+    ("J11", "HP", 84.0, 8.0, "hp", HP_Z),
 ]
 
 def panel_anchors_board():

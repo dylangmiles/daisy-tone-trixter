@@ -33551,8 +33551,8 @@
 		(uuid "be0dbbd1-a669-4471-ae20-93756f3f834b")
 	)
 	(gr_line
-		(start 149 68.5)
-		(end 149 73.5)
+		(start 149 56.5)
+		(end 149 61.5)
 		(stroke
 			(width 0.25)
 			(type default)
@@ -33561,8 +33561,8 @@
 		(uuid "fd4f2201-0514-4f69-9d22-723ff025da3f")
 	)
 	(gr_line
-		(start 149 71)
-		(end 165 71)
+		(start 149 59)
+		(end 165 59)
 		(stroke
 			(width 0.25)
 			(type default)
@@ -33571,8 +33571,8 @@
 		(uuid "12e28818-d305-464c-be9b-c927c1574a14")
 	)
 	(gr_line
-		(start 162 68.5)
-		(end 162 73.5)
+		(start 162 56.5)
+		(end 162 61.5)
 		(stroke
 			(width 0.25)
 			(type default)
@@ -33832,7 +33832,7 @@
 		)
 	)
 	(gr_text "HP"
-		(at 156 77 0)
+		(at 156 65 0)
 		(layer "B.SilkS")
 		(uuid "9bb1ef16-18ac-4557-848e-70f63cc23c05")
 		(effects
