@@ -142,9 +142,10 @@ s += _txt(DX(DEPTH)-e.COMBO_D/2-1, ZY(e.COMBO_Z)-e.COMBO_D/2+2, "PROVISIONAL -- 
 
 # --- HP jack on the LEFT wall, shown END-ON (its barrel runs in X, out of this section plane) ---
 _hp_y = e.LEFT[0][2]
-s += _circ(DX(_hp_y), ZY(e.HP_Z), 6.5, stroke='#2a2', dash='2 1')
+_hp_dia = e.LEFT[0][3]
+s += _circ(DX(_hp_y), ZY(e.HP_Z), _hp_dia, stroke='#2a2', dash='2 1')
 s += _txt(DX(_hp_y)-5, ZY(e.HP_Z)-5.0, "HP (left wall, end-on)", 'dim', 'end')
-s += _txt(DX(_hp_y)-5, ZY(e.HP_Z)-2.5, f"O6.5 @ z{e.HP_Z:g}; y={_hp_y:g}, fwd of OUT TRS body (Seed y80 .. TRS y88 gap)", 'dim', 'end')
+s += _txt(DX(_hp_y)-5, ZY(e.HP_Z)-2.5, f"O{_hp_dia:g} @ z{e.HP_Z:g}; y={_hp_y:g}, fwd of OUT TRS body (Seed y80 .. TRS y88 gap)", 'dim', 'end')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6

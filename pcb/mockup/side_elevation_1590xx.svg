@@ -34,9 +34,9 @@
 <line x1="142.00" y1="58.94" x2="161.00" y2="58.94" stroke="#c33" stroke-width="0.3" stroke-dasharray="3 1"/>
 <text x="135.00" y="45.94" class="note" text-anchor="end">IN B combo O24 @ z17</text>
 <text x="135.00" y="48.94" class="dim" text-anchor="end">PROVISIONAL -- PCB-mount, straddles the board; confirm height+fit</text>
-<circle cx="118.00" cy="59.44" r="3.25" fill="none" stroke="#2a2" stroke-width="0.3" stroke-dasharray="2 1"/>
+<circle cx="118.00" cy="59.44" r="4.00" fill="none" stroke="#2a2" stroke-width="0.3" stroke-dasharray="2 1"/>
 <text x="113.00" y="54.44" class="dim" text-anchor="end">HP (left wall, end-on)</text>
-<text x="113.00" y="56.94" class="dim" text-anchor="end">O6.5 @ z16.5; y=84, fwd of OUT TRS body (Seed y80 .. TRS y88 gap)</text>
+<text x="113.00" y="56.94" class="dim" text-anchor="end">O8 @ z16.5; y=84, fwd of OUT TRS body (Seed y80 .. TRS y88 gap)</text>
 <line x1="28.00" y1="75.94" x2="28.00" y2="26.33" stroke="#999" stroke-width="0.3"/>
 <line x1="26.50" y1="75.94" x2="29.50" y2="75.94" stroke="#999" stroke-width="0.3"/>
 <text x="26.00" y="76.84" class="dim" text-anchor="end">0 base (btm)</text>
