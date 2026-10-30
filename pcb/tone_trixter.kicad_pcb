@@ -3248,7 +3248,7 @@
 		(property "Reference" "J8"
 			(at 8.65 9 90)
 			(layer "B.SilkS")
-			(uuid "cc165f3a-d2e0-4911-86f2-d4694f4c3e3e")
+			(uuid "452fbbf0-5625-4d65-9a89-0355201b5d43")
 			(effects
 				(font
 					(size 1 1)
@@ -3260,7 +3260,7 @@
 		(property "Value" "NCJ9FI-H combo (CH2)"
 			(at 8.65 -21 90)
 			(layer "B.Fab")
-			(uuid "229de471-b54b-4d0b-94e6-646c3e1b3b87")
+			(uuid "c1cb63bb-7a01-42a2-b56d-beee6fdad765")
 			(effects
 				(font
 					(size 1 1)
@@ -3274,7 +3274,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "b79e67ac-f7a1-4a36-8a45-f346524ff028")
+			(uuid "fe31df66-e326-4778-be68-21313c47eb55")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3288,7 +3288,7 @@
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "024335c4-aeb6-47da-acfe-ab3f2489c2f1")
+			(uuid "b9b2b525-e74b-4793-b1a2-fb854b7a1e19")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3855,13 +3855,13 @@
 	(footprint "TT:K3599_TRS_6leg"
 		(layer "B.Cu")
 		(uuid "121b91c6-50dd-40a5-8b13-517c15aad360")
-		(at 51.225 77.86 180)
+		(at 50.5 77.86 180)
 		(descr "Mantech K3599 1/4in (6.35mm) 3-conductor CLOSED (switched) open-frame phone jack, 6 solder lugs. MEASURED off the real part 2026-10-10 (recalibrated caliper): thin through-pin FLAT 1.33w x 0.5 thick (diag ~1.42, fits the 1.5 drill), along-row pitch 6.36mm c-c (3 legs/row), ROW SPACING 17.0mm c-c (MEASURED 2026-10-29 at the body exit without splay -- supersedes the earlier 16.55; legs FLEX across the rows so holes are forgiving). Fat legs TAPER to the thin through-pin and seat on the PCB (~6mm standoff, INFERRED -- confirm on a real mount). lug width 20.42mm, jack length 34.26mm, barrel axis 13.85mm below the board (MEASURED 2026-10-29, barrel centre to board plane -> JACK_Z 9.31; supersedes the inferred 13.9 and the stale 12.39). Barrel/bushing IN LINE with the legs at the +Y (back-wall) end; body extends -Y (forward, below the board). Pads 1/2/3 = Tip/Ring/Sleeve, CONFIRMED off the part 2026-10-10: TIP is furthest from the barrel opening (deepest, pad 1 at -Y); RING is the middle leg (pad 2); SLEEVE/GND is closest to the opening (pad 3 at +Y, the barrel end) -- matches the Conn_01x03 symbol pins 1/2/3. Barrel front = panel hole = +18.36 from the ring leg (12 from the sleeve leg, 7 from back-of-barrel to the tip leg). The 3 unnumbered pads are the switch/normalling lugs (soldered, no net in v1). BOTTOM-MOUNTED: place on B.Cu so the body hangs below the board.")
 		(tags "jack TRS 6.35mm phone K3599 open-frame switched measured")
 		(property "Reference" "J1"
 			(at 12.225 7.36 0)
 			(layer "B.SilkS")
-			(uuid "b8fdaa70-657a-4902-8038-e2898dc474a0")
+			(uuid "2de94497-344d-4cf1-8031-a1a03d67db35")
 			(effects
 				(font
 					(size 1 1)
@@ -3873,7 +3873,7 @@
 		(property "Value" "INA jack lead"
 			(at 0.5 -19 0)
 			(layer "B.Fab")
-			(uuid "da5704f7-ed27-40db-bd00-3e7d1b1a23ca")
+			(uuid "24431c1c-df23-4cf7-9ec7-702d550f4fdf")
 			(effects
 				(font
 					(size 1 1)
@@ -3886,7 +3886,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "3a47fd00-e0c3-4dba-a510-70a64ec7c317")
+			(uuid "e8bc0601-0e35-462f-a52d-e6c0e4a09deb")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3898,7 +3898,7 @@
 			(at 0 0 0)
 			(layer "B.Fab")
 			(hide yes)
-			(uuid "c49bc2bc-e4dc-493e-a0cd-e4228e9f6b71")
+			(uuid "75ab39c7-08c0-4f8d-9902-517360ae3769")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -33441,14 +33441,24 @@
 		(uuid "1cfa32fe-f11a-4bf2-a5f8-6c6bf1b7e588")
 	)
 	(gr_line
-		(start 74.7 75.86)
-		(end 74.7 79.86)
+		(start 74 77.9)
+		(end 80 77.9)
 		(stroke
 			(width 0.25)
 			(type default)
 		)
 		(layer "B.SilkS")
-		(uuid "ffd6c6bf-a374-4986-93ac-d660dc02bb9f")
+		(uuid "683f9050-7a18-431c-a33a-ea0b40498dba")
+	)
+	(gr_line
+		(start 77 74.9)
+		(end 77 80.9)
+		(stroke
+			(width 0.25)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "0ba5c9e9-d4ae-455e-ac16-aa8586ff1f5a")
 	)
 	(gr_line
 		(start 79 31.5)
@@ -33539,6 +33549,36 @@
 		)
 		(layer "B.SilkS")
 		(uuid "be0dbbd1-a669-4471-ae20-93756f3f834b")
+	)
+	(gr_line
+		(start 149 68.5)
+		(end 149 73.5)
+		(stroke
+			(width 0.25)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "fd4f2201-0514-4f69-9d22-723ff025da3f")
+	)
+	(gr_line
+		(start 149 71)
+		(end 165 71)
+		(stroke
+			(width 0.25)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "12e28818-d305-464c-be9b-c927c1574a14")
+	)
+	(gr_line
+		(start 162 68.5)
+		(end 162 73.5)
+		(stroke
+			(width 0.25)
+			(type default)
+		)
+		(layer "B.SilkS")
+		(uuid "52065a14-c2ab-4bf8-8fc4-90e99dfebf22")
 	)
 	(gr_rect
 		(start 78 46)
@@ -33720,7 +33760,7 @@
 		)
 	)
 	(gr_text "XLR"
-		(at 74.7 77.9 0)
+		(at 77 83 0)
 		(layer "B.SilkS")
 		(uuid "89a2caaa-1909-40e5-8ac2-869a156542bc")
 		(effects
@@ -33792,7 +33832,7 @@
 		)
 	)
 	(gr_text "HP"
-		(at 162 71 0)
+		(at 156 77 0)
 		(layer "B.SilkS")
 		(uuid "9bb1ef16-18ac-4557-848e-70f63cc23c05")
 		(effects

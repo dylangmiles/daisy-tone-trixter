@@ -108,7 +108,7 @@ REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
     ("J2",  "OUT",  24.2,  10.0,        "trs",  JACK_Z),
     (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead
     ("J3",  "DC",   64.0,  12.0,        "dc",   JACK_Z),  # panel jack + flying lead -- x is a design choice
-    ("J8",  "IN B", 90.3,  COMBO_D,     "combo",COMBO_Z), # IN B = NCJ9FI-H combo (O24 + 2x M3, mark from part)
+    ("J8",  "IN B", 88.0,  COMBO_D,     "combo",COMBO_Z), # IN B = NCJ9FI-H combo (O24 + 2x M3, mark from part); x reverse-synced from the board (combo centre kicad 77.0, hard against IN A) 2026-10-30
     ("J1",  "IN A", 113.8, 10.0,        "trs",  JACK_Z),   # IN A outermost-right (primary guitar input)
 ]
 
