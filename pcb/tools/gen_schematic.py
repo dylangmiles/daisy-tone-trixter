@@ -92,7 +92,8 @@ def custom_ic(name, value, pins):
     pins = [(number, pin_name, side, etype)], side 'L'/'R', etype a KiCad pin type
     (power_in / input / output / bidirectional / passive / ...). Pins stack top→bottom per side."""
     L = [p for p in pins if p[2] == 'L']; R = [p for p in pins if p[2] == 'R']
-    rows = max(len(L), len(R)); H = round((rows + 1) * 2.54 / 2, 2); W = round(max(len(value) + 2, 10) * 0.9 + 3, 2)
+    rows = max(len(L), len(R)); H = round((rows + 1) * 2.54 / 2, 2)
+    W = round((max(len(value) + 2, 10) * 0.9 + 3) / 2.54) * 2.54   # snap to 2.54 mm so pins land on the connection grid (ERC)
     def row(ps, side):
         o = []
         for i, (num, pn, _, et) in enumerate(ps):
@@ -226,7 +227,7 @@ q = seed.pin(21); S.wire(q, (q[0] + G, q[1])); rail("+3V3A", (q[0] + G, q[1]))
 seed_net(22, "ENC_A"); seed_net(23, "ENC_B")
 seed_net(26, "LED1"); seed_net(27, "LED2")
 seed_net(28, "FSW_R"); seed_net(32, "FSW_L")
-for n in (24, 25, 29, 30, 31, 33, 34, 35, 36, 37): S.noconnect(seed.pin(n))
+for n in (24, 25, 29, 30, 31, 34, 35, 36, 37): S.noconnect(seed.pin(n))   # 33/D26 now drives PH_EN (phantom enable)
 q = seed.pin(38); S.wire(q, (q[0] + G, q[1])); rail("+3V3D", (q[0] + G, q[1]))
 q = seed.pin(39); S.wire(q, (q[0] + G, q[1])); rail("VIN", (q[0] + G, q[1]))
 q = seed.pin(40); S.wire(q, (q[0] + G, q[1])); S.wire((q[0] + G, q[1]), (q[0] + G, q[1] - 2*G)); gnd((q[0] + G, q[1] - 2*G), "GNDD")
@@ -555,7 +556,7 @@ custom_ic("INA163", "INA163UA", [
     ("9", "VO", "R", "output"), ("8", "Sense", "R", "passive"), ("10", "Ref", "R", "input"), ("12", "GS2", "R", "passive"), ("11", "V+", "R", "power_in"),
 ])
 custom_ic("LM2577", "LM2577S-ADJ", [
-    ("5", "VIN", "L", "power_in"), ("3", "GND", "L", "power_in"), ("1", "COMP", "L", "passive"),
+    ("5", "VIN", "L", "passive"), ("3", "GND", "L", "power_in"), ("1", "COMP", "L", "passive"),
     ("4", "VSW", "R", "output"), ("2", "FB", "R", "input"),
 ])
 custom_ic("ComboJack", "NCJ9FI-H", [
