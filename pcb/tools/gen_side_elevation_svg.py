@@ -80,7 +80,7 @@ def _txt(x, y, s, cls='lbl', anchor='start'):
 # ---- page / transforms -----------------------------------------------------------------------
 LM, TM = 34.0, 20.0          # left margin (for the Z scale), top margin
 Z_TOP_DRAW = ENC_SHAFT_ABOVE_TOP + T_TOP + 4    # headroom above the box for the shaft
-PAGE_W = LM + DEPTH + 10
+PAGE_W = LM + DEPTH + 16     # extra right margin so the combo O24 protrusion past the back wall isn't clipped
 PAGE_H = TM + (Z_TOP_DRAW + H_INT + T_BASE) + 22
 
 def DX(y): return LM + y
@@ -130,7 +130,18 @@ s += _txt(DX(ENC_Y+4), ZY(H_INT + ENC_SHAFT_ABOVE_TOP/2), f"encoder shaft (+{ENC
 s += _line(DX(BRD_Y1-6), ZY(Z_BRD_BOT), DX(BRD_Y1-6), ZY(Z_JACK + JACK_DIA/2), stroke='#111', sw=0.4)  # legs up to PCB
 s += _rect(DX(100), ZY(Z_JACK + JACK_DIA/2), (DEPTH - 100 + 10), JACK_DIA, fill='#fff', stroke='#111', sw=0.5)
 s += _line(DX(96), ZY(Z_JACK), DX(DEPTH)+11, ZY(Z_JACK), stroke='#111', dash='3 1', sw=0.3)
-s += _txt(DX(99), ZY(Z_JACK)-JACK_DIA/2-1, f"jack z={Z_JACK:g}", 'dim')
+s += _txt(DX(99), ZY(Z_JACK)-JACK_DIA/2-1, f"OUT/IN A/DC jack z={Z_JACK:g}", 'dim')
+
+# --- IN B COMBO (NCJ9FI-H): O24, higher axis than the TRS jacks; PCB-mount, straddles the board ---
+s += _circ(DX(DEPTH), ZY(e.COMBO_Z), e.COMBO_D, stroke='#c33', dash='3 2')
+s += _line(DX(DEPTH)-6, ZY(e.COMBO_Z), DX(DEPTH)+13, ZY(e.COMBO_Z), stroke='#c33', dash='3 1', sw=0.3)
+s += _txt(DX(DEPTH)-e.COMBO_D/2-1, ZY(e.COMBO_Z)-e.COMBO_D/2-1, f"IN B combo O{e.COMBO_D:g} @ z{e.COMBO_Z:g}", 'note', 'end')
+s += _txt(DX(DEPTH)-e.COMBO_D/2-1, ZY(e.COMBO_Z)-e.COMBO_D/2+2, "PROVISIONAL -- PCB-mount, straddles the board; confirm height+fit", 'dim', 'end')
+
+# --- HP jack on the LEFT wall, shown END-ON (its barrel runs in X, out of this section plane) ---
+s += _circ(DX(96), ZY(e.HP_Z), 6.5, stroke='#2a2', dash='2 1')
+s += _txt(DX(96)-5, ZY(e.HP_Z)-5.0, "HP (left wall, end-on)", 'dim', 'end')
+s += _txt(DX(96)-5, ZY(e.HP_Z)-2.5, f"O6.5 @ z{e.HP_Z:g}; just aft of the Seed (y95) -- verify clearance", 'dim', 'end')
 
 # --- Z dimension scale on the left ---
 xs = LM - 6
