@@ -391,6 +391,7 @@ S.text("OLED 1.3\" SH1106 I²C module, 4-pin (GND/VCC/SCL/SDA) → 0x3C (board.h
 r_scl = R("33R", g(X + 4, y + 2), 90); r_sda = R("33R", g(X + 4, y + 5), 90)
 S.glabel("SCL_U", min(r_scl.pin(1), r_scl.pin(2)), 180); S.glabel("SDA_U", min(r_sda.pin(1), r_sda.pin(2)), 180)
 scl = max(r_scl.pin(1), r_scl.pin(2)); sda = max(r_sda.pin(1), r_sda.pin(2))
+S.glabel("SCL_OLED", scl, 0); S.glabel("SDA_OLED", sda, 0)   # explicit header-side names → stop the Net-(J6-Pin_N) auto-name cross across syncs
 pu1 = R("4k7", (scl[0] + 2*G, scl[1] - 4*G), 0); pu2 = R("4k7", (scl[0] + 4*G, scl[1] - 4*G), 0)
 S.wire(scl, (pu1.pin(2)[0], scl[1])); S.wire((pu1.pin(2)[0], scl[1]), pu1.pin(2)); S.junction((pu1.pin(2)[0], scl[1]))
 S.wire(sda, (pu2.pin(2)[0], sda[1])); S.wire((pu2.pin(2)[0], sda[1]), pu2.pin(2)); S.junction((pu2.pin(2)[0], sda[1]))
