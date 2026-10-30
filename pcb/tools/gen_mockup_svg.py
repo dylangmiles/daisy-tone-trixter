@@ -192,18 +192,24 @@ for ref, label, xc, size, kind, z in e.REAR:
             s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
 
 # ============================================================ LEFT WALL panel (fold-out, to the LEFT) =
-# Folds off the top face's LEFT edge. Drawn extending leftward: LID SEAM (far/left) -> panel (CAVITY_H)
-# -> top-face band -> FOLD (at x=ox). z measured UP from the lid seam toward the fold.
-LXS = ox - WALL_TOP - CAVITY_H                                        # left-wall lid seam (leftmost)
-def LX(z): return LXS + z
-s += _rect(LXS, oy, CAVITY_H, BOX_D, sw=0.6)                          # the left wall panel itself
-s += _rect(ox - WALL_TOP, oy, WALL_TOP, BOX_D, stroke='#999', sw=0.3) # top-face band next to the fold
-s += _txt(LXS + CAVITY_H/2, oy - 2.5, "LEFT WALL -- fold", 'fold')
+# From the top face's internal left edge (ox) OUTWARD to the left (matches the rear-wall fold):
+#   [inside wall @ ox] -> WALL_SIDE wall thickness -> [outside wall = FOLD @ ox-WALL_SIDE]
+#   -> WALL_TOP top-face band (= top edge of the left wall) -> left wall PANEL (CAVITY_H) -> LID SEAM.
+LW_FOLD = ox - WALL_SIDE                    # outside wall face = the fold line (external left edge)
+LW_BAND = LW_FOLD - WALL_TOP                # inner edge of the top-face band (= top edge of the left wall)
+LXS     = LW_BAND - CAVITY_H                # left-wall panel lid seam (leftmost)
+def LX(z): return LXS + z                   # z up from the lid seam toward the fold
+s += _rect(LW_FOLD, oy, WALL_SIDE, BOX_D, stroke='#999', sw=0.3)      # left wall thickness (inside..outside)
+s += _rect(LW_BAND, oy, WALL_TOP, BOX_D, stroke='#999', sw=0.3)       # top-face band = top edge of the left wall
+s += _rect(LXS, oy, CAVITY_H, BOX_D, sw=0.6)                          # the left wall PANEL (outside face, drilled)
+s += _line(LW_FOLD, oy, LW_FOLD, oy + BOX_D, stroke='#06c', dash='5 2', sw=0.6)   # FOLD = outside wall edge
+s += _txt(LXS + CAVITY_H/2, oy - 5.5, "LEFT WALL panel (outside face, drilled)", 'fold', 'middle')
+s += _txt(LXS + CAVITY_H/2, oy - 2.2, "R->L: inside wall | outside wall=FOLD | top edge | panel", 'dim', 'middle')
 s += _txt(LXS + 1, oy + BOX_D + 3, "LID SEAM (z=0)", 'dim', 'start')
-s += _txt(ox - 1, oy + BOX_D + 3, f"FOLD (z={CAVITY_H:g})", 'dim', 'end')
+s += _txt(LW_FOLD + 0.6, oy + BOX_D + 3, "FOLD (outside wall)", 'fold', 'start')
 for ref, label, yc, dia, kind, z in e.LEFT:
     hx2, hy2 = LX(z), TY(yc)
-    s += _line(ox, hy2, hx2, hy2, stroke='#bbb', dash='2 2', sw=0.2)  # projection to the fold edge
+    s += _line(LW_FOLD, hy2, hx2, hy2, stroke='#bbb', dash='2 2', sw=0.2)  # projection from the fold edge
     s += _circ(hx2, hy2, dia) + _cross(hx2, hy2)
     s += _txt(hx2, hy2 - dia/2 - 1.6, f"{label} O{dia:g} (z={z:g})", 'dim')
 

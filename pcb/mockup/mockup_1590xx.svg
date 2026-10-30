@@ -77,16 +77,19 @@
 <line x1="165.13" y1="33.31" x2="169.13" y2="33.31" stroke="#111" stroke-width="0.2"/>
 <line x1="167.13" y1="31.31" x2="167.13" y2="35.31" stroke="#111" stroke-width="0.2"/>
 <text x="167.13" y="40.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,334.26,81.62)">IN A O10</text>
-<rect x="18.00" y="61.83" width="33.00" height="114.00" fill="none" stroke="#111" stroke-width="0.6"/>
-<rect x="51.00" y="61.83" width="2.33" height="114.00" fill="none" stroke="#999" stroke-width="0.3"/>
-<text x="34.50" y="59.33" class="fold" text-anchor="middle">LEFT WALL -- fold</text>
-<text x="19.00" y="178.83" class="dim" text-anchor="start">LID SEAM (z=0)</text>
-<text x="52.33" y="178.83" class="dim" text-anchor="end">FOLD (z=33)</text>
-<line x1="53.33" y1="79.83" x2="34.50" y2="79.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
-<circle cx="34.50" cy="79.83" r="3.25" fill="none" stroke="#111" stroke-width="0.3"/>
-<line x1="32.50" y1="79.83" x2="36.50" y2="79.83" stroke="#111" stroke-width="0.2"/>
-<line x1="34.50" y1="77.83" x2="34.50" y2="81.83" stroke="#111" stroke-width="0.2"/>
-<text x="34.50" y="74.98" class="dim" text-anchor="middle">HP O6.5 (z=16.5)</text>
+<rect x="51.03" y="61.83" width="2.30" height="114.00" fill="none" stroke="#999" stroke-width="0.3"/>
+<rect x="48.70" y="61.83" width="2.33" height="114.00" fill="none" stroke="#999" stroke-width="0.3"/>
+<rect x="15.70" y="61.83" width="33.00" height="114.00" fill="none" stroke="#111" stroke-width="0.6"/>
+<line x1="51.03" y1="61.83" x2="51.03" y2="175.83" stroke="#06c" stroke-width="0.6" stroke-dasharray="5 2"/>
+<text x="32.20" y="56.33" class="fold" text-anchor="middle">LEFT WALL panel (outside face, drilled)</text>
+<text x="32.20" y="59.63" class="dim" text-anchor="middle">R->L: inside wall | outside wall=FOLD | top edge | panel</text>
+<text x="16.70" y="178.83" class="dim" text-anchor="start">LID SEAM (z=0)</text>
+<text x="51.63" y="178.83" class="fold" text-anchor="start">FOLD (outside wall)</text>
+<line x1="51.03" y1="79.83" x2="32.20" y2="79.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
+<circle cx="32.20" cy="79.83" r="3.25" fill="none" stroke="#111" stroke-width="0.3"/>
+<line x1="30.20" y1="79.83" x2="34.20" y2="79.83" stroke="#111" stroke-width="0.2"/>
+<line x1="32.20" y1="77.83" x2="32.20" y2="81.83" stroke="#111" stroke-width="0.2"/>
+<text x="32.20" y="74.98" class="dim" text-anchor="middle">HP O6.5 (z=16.5)</text>
 <text x="122.33" y="177.33" class="fold" text-anchor="middle">FOLD -- outer top-front edge -- small registration tab (front wall dropped, no holes)</text>
 <rect x="53.33" y="178.33" width="138.00" height="2.33" fill="none" stroke="#999" stroke-width="0.3"/>
 <rect x="53.33" y="180.66" width="138.00" height="10.00" fill="none" stroke="#111" stroke-width="0.6"/>
