@@ -97,12 +97,26 @@ USB_Z    = 16.0         # panel-hole centre above base -- sits just UNDER the bo
                         #   23.16; barrel O11.6 tops out ~21.8) so the 16.9 mm barrel runs in the under-board
                         #   space between the hanging jack barrels, rearward of the Seed (Y<=95). ~1.4 mm under
                         #   the PCB -- revisit if the board height drops. Bezels clear OUT (22.4) + DC (18.7).
+# IN B is now the Neutrik NCJ9FI-H COMBO (XLR + switching 1/4in) -- a big Neutrik D / Combo-A cut-out,
+# NOT a small TRS hole (2026-10-30).
+COMBO_D = 24.0          # main connector hole O24 (standard Neutrik D / Combo-A cut-out).
+COMBO_Z = 17.0          # ⚠ PROVISIONAL barrel-axis height: deliberately higher than the TRS jacks (9.31)
+                        #   so the O24 clears the 33 mm wall. Set precisely from the NCJ9FI-H jack-axis-
+                        #   above-PCB + the board Z, then confirm on the real part. Plus 2x M3 mounting
+                        #   holes -- MARK THOSE FROM THE CONNECTOR (spacing per the NCJ9FI-H datasheet).
 REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
-    ("J2",  "OUT",  24.2,  10.0,        "trs", JACK_Z),
+    ("J2",  "OUT",  24.2,  10.0,        "trs",  JACK_Z),
     (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead
-    ("J3",  "DC",   64.0,  12.0,        "dc",  JACK_Z),  # panel jack + flying lead -- x is a design choice
-    ("J8",  "IN B", 90.3,  10.0,        "trs", JACK_Z),   # IN B inner
-    ("J1",  "IN A", 113.8, 10.0,        "trs", JACK_Z),   # IN A outermost-right (primary guitar input)
+    ("J3",  "DC",   64.0,  12.0,        "dc",   JACK_Z),  # panel jack + flying lead -- x is a design choice
+    ("J8",  "IN B", 90.3,  COMBO_D,     "combo",COMBO_Z), # IN B = NCJ9FI-H combo (O24 + 2x M3, mark from part)
+    ("J1",  "IN A", 113.8, 10.0,        "trs",  JACK_Z),   # IN A outermost-right (primary guitar input)
+]
+
+# LEFT wall holes (X=0 wall), viewed from outside. HP jack on a 3.5 mm panel socket + flying lead to J11.
+# Toward the REAR but FWD of the OUT jack body so it is clear in front of it.
+HP_Z = 16.5             # ⚠ mid-wall; verify internal clearance (board bottom ~23, under-board barrels/Seed)
+LEFT = [  # (board_ref, label, y_enclosure, dia, kind, z_axis)
+    ("J11", "HP", 96.0, 6.5, "hp", HP_Z),   # y=96 is FWD of the OUT body (JACK_Y 102.9); 3.5 mm -> O6.5
 ]
 
 def panel_anchors_board():

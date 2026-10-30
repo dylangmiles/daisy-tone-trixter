@@ -80,26 +80,27 @@ WALL_SIDE = e.WALL_SIDE                 # left/right wall = external outline ove
 WALL_TOP = e.WALL_TOP                   # top-face plate thickness -> band between the fold and panel
 # REAR WALL panel ABOVE the top view. Far (top) edge = lid seam (z=0); then panel up to z=CAVITY_H;
 # then the top-face band; then the FOLD (outer top-rear edge).
-FY_BASE    = 34.0                       # panel FAR edge = LID SEAM (cavity floor, z=0)
+FY_BASE    = 24.0                       # panel FAR edge = LID SEAM (cavity floor, z=0) -- tightened for A4 landscape
 FY_PANEL_T = FY_BASE + CAVITY_H         # panel TOP edge (z=CAVITY_H) -- meets the top-face band
 FY_HINGE   = FY_PANEL_T + WALL_TOP      # FOLD = outer top-rear edge (one top-face thickness above)
-ox       = MARGIN
+ox       = MARGIN + WALL_TOP + CAVITY_H + 6   # shift right to make room for the LEFT WALL panel drawn to the left
 oy       = FY_HINGE + WALL_FR            # inner-plane BACK edge: WALL_FR (rear wall) inside the fold
 def TX(x): return ox + x                                 # SAME X as the flap -> columns align
 def TY(y): return oy + (BOX_D - y)                       # flip so FRONT (Y=0) is at the bottom
 
-# FRONT WALL panel BELOW the top view (same net, folding over the front edge; no holes).
+# FRONT WALL dropped to a small registration TAB BELOW the top view (no holes on the front wall).
+FRONT_TAB  = 10.0                        # just enough to fold over the front edge for positioning
 FF_FOLD    = TY(0) + WALL_FR             # outer top-FRONT edge = front fold
-FF_PANEL_T = FF_FOLD + WALL_TOP          # front panel TOP edge (after the top-face band)
-FF_PANEL_B = FF_PANEL_T + CAVITY_H       # front panel BOTTOM = lid seam
+FF_PANEL_T = FF_FOLD + WALL_TOP          # tab TOP edge (after the top-face band)
+FF_PANEL_B = FF_PANEL_T + FRONT_TAB      # tab bottom
 
-PAGE_W = MARGIN*2 + max(EXT_W, BOX_W) + 6
-PAGE_H = FF_PANEL_B + 22
+PAGE_W = 297.0                           # A4 LANDSCAPE
+PAGE_H = 210.0
 
 s = _hdr(PAGE_W, PAGE_H)
 s += _txt(MARGIN, 7,  "1590XX template -- OUTSIDE, ink up, drill from outside -- PRINT AT 100%", 'ttl', 'start')
-s += _txt(MARGIN, 11, "Box NET: TOP FACE centre; REAR WALL panel above, FRONT WALL panel below. Each panel: FOLD (outer edge) -> top-face band -> panel -> LID SEAM (lid not drawn).", 'note', 'start')
-s += _txt(MARGIN, 14.5,"Fold each panel down over its wall; rear jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen.", 'note', 'start')
+s += _txt(MARGIN, 11, "Box NET: TOP FACE centre; REAR WALL above (jacks); LEFT WALL to the left (HP jack); FRONT = small registration tab below. Each panel: FOLD -> top-face band -> panel -> LID SEAM.", 'note', 'start')
+s += _txt(MARGIN, 14.5,"Fold each panel over its wall; rear jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen. IN B = Neutrik NCJ9FI-H combo (O24).", 'note', 'start')
 
 # ============================================================ TOP FACE (player-natural) =========
 # external outline (dashed) = internal plane + the REAL walls, CENTRED on the box centre so it lines
@@ -185,18 +186,32 @@ for ref, label, xc, size, kind, z in e.REAR:
         if kind == "usbc":       # panel USB-C: dashed ghost = finished bezel OD (keep-clear vs neighbours)
             s += _circ(TX(xc), hy, e.USB_BEZEL_OD, stroke='#111', dash='1 1')
             s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g} (bezel O{e.USB_BEZEL_OD:g})", 'dim')
+        elif kind == "combo":    # Neutrik D / Combo-A cut-out: O24 main hole + 2x M3 (mark from the part)
+            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} combo O{size:g} + 2x M3 (mark from part)", 'dim')
         else:
             s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
 
-# ============================================================ FRONT WALL panel (fold-down, below) =
-# Same net as the rear, folding over the FRONT edge (no holes -- a registration/wrap panel).
-# Top of page downward: FOLD (outer top-front edge) -> top-face band -> panel (CAVITY_H) -> LID SEAM.
-s += _txt(TX(BOX_W/2), FF_FOLD - 1.0, "FOLD DOWN -- outer top-front edge -- panel wraps the front wall", 'fold')
+# ============================================================ LEFT WALL panel (fold-out, to the LEFT) =
+# Folds off the top face's LEFT edge. Drawn extending leftward: LID SEAM (far/left) -> panel (CAVITY_H)
+# -> top-face band -> FOLD (at x=ox). z measured UP from the lid seam toward the fold.
+LXS = ox - WALL_TOP - CAVITY_H                                        # left-wall lid seam (leftmost)
+def LX(z): return LXS + z
+s += _rect(LXS, oy, CAVITY_H, BOX_D, sw=0.6)                          # the left wall panel itself
+s += _rect(ox - WALL_TOP, oy, WALL_TOP, BOX_D, stroke='#999', sw=0.3) # top-face band next to the fold
+s += _txt(LXS + CAVITY_H/2, oy - 2.5, "LEFT WALL -- fold", 'fold')
+s += _txt(LXS + 1, oy + BOX_D + 3, "LID SEAM (z=0)", 'dim', 'start')
+s += _txt(ox - 1, oy + BOX_D + 3, f"FOLD (z={CAVITY_H:g})", 'dim', 'end')
+for ref, label, yc, dia, kind, z in e.LEFT:
+    hx2, hy2 = LX(z), TY(yc)
+    s += _line(ox, hy2, hx2, hy2, stroke='#bbb', dash='2 2', sw=0.2)  # projection to the fold edge
+    s += _circ(hx2, hy2, dia) + _cross(hx2, hy2)
+    s += _txt(hx2, hy2 - dia/2 - 1.6, f"{label} O{dia:g} (z={z:g})", 'dim')
+
+# ============================================================ FRONT WALL -> registration TAB (below) ==
+s += _txt(TX(BOX_W/2), FF_FOLD - 1.0, "FOLD -- outer top-front edge -- small registration tab (front wall dropped, no holes)", 'fold')
 s += _rect(ox, FF_FOLD, BOX_W, WALL_TOP, stroke='#999', sw=0.3)        # top-face-thickness band
-s += _txt(ox + BOX_W - 1, FF_FOLD + WALL_TOP - 0.6, f"top-face edge {WALL_TOP:g}", 'dim', 'end')
-s += _rect(ox, FF_PANEL_T, BOX_W, CAVITY_H, sw=0.6)                    # the front wall panel itself
-s += _txt(TX(BOX_W/2), FF_PANEL_T + CAVITY_H/2, "FRONT WALL panel (toward player, no holes)", 'dim')
-s += _txt(TX(BOX_W/2), FF_PANEL_B + 3.0, "LID SEAM (panel bottom, z=0) -- lid is below, not drawn", 'dim')
+s += _rect(ox, FF_PANEL_T, BOX_W, FRONT_TAB, sw=0.6)                   # the front registration TAB
+s += _txt(TX(BOX_W/2), FF_PANEL_T + FRONT_TAB/2, "FRONT registration tab (fold for positioning only)", 'dim')
 
 # ---- 100 mm scale ruler (print check) ----
 ruy = FF_PANEL_B + 12
