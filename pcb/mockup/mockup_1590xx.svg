@@ -46,7 +46,7 @@
 <rect x="53.33" y="24.00" width="138.00" height="33.00" fill="none" stroke="#111" stroke-width="0.6"/>
 <rect x="53.33" y="57.00" width="138.00" height="2.33" fill="none" stroke="#999" stroke-width="0.3"/>
 <text x="190.33" y="58.73" class="dim" text-anchor="end">top-face edge 2.33</text>
-<text x="122.33" y="58.53" class="fold" text-anchor="middle">FOLD DOWN -- outer top-rear edge -- panel wraps the back wall</text>
+<text x="122.33" y="58.53" class="fold" text-anchor="middle">FOLD DOWN (outer top-rear edge)</text>
 <text x="122.33" y="23.00" class="dim" text-anchor="middle">LID SEAM (z=0, cavity floor) -- lid is below, not drawn</text>
 <text x="54.33" y="17.00" class="dim" text-anchor="start">← box LEFT wall (player's L)</text>
 <text x="190.33" y="17.00" class="dim" text-anchor="end">box RIGHT wall (player's R) →</text>
@@ -55,28 +55,28 @@
 <circle cx="77.53" cy="33.31" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="75.53" y1="33.31" x2="79.53" y2="33.31" stroke="#111" stroke-width="0.2"/>
 <line x1="77.53" y1="31.31" x2="77.53" y2="35.31" stroke="#111" stroke-width="0.2"/>
-<text x="77.53" y="40.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,155.06,81.62)">OUT O10</text>
+<text x="77.53" y="26.31" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,155.06,52.62)">OUT O10</text>
 <line x1="99.33" y1="40.00" x2="99.33" y2="61.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
 <circle cx="99.33" cy="40.00" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="97.33" y1="40.00" x2="101.33" y2="40.00" stroke="#111" stroke-width="0.2"/>
 <line x1="99.33" y1="38.00" x2="99.33" y2="42.00" stroke="#111" stroke-width="0.2"/>
 <circle cx="99.33" cy="40.00" r="6.95" fill="none" stroke="#111" stroke-width="0.3" stroke-dasharray="1 1"/>
-<text x="99.33" y="48.50" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,198.66,97.00)">USB O12 (bezel O13.9)</text>
+<text x="99.33" y="32.00" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,198.66,64.00)">USB O12 (bezel O13.9)</text>
 <line x1="117.33" y1="33.31" x2="117.33" y2="61.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
 <circle cx="117.33" cy="33.31" r="6.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="115.33" y1="33.31" x2="119.33" y2="33.31" stroke="#111" stroke-width="0.2"/>
 <line x1="117.33" y1="31.31" x2="117.33" y2="35.31" stroke="#111" stroke-width="0.2"/>
-<text x="117.33" y="41.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,234.66,83.62)">DC O12</text>
+<text x="117.33" y="25.31" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,234.66,50.62)">DC O12</text>
 <line x1="141.33" y1="41.00" x2="141.33" y2="61.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
 <circle cx="141.33" cy="41.00" r="12.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="139.33" y1="41.00" x2="143.33" y2="41.00" stroke="#111" stroke-width="0.2"/>
 <line x1="141.33" y1="39.00" x2="141.33" y2="43.00" stroke="#111" stroke-width="0.2"/>
-<text x="141.33" y="55.50" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,282.66,111.00)">IN B combo O24 + 2x M3 (mark from part)</text>
+<text x="141.33" y="27.00" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,282.66,54.00)">IN B combo O24 +M3x2</text>
 <line x1="167.13" y1="33.31" x2="167.13" y2="61.83" stroke="#bbb" stroke-width="0.2" stroke-dasharray="2 2"/>
 <circle cx="167.13" cy="33.31" r="5.00" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="165.13" y1="33.31" x2="169.13" y2="33.31" stroke="#111" stroke-width="0.2"/>
 <line x1="167.13" y1="31.31" x2="167.13" y2="35.31" stroke="#111" stroke-width="0.2"/>
-<text x="167.13" y="40.81" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,334.26,81.62)">IN A O10</text>
+<text x="167.13" y="26.31" class="dim" text-anchor="middle" transform="matrix(-1,0,0,-1,334.26,52.62)">IN A O10</text>
 <rect x="51.03" y="61.83" width="2.30" height="114.00" fill="none" stroke="#999" stroke-width="0.3"/>
 <rect x="48.70" y="61.83" width="2.33" height="114.00" fill="none" stroke="#999" stroke-width="0.3"/>
 <rect x="15.70" y="61.83" width="33.00" height="114.00" fill="none" stroke="#111" stroke-width="0.6"/>

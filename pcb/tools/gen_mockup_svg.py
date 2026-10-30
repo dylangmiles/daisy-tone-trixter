@@ -164,7 +164,7 @@ s += _rect(ox, FY_BASE, BOX_W, CAVITY_H, sw=0.6)                 # the rear wall
 s += _rect(ox, FY_PANEL_T, BOX_W, WALL_TOP, stroke='#999', sw=0.3)   # top-face-thickness band
 s += _txt(ox + BOX_W - 1, FY_PANEL_T + WALL_TOP - 0.6, f"top-face edge {WALL_TOP:g}", 'dim', 'end')
 # fold emphasis (bottom edge of the band = outer top-rear edge)
-s += _txt(TX(BOX_W/2), FY_HINGE - 0.8, "FOLD DOWN -- outer top-rear edge -- panel wraps the back wall", 'fold')
+s += _txt(TX(BOX_W/2), FY_HINGE - 0.8, "FOLD DOWN (outer top-rear edge)", 'fold')
 # lid seam (far edge); the lid is a separate bottom plate, NOT drawn
 s += _txt(TX(BOX_W/2), FY_BASE - 1.0, "LID SEAM (z=0, cavity floor) -- lid is below, not drawn", 'dim')
 # datum + end-wall labels (above the panel, UN-mirrored: player's left on the left, right on the right)
@@ -180,16 +180,16 @@ for ref, label, xc, size, kind, z in e.REAR:
     if kind == "usb":            # legacy rectangular direct-port slot (unused since 2026-10-29)
         w, h = size
         s += _rect(TX(xc) - w/2, hy - h/2, w, h, sw=0.4)
-        s += _vtxt(TX(xc), hy + h/2 + 2.5, f"{label} {w:g}x{h:g}", 'dim')
+        s += _vtxt(TX(xc), hy - h/2 - 2.0, f"{label} {w:g}x{h:g}", 'dim')
     else:
         s += _circ(TX(xc), hy, size) + _cross(TX(xc), hy)
         if kind == "usbc":       # panel USB-C: dashed ghost = finished bezel OD (keep-clear vs neighbours)
             s += _circ(TX(xc), hy, e.USB_BEZEL_OD, stroke='#111', dash='1 1')
-            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g} (bezel O{e.USB_BEZEL_OD:g})", 'dim')
+            s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} O{size:g} (bezel O{e.USB_BEZEL_OD:g})", 'dim')
         elif kind == "combo":    # Neutrik D / Combo-A cut-out: O24 main hole + 2x M3 (mark from the part)
-            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} combo O{size:g} + 2x M3 (mark from part)", 'dim')
+            s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} combo O{size:g} +M3x2", 'dim')
         else:
-            s += _vtxt(TX(xc), hy + size/2 + 2.5, f"{label} O{size:g}", 'dim')
+            s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} O{size:g}", 'dim')
 
 # ============================================================ LEFT WALL panel (fold-out, to the LEFT) =
 # From the top face's internal left edge (ox) OUTWARD to the left (matches the rear-wall fold):
