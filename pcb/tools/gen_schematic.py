@@ -402,8 +402,12 @@ j_oled = S.add(Sym("Connector", "Conn_01x04_Pin", "J6", "OLED 1.3\" 4-pin I2C", 
 # rot 180: pins to the left; pin1 top? lib pin1 at y=+7.62 (top) → rot180 → sch y = at.y + 7.62 (bottom). fine, just wire by pin()
 S.wire(j_oled.pin(1), (j_oled.pin(1)[0] - G, j_oled.pin(1)[1])); gnd((j_oled.pin(1)[0] - G, j_oled.pin(1)[1]), "GNDD")
 S.wire(j_oled.pin(2), (j_oled.pin(2)[0] - G, j_oled.pin(2)[1])); rail("+3V3D", (j_oled.pin(2)[0] - G, j_oled.pin(2)[1]))
-S.wire((pu1.pin(2)[0], scl[1]), (pu1.pin(2)[0] + 3*G, scl[1])); S.wire((pu1.pin(2)[0] + 3*G, scl[1]), (pu1.pin(2)[0] + 3*G, j_oled.pin(3)[1])); S.wire((pu1.pin(2)[0] + 3*G, j_oled.pin(3)[1]), j_oled.pin(3))
-S.wire((pu2.pin(2)[0], sda[1]), (pu2.pin(2)[0] + 2*G, sda[1])); S.wire((pu2.pin(2)[0] + 2*G, sda[1]), (pu2.pin(2)[0] + 2*G, j_oled.pin(4)[1])); S.wire((pu2.pin(2)[0] + 2*G, j_oled.pin(4)[1]), j_oled.pin(4))
+# ⚠ pins 3/4 (SCL/SDA) connect by NET LABEL at each pin stub — NOT by wires routed across each other.
+#   The old crossing routing left pin4 ambiguous: the KiCad GUI ERC flags "J6 pin4 not connected" while
+#   the netlister reads it connected. That inconsistency is also the likely root of the recurring board
+#   pad-net scramble on Update-PCB. A label on a short stub is unambiguous and never crosses another wire.
+S.wire(j_oled.pin(3), (j_oled.pin(3)[0] - G, j_oled.pin(3)[1])); S.glabel("SCL_OLED", (j_oled.pin(3)[0] - G, j_oled.pin(3)[1]), 180)
+S.wire(j_oled.pin(4), (j_oled.pin(4)[0] - G, j_oled.pin(4)[1])); S.glabel("SDA_OLED", (j_oled.pin(4)[0] - G, j_oled.pin(4)[1]), 180)
 # 4-pin module has no RES/DC/CS pins — onboard self-reset; OLED_RES stays on U4.D13 only (a no-op).
 c_ol = C("100n", (j_oled.pin(2)[0] - 3*G, j_oled.pin(2)[1] + 3*G), 0)
 S.wire((j_oled.pin(2)[0] - G, j_oled.pin(2)[1]), (c_ol.pin(1)[0], j_oled.pin(2)[1])); S.wire((c_ol.pin(1)[0], j_oled.pin(2)[1]), c_ol.pin(1)); S.junction((j_oled.pin(2)[0] - G, j_oled.pin(2)[1])); gnd(c_ol.pin(2), "GNDD")
