@@ -22484,11 +22484,11 @@
 	(footprint "NetTie:NetTie-2_SMD_Pad0.5mm"
 		(layer "B.Cu")
 		(uuid "bff74267-a854-44d9-83d8-87ef71297d8a")
-		(at 117 30.5 -90)
+		(at 74.5 44.5)
 		(descr "Net tie, 2 pin, 0.5mm square SMD pads")
 		(tags "net tie")
 		(property "Reference" "NT1"
-			(at 0 1.2 90)
+			(at 0 1.2 0)
 			(layer "B.SilkS")
 			(hide yes)
 			(uuid "db9110bf-8645-4e47-a536-565429df3cfa")
@@ -22501,7 +22501,7 @@
 			)
 		)
 		(property "Value" "STAR"
-			(at 0 -1.2 90)
+			(at 0 -1.2 0)
 			(layer "B.Fab")
 			(hide yes)
 			(uuid "3cd7445f-af3a-411a-8f45-61d7e9a2b59b")
@@ -22514,7 +22514,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 90)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
@@ -22528,7 +22528,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 90)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
@@ -22542,7 +22542,7 @@
 			)
 		)
 		(property "Note" "the ONE AGND↔DGND join; place at power entry next to Seed DGND"
-			(at 0 0 90)
+			(at 0 0 180)
 			(unlocked yes)
 			(layer "B.Fab")
 			(hide yes)
@@ -22581,7 +22581,7 @@
 			(uuid "bdbb011d-673b-4d12-aec5-9f836a8c6872")
 		)
 		(pad "1" smd circle
-			(at -0.5 0 270)
+			(at -0.5 0)
 			(size 0.5 0.5)
 			(layers "B.Cu")
 			(net "GNDA")
@@ -22590,7 +22590,7 @@
 			(uuid "5233a606-81db-47b5-9a7e-ae934f9e38cb")
 		)
 		(pad "2" smd circle
-			(at 0.5 0 270)
+			(at 0.5 0)
 			(size 0.5 0.5)
 			(layers "B.Cu")
 			(net "GNDD")
@@ -34248,6 +34248,53 @@
 		(effects
 			(font
 				(size 2 2)
+			)
+		)
+	)
+	(zone
+		(net "GNDD")
+		(layer "In2.Cu")
+		(uuid "193a96de-f86d-4bf7-b712-699dd73ae18f")
+		(hatch edge 0.5)
+		(priority 1)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 161.984879 63) (xy 149.5 63) (xy 149.5 55.5) (xy 139.5 55.5) (xy 139.5 63) (xy 137.984879 63)
+				(xy 137.984879 61.5) (xy 128.984879 61.5) (xy 128.984879 74.5) (xy 108.984879 74.5) (xy 109.227237 56.652666)
+				(xy 97.984879 56.5) (xy 97.984879 54.5) (xy 80.484879 54.5) (xy 80.484879 51.000002) (xy 70.484879 40.000002)
+				(xy 70.484879 31) (xy 52.984879 31) (xy 52.984879 20) (xy 161.984879 20)
+			)
+		)
+	)
+	(zone
+		(net "GNDA")
+		(layer "In2.Cu")
+		(uuid "fd6f0481-bb71-40a3-bc9a-6c77d0c3c1a9")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 52.5 32.5) (xy 70 32.5) (xy 70 39.5) (xy 80 50.5) (xy 80 55) (xy 97.5 55) (xy 97.5 57.5) (xy 108.5 57.5)
+				(xy 108.5 75) (xy 129.5 75) (xy 129.5 62) (xy 137.5 62) (xy 137.5 63.5) (xy 139.5 63.5) (xy 139.5 55.5)
+				(xy 149.5 55.5) (xy 149.5 63.5) (xy 162 63.5) (xy 162 77) (xy 152 77) (xy 152 87) (xy 40 87) (xy 40 77)
+				(xy 30 77) (xy 30 20) (xy 52.5 20)
 			)
 		)
 	)

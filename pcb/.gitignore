@@ -17,3 +17,7 @@ tools/rottest.*
 
 # regenerable render (the 1:1 board prints + schematic.pdf ARE committed; this isn't)
 out/board.svg
+
+# review/design aids (regenerable)
+out/ground_domain_map.*
+out/ground_split_review.*
