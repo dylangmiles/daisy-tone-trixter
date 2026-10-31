@@ -45,7 +45,8 @@ in `../enclosure/out/`):
   behind the pedal). For board-mounted jacks the most accurate method is to drill through the finished board.
 
 **Assembly plan (decided 2026-10-15):** **0805** passives (kept over 0603 for hand-reworkability).
-**JLC assembles the SMD** — keep it **single-side (F.Cu)** if it fits, prefer JLC Basic parts (small
+**JLC assembles the SMD** — **single-side on B.Cu** (all 112 SMDs under the board — bottom-lid
+debug access; validated 0 on F.Cu 2026-10-31), prefer JLC Basic parts (small
 Extended fee for the OPA1642 etc.); parts are LCSC-coded in `gen_schematic.py`. **Hand-solder the
 through-hole** — jacks, encoder, Seed, footswitch/battery/DC connectors, test points. For the order,
 export Gerbers + BOM + CPL from KiCad. Finish = **ENIG** (flatter pads for assembly). See brief §4.

@@ -7,10 +7,15 @@
 		(legacy_teardrops no)
 	)
 	(paper "A4")
+	(title_block
+		(title "Tone Trixie")
+		(date "2026-10-31")
+		(company "Dylan Miles")
+	)
 	(layers
 		(0 "F.Cu" signal)
-		(4 "In1.Cu" power)
-		(6 "In2.Cu" power)
+		(4 "In1.Cu" power "Power")
+		(6 "In2.Cu" power "GND")
 		(2 "B.Cu" signal)
 		(9 "F.Adhes" user "F.Adhesive")
 		(11 "B.Adhes" user "B.Adhesive")
