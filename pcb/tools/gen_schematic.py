@@ -627,6 +627,13 @@ rc('R', "1k", 172, 154, "PH_EN", "PH_EN_G", Note="GPIO gate series")
 rc('R', "100k", 172, 160, "PH_EN_G", ('gnd', "GNDD"), Note="gate pulldown = OFF at boot/float")
 seed_net(33, "PH_EN")   # D26 / PD11 — phantom enable GPIO (firmware; default drive LOW = phantom off)
 
+# ⚠ ADDED LAST (keep at the END — do NOT move up): boost INPUT decoupling on BST_IN at U7 pin5. The main
+#   VIN bulk (C1) sits over by the Daisy and the P-FET is in series, so BST_IN had no local cap. Kept here
+#   so adding it does NOT shift existing refs/UUIDs (same reason the TPA block was created last).
+#   PLACE both tight to U7 pin5 on the board.
+rc('C', "10u",  196, 128, "BST_IN", ('gnd', "GNDD"), fp="C1210", Note="boost input reservoir at U7 pin5 (BST_IN) — place tight to VIN")
+rc('C', "100n", 202, 128, "BST_IN", ('gnd', "GNDD"), Note="boost input HF bypass at U7 pin5")
+
 # ---------------------------------------------------------------- write
 # --- project files: TT symbol library, sym-lib-table, .kicad_pro (created once, never overwritten)
 LIB = HERE.parent / "TT.kicad_sym"
