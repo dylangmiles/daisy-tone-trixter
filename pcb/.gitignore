@@ -1,10 +1,19 @@
 # generated / local
 erc*.json
 *.net
-svg/
-*-backups/
-fp-info-cache
-*.kicad_prl
-*.lck
 *-erc.rpt
 *-drc.rpt
+*.kicad_prl
+*.lck
+fp-info-cache
+*-backups/
+svg/
+mockup/          # defunct (content moved to out/ 2026-10-31; safe to delete)
+
+# python tooling
+__pycache__/
+*.pyc
+tools/rottest.*
+
+# regenerable render (the 1:1 board prints + schematic.pdf ARE committed; this isn't)
+out/board.svg

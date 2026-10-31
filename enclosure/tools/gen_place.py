@@ -21,7 +21,7 @@ from collections import defaultdict
 import pcbnew
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.dirname(HERE))
 import enclosure as enc          # SINGLE SOURCE OF TRUTH for enclosure-coupled positions
 BOARD = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "..", "tone_trixter.kicad_pcb")
 

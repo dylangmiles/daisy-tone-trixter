@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gen_side_elevation_svg.py -- 1:1 side-elevation (Z-stack) of the Tone Trixter in a 1590XX.
+"""gen_side_elevation.py -- 1:1 side-elevation (Z-stack) of the Tone Trixter in a 1590XX.
 
 Front-to-back vertical cross-section: the VERTICAL budget the flat top-face mock-up cannot show.
 Items are PROJECTED onto the depth-height plane (OLED, encoder and jacks are at different widths X,
@@ -9,16 +9,16 @@ so this is a height study, not a true section). Print at 100% and check the 100 
 ~8 mm below the top face; the Seed hangs below the board; jacks bottom-mount and land low on the wall.
 Edit the dict and re-run. Stdlib only.
 
-  python3 tools/gen_side_elevation_svg.py       # -> mockup/side_elevation_1590xx.svg
+  python3 enclosure/tools/gen_side_elevation.py  -> enclosure/out/side_elevation.svg
 """
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # ../ -> enclosure/ (enclosure.py)
 import enclosure as e
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "side_elevation_1590xx.svg")
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "out", "side_elevation.svg")
 
 # ---- box cross-section (depth x height) -- SHARED dims from enclosure.py (cannot drift) ------
-# Same Z datum as the rear-wall fold-up flap (gen_mockup_svg.py): z=0 = base (pedal bottom),
+# Same Z datum as the rear-wall fold-up flap (gen_template.py): z=0 = base (pedal bottom),
 # z=H_INT = top inner = the top-rear FOLD edge. This elevation keeps base-at-bottom (reads the
 # natural way up); the flap only draws z inverted because it physically folds over the back.
 # ⚠ NOTE (2026-10-29, for a future datum flip): consider re-referencing z from the TOP-INNER face

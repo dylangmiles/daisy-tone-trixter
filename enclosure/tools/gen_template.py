@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gen_mockup_svg.py -- 1:1 OUTSIDE drilling template for the Tone Trixter in a Hammond 1590XX.
+"""gen_template.py -- 1:1 OUTSIDE drilling template for the Tone Trixter in a Hammond 1590XX.
 
 Positions come from enclosure.py (SHARED with gen_place.py), so the template and the board cannot
 drift. TAPE TO THE OUTSIDE of the box, ink up, drill from the outside (clean entry on the show face).
@@ -17,13 +17,13 @@ view). That is immune to the wall-thickness / 145-vs-138 guesswork.
 Convention (locked 2026-10-12): INPUT on the RIGHT, OUTPUT on the LEFT; encoder right of the screen.
 
 Print at 100% / "actual size", confirm the 100 mm ruler reads 100.0, cut out, tape, mark, drill.
-  python3 tools/gen_mockup_svg.py              # -> mockup/mockup_1590xx.svg
+  python3 enclosure/tools/gen_template.py      -> enclosure/out/drilling_template.svg
 """
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # ../ -> enclosure/ (enclosure.py)
 import enclosure as e
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mockup", "mockup_1590xx.svg")
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "out", "drilling_template.svg")
 
 BOX_W, BOX_D = e.BOX_W, e.BOX_D
 EXT_W, EXT_D = e.EXT_W, e.EXT_D

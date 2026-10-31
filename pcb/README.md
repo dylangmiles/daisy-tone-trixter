@@ -10,7 +10,7 @@ tools/kisch.py, tools/kisym.py  # tiny writer + KiCad-library symbol extractor
 tone_trixter.kicad_sch          # generated
 tone_trixter.kicad_pro          # project (created once)
 TT.kicad_sym, sym-lib-table     # the Daisy Seed3 symbol, built from the pinout CSV
-tone_trixter_schematic.pdf      # review print
+out/schematic.pdf               # review print (netlist.net + 1:1 board prints also in out/)
 ```
 
 Check: `kicad-cli sch erc tone_trixter.kicad_sch` (only "symbol differs from library" notices expected —
@@ -19,13 +19,15 @@ also runs a wire-through-pin check and prints `CHECK:` lines if any wire crosses
 
 ## Layout (started 2026-10-09)
 
-⚠ **`tools/enclosure.py` is the SINGLE SOURCE OF TRUTH for panel-part positions** (2026-10-12).
-Both the paper template (`gen_mockup_svg.py`) and the PCB placement (`gen_place.py`) import it, so the
-template and the board **cannot drift** — change a position once, both follow. Convention locked there:
-**INPUT on the RIGHT, OUTPUT on the LEFT** (signal R→L), encoder right of the centred screen.
+⚠ **`../enclosure/enclosure.py` is the SINGLE SOURCE OF TRUTH for panel-part positions** (2026-10-12;
+enclosure tooling moved to a sibling `enclosure/` dir 2026-10-31). The paper template
+(`../enclosure/tools/gen_template.py`) imports it, so the template and the board **cannot drift** —
+change a position once, re-render, both follow. Convention locked there: **INPUT on the RIGHT,
+OUTPUT on the LEFT** (signal R→L), encoder right of the centred screen.
 
 The enclosure mock-up revised the brief's board envelope. **Current geometry** (see
-`tools/enclosure.py`, `tools/gen_mockup_svg.py` + `tools/gen_side_elevation_svg.py`, rendered in `mockup/`):
+`../enclosure/enclosure.py`, `../enclosure/tools/gen_template.py` + `gen_side_elevation.py`, rendered
+in `../enclosure/out/`):
 
 - 1590XX **landscape** (internal top-face plane 138 × 114, **2.33 mm walls**, internal cavity **33 mm**
   tall, Ø7 corner bosses). All measured off the box 2026-10-10.
