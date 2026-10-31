@@ -132,6 +132,19 @@ S = Sch("tone_trixter", paper="A2")
 G = 2.54
 def g(x, y): return (round(x * G, 4), round(y * G, 4))       # grid units → mm
 
+def note(text, at, size=1.8, width=58):
+    """Word-wrap `text` to ~`width` chars/line and emit stacked text lines that grow UPWARD
+       from `at` — the bottom (last) line sits exactly at `at`, so a long note never intrudes
+       on the circuit below it; extra lines stack into the gap above. 1-line notes == S.text."""
+    words, lines, cur = text.split(), [], ""
+    for w in words:
+        if cur and len(cur) + 1 + len(w) > width: lines.append(cur); cur = w
+        else: cur = (cur + " " + w) if cur else w
+    if cur: lines.append(cur)
+    x, y = at; n = len(lines)
+    for i, ln in enumerate(lines):
+        S.text(ln, (x, round(y - (n - 1 - i) * G, 4)), size)
+
 refs = {"D": 3}     # D1–D3 are the power diodes, named explicitly; LEDs continue from D4
 def ref(prefix):
     refs[prefix] = refs.get(prefix, 0) + 1
@@ -159,7 +172,7 @@ def opamp_power(refname, at):
     return S.add(Sym("Amplifier_Operational", "OPA2134", refname, "OPA1642AIDR", at, 0, unit=3, footprint=FP["OPA"]))
 
 # ================================================================ 1. POWER (top-left)
-S.text("POWER — parallel diode-OR (pinmap §4n), no regulator. VIN abs max 17 V: 12 V adapters yes, 18 V no.", g(4, 3), 1.8)
+note("POWER — parallel diode-OR (pinmap §4n), no regulator. VIN abs max 17 V: 12 V adapters yes, 18 V no.", g(4, 3), 1.8)
 # DC jack lead (panel jack → JST 2-pin): pin1 = centre (−, Boss convention: sleeve +), pin2 = sleeve
 j_dc = S.add(Sym("Connector", "Conn_01x02_Pin", "J3", "DC 2.1mm lead", g(6, 8), 0, footprint=FP["JST2"], fields={"Note": "panel DC jack, centre-negative: pin1 +(sleeve) pin2 −(centre)"}))
 f1   = S.add(Sym("Device", "Polyfuse", "F1", "500mA", g(14, 7), 90, footprint=FP["PF"], fields={"LCSC": "C883116", "Note": "1812 PTC 0.5 A hold"}))
@@ -186,28 +199,28 @@ for c in (d3, c_b1, c_b2, c_b3):
 rail("VIN", (c_b3.pin(1)[0], vin_bus_y))
 S.add(Sym("power", "PWR_FLAG", "#FLG1", "PWR_FLAG", (c_b3.pin(1)[0] + G, vin_bus_y), 0)); S.wire((c_b3.pin(1)[0], vin_bus_y), (c_b3.pin(1)[0] + G, vin_bus_y))
 S.add(Sym("power", "PWR_FLAG", "#FLG2", "PWR_FLAG", (j_dc.pin(2)[0] + G, j_dc.pin(2)[1]), 0))
-S.text("Rail = VIN (≈8.6 V battery / ≈11.6 V adapter). Battery − returns via the OUT ring (the power switch).", g(4, 20), 1.4)
+note("Rail = VIN (≈8.6 V battery / ≈11.6 V adapter). Battery − returns via the OUT ring (the power switch).", g(4, 20), 1.4)
 
 # +9VA filtered analog rail: VIN → 100R → 100u → +9VA
 r_f  = R("100R", g(50, 8), 90)
 c_f  = C("100u/25V", g(56, 10), 0, fp="Cel", polar=True)
 rail("VIN", r_f.pin(1)); S.wire(r_f.pin(2), (c_f.pin(1)[0], r_f.pin(2)[1])); S.wire((c_f.pin(1)[0], r_f.pin(2)[1]), c_f.pin(1)); gnd(c_f.pin(2), "GNDA")
 rail("+9VA", (c_f.pin(1)[0], r_f.pin(2)[1])); S.junction((c_f.pin(1)[0], r_f.pin(2)[1]))
-S.text("+9VA: RC-filtered op-amp rail (brief §3.4).", g(48, 14), 1.4)
+note("+9VA: RC-filtered op-amp rail (brief §3.4).", g(48, 14), 1.4)
 S.add(Sym("power", "PWR_FLAG", "#FLG3", "PWR_FLAG", (c_f.pin(1)[0] + 2*G, r_f.pin(2)[1]), 0)); S.wire((c_f.pin(1)[0], r_f.pin(2)[1]), (c_f.pin(1)[0] + 2*G, r_f.pin(2)[1]))
 
 # Ground star: NetTie AGND ↔ DGND, ONE point (Seed3 datasheet Fig 1.5). Enclosure bond on AGND.
 nt = S.add(Sym("Device", "NetTie_2", "NT1", "STAR", g(72, 10), 0, footprint=FP["NT"], fields={"Note": "the ONE AGND↔DGND join; place at power entry next to Seed DGND"}))
 gnd(nt.pin(1), "GNDA"); gnd(nt.pin(2), "GNDD")
 S.add(Sym("power", "PWR_FLAG", "#FLG4", "PWR_FLAG", (nt.pin(1)[0], nt.pin(1)[1] - 2*G), 0)); S.wire(nt.pin(1), (nt.pin(1)[0], nt.pin(1)[1] - 2*G))
-S.text("GROUND STAR — NT1 is the single AGND↔DGND join (pinmap §4l). Place at the power-entry corner.", g(48, 17), 1.4)
+note("GROUND STAR — NT1 is the single AGND↔DGND join (pinmap §4l). Place at the power-entry corner.", g(48, 17), 1.4)
 j_bond = S.add(Sym("Connector", "Conn_01x02_Pin", "J5", "Enclosure bond", g(84, 8), 0, footprint=FP["JST2"], fields={"Note": "both pins AGND (pinmap §4j2) → one lug on the casting"}))
 gnd(j_bond.pin(1), "GNDA"); gnd(j_bond.pin(2), "GNDA")
 
 # ================================================================ 2. SEED3 (centre-left)
 seed = S.add(Sym("TT", "Daisy_Seed3", "U4", "Daisy Seed3", g(30, 50), 0, footprint=FP["DAISY"],
                  fields={"Note": "2 × 20-way 0.1\" sockets (Sullins PPTC201LFBN-RC); Seed plugs in component-side up"}))
-S.text("DAISY SEED3 — pin numbers per daisy/board.h. Unused GPIO marked NC.", g(4, 24), 1.8)
+note("DAISY SEED3 — pin numbers per daisy/board.h. Unused GPIO marked NC.", g(4, 24), 1.8)
 def seed_net(num, net, stub=2, rot=None, glabel=True):
     p = seed.pin(num)
     left = p[0] < seed.at[0]
@@ -231,7 +244,7 @@ for n in (24, 25, 29, 30, 31, 34, 35, 36, 37): S.noconnect(seed.pin(n))   # 33/D
 q = seed.pin(38); S.wire(q, (q[0] + G, q[1])); rail("+3V3D", (q[0] + G, q[1]))
 q = seed.pin(39); S.wire(q, (q[0] + G, q[1])); rail("VIN", (q[0] + G, q[1]))
 q = seed.pin(40); S.wire(q, (q[0] + G, q[1])); S.wire((q[0] + G, q[1]), (q[0] + G, q[1] - 2*G)); gnd((q[0] + G, q[1] - 2*G), "GNDD")
-S.text("USB: the Seed's own USB-C port via the panel extender — no board connection (D29/D30 NC).", g(4, 76), 1.4)
+note("USB: the Seed's own USB-C port via the panel extender — no board connection (D29/D30 NC).", g(4, 76), 1.4)
 
 # ================================================================ 3. FRONT END — Fig 3.3 with rev D Vref
 VREF_BIAS_TAPS = []   # 1 M VREF bias tap per channel → local VREF bypass cap, placed at the END (2026-10-21)
@@ -242,7 +255,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
        stomp-box piezo vs mic-preamp, 2026-10-29)."""
     x = 4
     jack_fp = jack_fp or FP["JST3"]
-    S.text(f"FRONT END CH {chan} — Seed3 Fig 3.3 (RF stopper · unity follower · pole+pad · inverting unity · 100R+33n), Vref = rev D 2.7 V. Rin 1 M (K&K 24.5 nF → 6.5 Hz).", g(x, y0 - 3), 1.8)
+    note(f"FRONT END CH {chan} — Seed3 Fig 3.3 (RF stopper · unity follower · pole+pad · inverting unity · 100R+33n), Vref = rev D 2.7 V. Rin 1 M (K&K 24.5 nF → 6.5 Hz).", g(x, y0 - 3), 1.8)
     if make_jack:
         j = S.add(Sym("Connector", "Conn_01x03_Pin", jack_ref, f"IN{chan} jack lead", g(x + 2, y0 + 2), 0, footprint=jack_fp, fields={"Note": jack_note}))
         # pins: 1 tip, 2 ring, 3 sleeve
@@ -314,7 +327,7 @@ def front_end(chan, y0, uref, jack_ref, jack_note, in_net, ain_net, jack_fp=None
     S.wire((c33.pin(1)[0], node_e[1]), (c33.pin(1)[0] + 3*G, node_e[1]))
     S.glabel(ain_net, (c33.pin(1)[0] + 3*G, node_e[1]), 0)
     tp(ain_net, (c33.pin(1)[0] + 2*G, node_e[1] - 2*G)); S.wire((c33.pin(1)[0] + 2*G, node_e[1]), (c33.pin(1)[0] + 2*G, node_e[1] - 2*G)); S.junction((c33.pin(1)[0] + 2*G, node_e[1]))
-    S.text("Second stage inverts → firmware flips the sign (brief §3.1).", g(x + 62, y0 + 2), 1.2)
+    note("Second stage inverts → firmware flips the sign (brief §3.1).", g(x + 62, y0 + 2), 1.2)
 
 front_end("A", 86, "U1", "J1", "IN jack, K3599 board-mount TRS switched, bottom-mounted. pin1 tip · pin2 ring (sleeve–ring link AT THE JACK) · pin3 sleeve", "IN1_TIP", "AIN1", jack_fp=FP["K3599"])
 # CH B input jack is the COMBO jack (XLR mic + 1/4in), created in the XLR/mic block below — it drives IN2_TIP.
@@ -322,7 +335,7 @@ front_end("B", 112, "U2", "J8", "IN B — fed by the combo jack (XLR mic OR 1/4i
 
 # ================================================================ 4. VREF + OUTPUT (Fig 3.6)
 y0 = 138; x = 4
-S.text("VREF — rev D bias: 1 M / 470 k from +9VA → 2.7 V. Buffered by U3B.", g(x, y0 - 3), 1.8)
+note("VREF — rev D bias: 1 M / 470 k from +9VA → 2.7 V. Buffered by U3B.", g(x, y0 - 3), 1.8)
 rb1 = R("1M", g(x + 4, y0 + 2), 0); rb2 = R("470k", g(x + 4, y0 + 8), 0)
 rail("+9VA", rb1.pin(1)); S.wire(rb1.pin(2), rb2.pin(1)); gnd(rb2.pin(2), "GNDA")
 mid = rb1.pin(2); cb = C("100n", (mid[0] + 3*G, rb2.at[1]), 0)
@@ -337,7 +350,7 @@ S.wire((cv.pin(1)[0], o[1]), (cv.pin(1)[0] + 2*G, o[1])); rail("VREF", (cv.pin(1
 tp("VREF", (cv.pin(1)[0] + 2*G, o[1] - 2*G)); S.wire((cv.pin(1)[0] + 2*G, o[1]), (cv.pin(1)[0] + 2*G, o[1] - 2*G))
 
 x = 44
-S.text("OUTPUT — Seed3 Fig 3.6 instrument-level stage, UNITY (Rin = Rf1 15k, Rf2 0R link; fit 18k for +7 dB). 100R source, 10u/10k out. OUT ring = battery −.", g(x, y0 - 6), 1.8)
+note("OUTPUT — Seed3 Fig 3.6 instrument-level stage, UNITY (Rin = Rf1 15k, Rf2 0R link; fit 18k for +7 dB). 100R source, 10u/10k out. OUT ring = battery −.", g(x, y0 - 6), 1.8)
 yo = g(0, y0 + 2)[1]
 S.glabel("AOUT1", g(x + 2, y0 + 2), 180)
 co = C("1u", g(x + 5, y0 + 2), 90, fp="C1210", Note="C0G/NP0 1210 (was 10u film); output-stage input coupling, AOUT1 into 15k -> corner 1/(2pi*15k*1u)=10.6Hz; small/low-profile fits under the OUT jack")
@@ -375,7 +388,7 @@ S.wire(jo.pin(3), (jo.pin(3)[0] - 2*G, jo.pin(3)[1])); gnd((jo.pin(3)[0] - 2*G, 
 
 # op-amp power units (3 chips), decoupling
 x = 4; y = 154
-S.text("OP-AMP POWER — +9VA / AGND, 100n at each chip.", g(x, y - 3), 1.8)
+note("OP-AMP POWER — +9VA / AGND, 100n at each chip.", g(x, y - 3), 1.8)
 for i, u in enumerate(("U1", "U2", "U3")):
     p = opamp_power(u, g(x + 4 + i * 10, y + 4))
     top = p.pin(8); bot = p.pin(4)
@@ -388,7 +401,7 @@ for i, u in enumerate(("U1", "U2", "U3")):
 X = 100
 # --- I2C OLED
 y = 24
-S.text("OLED 1.3\" SH1106 I²C module, 4-pin (GND/VCC/SCL/SDA) → 0x3C (board.h). 33R series at the Seed, 4k7 pull-ups at the header (brief §3.6). RES onboard self-reset, D13 a no-op.", g(X, y - 3), 1.8)
+note("OLED 1.3\" SH1106 I²C module, 4-pin (GND/VCC/SCL/SDA) → 0x3C (board.h). 33R series at the Seed, 4k7 pull-ups at the header (brief §3.6). RES onboard self-reset, D13 a no-op.", g(X, y - 3), 1.8)
 r_scl = R("33R", g(X + 4, y + 2), 90); r_sda = R("33R", g(X + 4, y + 5), 90)
 S.glabel("SCL_U", min(r_scl.pin(1), r_scl.pin(2)), 180); S.glabel("SDA_U", min(r_sda.pin(1), r_sda.pin(2)), 180)
 scl = max(r_scl.pin(1), r_scl.pin(2)); sda = max(r_sda.pin(1), r_sda.pin(2))
@@ -397,7 +410,7 @@ pu1 = R("4k7", (scl[0] + 2*G, scl[1] - 4*G), 0); pu2 = R("4k7", (scl[0] + 4*G, s
 S.wire(scl, (pu1.pin(2)[0], scl[1])); S.wire((pu1.pin(2)[0], scl[1]), pu1.pin(2)); S.junction((pu1.pin(2)[0], scl[1]))
 S.wire(sda, (pu2.pin(2)[0], sda[1])); S.wire((pu2.pin(2)[0], sda[1]), pu2.pin(2)); S.junction((pu2.pin(2)[0], sda[1]))
 S.wire(pu1.pin(1), (pu1.pin(1)[0], pu1.pin(1)[1] - G)); S.wire(pu2.pin(1), (pu2.pin(1)[0], pu2.pin(1)[1] - G)); S.wire((pu1.pin(1)[0], pu1.pin(1)[1] - G), (pu2.pin(1)[0], pu2.pin(1)[1] - G)); rail("+3V3D", (pu1.pin(1)[0], pu1.pin(1)[1] - G))
-j_oled = S.add(Sym("Connector", "Conn_01x04_Pin", "J6", "OLED 1.3\" 4-pin I2C", (scl[0] + 12*G, scl[1] + 4*G), 180, footprint=FP["HDR4"],
+j_oled = S.add(Sym("Connector", "Conn_01x04_Pin", "J6", "OLED 1.3\" 4-pin I2C", (scl[0] + 18*G, scl[1] + 4*G), 180, footprint=FP["HDR4"],
                    fields={"Note": "4-pin I2C module: 1 GND · 2 VCC · 3 SCL · 4 SDA (right-angle header, cable to top-face screen)"}))
 # rot 180: pins to the left; pin1 top? lib pin1 at y=+7.62 (top) → rot180 → sch y = at.y + 7.62 (bottom). fine, just wire by pin()
 S.wire(j_oled.pin(1), (j_oled.pin(1)[0] - G, j_oled.pin(1)[1])); gnd((j_oled.pin(1)[0] - G, j_oled.pin(1)[1]), "GNDD")
@@ -414,7 +427,7 @@ S.wire((j_oled.pin(2)[0] - G, j_oled.pin(2)[1]), (c_ol.pin(1)[0], j_oled.pin(2)[
 
 # --- Encoder
 y = 46
-S.text("ENCODER — PEC11R, board-mounted. A/B/SW pulled up 10k, 10n debounce. ⚠ bushing must not bond to the casting (brief §2).", g(X, y - 3), 1.8)
+note("ENCODER — PEC11R, board-mounted. A/B/SW pulled up 10k, 10n debounce. ⚠ bushing must not bond to the casting (brief §2).", g(X, y - 3), 1.8)
 enc = S.add(Sym("Device", "RotaryEncoder_Switch", "SW1", "PEC11R-4220F-S0024", g(X + 8, y + 4), 0, footprint=FP["ENC"], fields={"Note": "20 mm D-shaft, detent + switch"}))
 for pin, net in (("A", "ENC_A"), ("B", "ENC_B"), ("S1", "ENC_SW")):
     p = enc.pin(pin); left = pin in ("A", "B")
@@ -431,7 +444,7 @@ for pin in ("C", "S2"):
 
 # --- Footswitches
 y = 66
-S.text("FOOTSWITCHES — panel-mounted momentary SPST on JST 2-pin leads. 10k pull-up + 100n. LEFT = bypass (D25), RIGHT = tuner (D21).", g(X, y - 3), 1.8)
+note("FOOTSWITCHES — panel-mounted momentary SPST on JST 2-pin leads. 10k pull-up + 100n. LEFT = bypass (D25), RIGHT = tuner (D21).", g(X, y - 3), 1.8, 40)   # narrower: this column abuts the HP AOUT1-tap column (HP_ACR/C37)
 for i, (jr, net, lab) in enumerate((("J7", "FSW_L", "SW-L bypass"), ("J9", "FSW_R", "SW-R tuner"))):
     j = S.add(Sym("Connector", "Conn_01x02_Pin", jr, lab, g(X + 24 + i * 22, y + 4), 180, footprint=FP["JST2"]))
     p = j.pin(1); q = (p[0] - 6*G, p[1]); S.wire(p, q); S.glabel(net, q, 180)
@@ -443,7 +456,7 @@ for i, (jr, net, lab) in enumerate((("J7", "FSW_L", "SW-L bypass"), ("J9", "FSW_
 
 # --- LEDs
 y = 84
-S.text("STATUS LEDs — D19 = bypass/engaged, D20 = looper/record. 3 mm through the face; shape/position distinguish them, not colour.", g(X, y - 3), 1.8)
+note("STATUS LEDs — D19 = bypass/engaged, D20 = looper/record. 3 mm through the face; shape/position distinguish them, not colour.", g(X, y - 3), 1.8)
 for i, (net, lab) in enumerate((("LED1", "engaged"), ("LED2", "record"))):
     r = R("1k", g(X + 6 + i * 16, y + 3), 90)
     S.glabel(net, min(r.pin(1), r.pin(2)), 180)
@@ -453,7 +466,7 @@ for i, (net, lab) in enumerate((("LED1", "engaged"), ("LED2", "record"))):
 
 # --- microSD
 y = 100
-S.text("microSD — push-push socket ON THE SDMMC PINS (D1–D6). Bit-bang SPI fallback = 4 pin numbers in sd_spi.h: CS=D1 MOSI=D5 SCK=D6 MISO=D4 (brief §3.7).", g(X, y - 3), 1.8)
+note("microSD — push-push socket ON THE SDMMC PINS (D1–D6). Bit-bang SPI fallback = 4 pin numbers in sd_spi.h: CS=D1 MOSI=D5 SCK=D6 MISO=D4 (brief §3.7).", g(X, y - 3), 1.8)
 sd = S.add(Sym("Connector", "Micro_SD_Card_Det_Hirose_DM3AT", "J10", "microSD DM3AT", g(X + 16, y + 8), 0, footprint=FP["SD"], fields={"LCSC": "C114218"}))
 for pin, net in (("1", "SD_DAT2"), ("2", "SD_DAT3"), ("3", "SD_CMD"), ("5", "SD_CLK"), ("7", "SD_DAT0"), ("8", "SD_DAT1")):
     p = sd.pin(pin); q = (p[0] - 4*G, p[1]); S.wire(p, q); S.glabel(net, q, 180)
@@ -469,7 +482,7 @@ p = sd.pin("SH"); S.wire(p, (p[0] + G, p[1])); gnd((p[0] + G, p[1]), "GNDD")
 
 # --- Test points on rails
 y = 124
-S.text("TEST POINTS — every pad has an adjacent GND pad on the layout (feedback_design_for_probeability).", g(X, y - 3), 1.8)
+note("TEST POINTS — every pad has an adjacent GND pad on the layout (feedback_design_for_probeability).", g(X, y - 3), 1.8)
 for i, net in enumerate(("VIN", "+9VA", "+3V3D", "+3V3A")):
     t = tp(net, g(X + 4 + i * 8, y + 4)); rail(net, t.pin(1))
 for i, net in enumerate(("GNDA", "GNDD")):
@@ -504,7 +517,7 @@ custom_ic("TPA6130A2", "TPA6130A2", [
     ("15", "CPVSS", "R", "passive"), ("16", "CPVSS", "R", "passive"),
     ("17", "CPN", "R", "passive"), ("18", "CPP", "R", "passive"),
 ])
-S.text("HEADPHONE MONITOR — TPA6130A2 I2C DirectPath (0x60, no output caps). Taps AOUT1 dual-mono to a 3.5mm panel jack. VDD=+3V3D (charge-pump off +3V3A). Volume/mute over I2C = firmware menu.", g(130, 28), 1.8)
+note("HEADPHONE MONITOR — TPA6130A2 I2C DirectPath (0x60, no output caps). Taps AOUT1 dual-mono to a 3.5mm panel jack. VDD=+3V3D (charge-pump off +3V3A). Volume/mute over I2C = firmware menu.", g(130, 28), 1.8)
 u_hp = S.add(Sym("TT", "TPA6130A2", "U5", "TPA6130A2", g(150, 48), 0, footprint=FP["TPA_QFN"],
              fields={"LCSC": "C130046", "Note": "138mW DirectPath HP amp; I2C 0x60 on the OLED bus; SD->+3V3D=enabled, mute/vol via I2C"}))
 def _hp(num, net, d='L', k='g'):
@@ -567,7 +580,7 @@ custom_ic("ComboJack", "NCJ9FI-H", [
     ("1", "XLR1", "L", "passive"), ("2", "XLR2", "L", "passive"), ("3", "XLR3", "L", "passive"), ("G", "CHAS", "L", "passive"),
     ("T", "TIP", "R", "passive"), ("TN", "TIPN", "R", "passive"), ("S", "SLV", "R", "passive"), ("R", "RING", "R", "passive"),
 ])
-S.text("XLR MIC FRONT-END + 48 V PHANTOM — CH2 combo: XLR mic (INA163, G=1+6k/RG, RG=120R≈+34 dB fixed + DSP) OR 1/4\" stomp-box/instrument via the combo's normalling switch. LM2577 boost → 48 V phantom, GPIO P-FET enable (default OFF). Single-supply off VIN (best at 12 V).", g(6, 133), 1.6)
+note("XLR MIC FRONT-END + 48 V PHANTOM — CH2 combo: XLR mic (INA163, G=1+6k/RG, RG=120R≈+34 dB fixed + DSP) OR 1/4\" stomp-box/instrument via the combo's normalling switch. LM2577 boost → 48 V phantom, GPIO P-FET enable (default OFF). Single-supply off VIN (best at 12 V).", g(6, 133), 1.6)
 def xg(sym, num, net, d='L', k='g'):
     p = sym.pin(num); dd = {'L': (-G, 0), 'R': (G, 0), 'U': (0, -G), 'D': (0, G)}[d]
     q = (round(p[0] + dd[0], 3), round(p[1] + dd[1], 3)); S.wire(p, q)
