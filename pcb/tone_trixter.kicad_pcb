@@ -1317,7 +1317,7 @@
 	(footprint "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm_CircularMountingHoles"
 		(layer "F.Cu")
 		(uuid "e5a3750a-9371-4efc-b4c4-d9f0dd497c30")
-		(at 64.5 55.5 180)
+		(at 61.4125 63 180)
 		(descr "Alps rotary encoder, EC11E... with switch, vertical shaft, mounting holes with circular drills, http://www.alps.com/prod/info/E/HTML/Encoder/Incremental/EC11/EC11E15204A3.html")
 		(tags "rotary encoder")
 		(property "Reference" "SW1"
@@ -7071,7 +7071,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "2ee391bd-c0f1-4a79-8a03-5eb0575884f9")
-		(at 53 51.6)
+		(at 49.9125 59.1)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C28"
@@ -22598,7 +22598,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "c2329a58-abe1-4247-bcac-d30b82707ea2")
-		(at 60.5 49 180)
+		(at 57.4125 56.5 180)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C27"
@@ -26497,7 +26497,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "d81c5efc-ea04-49ae-afaf-3638cb35fba6")
-		(at 60.5 57 180)
+		(at 57.4125 64.5 180)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C26"
@@ -26661,7 +26661,7 @@
 	(footprint "Capacitor_SMD:C_1210_3225Metric"
 		(layer "B.Cu")
 		(uuid "d8a1bfdd-969e-44c4-8de4-1f43df332e1e")
-		(at 44.27 51.5 90)
+		(at 44.27 51 90)
 		(descr "Capacitor SMD 1210 (3225 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C44"
@@ -28619,7 +28619,7 @@
 	(footprint "Capacitor_SMD:C_1210_3225Metric"
 		(layer "B.Cu")
 		(uuid "ea7b96bc-a1a8-417c-9bc9-09ef4aa3e077")
-		(at 47.5 68)
+		(at 43.5 67)
 		(descr "Capacitor SMD 1210 (3225 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C8"
@@ -29449,7 +29449,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "f0871bc8-ae56-436a-b1c3-30ffcc6670b0")
-		(at 60.5 54.5)
+		(at 57.4125 62)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R27"
@@ -29791,7 +29791,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "f1825ff2-e3a2-47b4-9299-368410cccbcb")
-		(at 53 49.1 180)
+		(at 49.9125 56.6 180)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R29"
@@ -32886,7 +32886,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "B.Cu")
 		(uuid "facecd12-9fc8-42d6-9452-3daa0f963cd3")
-		(at 60.5875 51.5)
+		(at 57.5 59)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R28"
@@ -33697,8 +33697,8 @@
 		)
 	)
 	(gr_line
-		(start 54 53)
-		(end 60 53)
+		(start 50.91 60.5)
+		(end 56.91 60.5)
 		(stroke
 			(width 0.2)
 			(type default)
@@ -33708,8 +33708,8 @@
 		(uuid "f52b466e-03b8-4bca-bd90-354184669eed")
 	)
 	(gr_line
-		(start 57 50)
-		(end 57 56)
+		(start 53.91 57.5)
+		(end 53.91 63.5)
 		(stroke
 			(width 0.2)
 			(type default)
@@ -33774,6 +33774,17 @@
 		(uuid "7b7c36cd-df5d-4fea-8835-ce3e89215b1c")
 	)
 	(gr_line
+		(start 49.91 60.5)
+		(end 57.91 60.5)
+		(stroke
+			(width 0.25)
+			(type default)
+		)
+		(locked yes)
+		(layer "B.SilkS")
+		(uuid "bd9faf3f-7bd5-4a71-8efa-f6ad24d99bf1")
+	)
+	(gr_line
 		(start 50.7 74.835)
 		(end 50.7 78.835)
 		(stroke
@@ -33785,19 +33796,8 @@
 		(uuid "38cc8524-d490-48bc-aa06-3c32f946316c")
 	)
 	(gr_line
-		(start 53 53)
-		(end 61 53)
-		(stroke
-			(width 0.25)
-			(type default)
-		)
-		(locked yes)
-		(layer "B.SilkS")
-		(uuid "bd9faf3f-7bd5-4a71-8efa-f6ad24d99bf1")
-	)
-	(gr_line
-		(start 57 49)
-		(end 57 57)
+		(start 53.91 56.5)
+		(end 53.91 64.5)
 		(stroke
 			(width 0.25)
 			(type default)
@@ -33950,8 +33950,8 @@
 		(uuid "52065a14-c2ab-4bf8-8fc4-90e99dfebf22")
 	)
 	(gr_rect
-		(start 78 36)
-		(end 114 70)
+		(start 78 43.5)
+		(end 114 77.5)
 		(stroke
 			(width 0.15)
 			(type default)
@@ -33962,8 +33962,8 @@
 		(uuid "ffb9869a-488c-4fa2-a820-aee9bb1a02a7")
 	)
 	(gr_rect
-		(start 78.5 43)
-		(end 113.5 63)
+		(start 78.5 50.5)
+		(end 113.5 70.5)
 		(stroke
 			(width 0.25)
 			(type default)
@@ -33974,8 +33974,8 @@
 		(uuid "74a37c94-3b25-4d56-99a2-5eba7d8711b4")
 	)
 	(gr_rect
-		(start 79.5 44.5)
-		(end 112.5 61.5)
+		(start 79.5 52)
+		(end 112.5 69)
 		(stroke
 			(width 0.15)
 			(type default)
@@ -34075,7 +34075,7 @@
 	)
 	(gr_text "ENC"
 		(locked yes)
-		(at 57 56.5 0)
+		(at 53.91 64 0)
 		(layer "F.SilkS")
 		(uuid "6502c009-0571-4b31-ae04-065771283f63")
 		(effects
@@ -34111,7 +34111,7 @@
 	)
 	(gr_text "ENC CTR"
 		(locked yes)
-		(at 57 61.5 0)
+		(at 53.91 69 0)
 		(layer "B.SilkS")
 		(uuid "48ef1508-468a-47bb-9bdd-ff517b8cb4e4")
 		(effects
@@ -34215,7 +34215,7 @@
 	)
 	(gr_text "OLED screen 33x17 (top-face ghost)"
 		(locked yes)
-		(at 96 53 0)
+		(at 96 60.5 0)
 		(layer "Dwgs.User")
 		(uuid "301e47d8-8630-4316-a9c0-ca2a737b057b")
 		(effects

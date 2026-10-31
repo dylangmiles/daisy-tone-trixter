@@ -56,7 +56,7 @@ def to_board(x, y):
 #   the screen sticks to the top-face inner surface (foam tape) with its glass flush to the window,
 #   and J6 is a 1x4 I2C header on the board linked by a short flat cable. So the window is placed on
 #   the top face in its own right; the old header->window offset no longer applies.
-OLED_CTR    = (69.0, 78.0)                    # OLED window centre; y aligned to the ENCODER (both y=78, moved fwd 2026-10-31)
+OLED_CTR    = (69.0, 85.5)                    # OLED window centre; y = centre of the top/rear half (0.75*BOX_D=85.5), level with the ENCODER (moved back from 78 on 2026-10-31 for visual balance)
 OLED_W, OLED_H = 33.0, 17.0                   # window CUT -- sits BETWEEN the active area (shows through) and the
                                               #   flat black "nice" glass (lip all round):
                                               #   active 29.42 x 14.7  <  WINDOW 33 x 17  <  nice glass 35.58 x 18.66
@@ -76,9 +76,9 @@ OLED_HEADER = (69.0, 48.0)                    # header STRIP CENTRE (the ghost r
                                               #   ghost 3.8 mm left of the strip. No board move needed; nudge J6 x->99.81 only
                                               #   if an exact 96.0 strip centre is ever wanted.
 OLED_HDR_W, OLED_HDR_H = 10.0, 2.6            # 1x4 right-angle header strip (4 x 2.54), for the ghost
-ENCODER    = (108.0, 78.0)                    # encoder SHAFT centre (moved fwd 2026-10-31 to clear J8). SW1 ORIGIN is a
-                                              #   corner pin (64.5,55.5); the real shaft/bushing is the
-                                              #   F.Fab circle at board (57.0,53.0) -> enc(108,78).
+ENCODER    = (111.1, 85.5)                    # encoder SHAFT centre (moved back to y85.5 level with OLED + right ~3mm to clear J8, 2026-10-31). SW1 ORIGIN is a
+                                              #   corner pin (61.41,63.0); the real shaft/bushing is the
+                                              #   F.Fab circle at board (53.91,60.5) -> enc(111.1,85.5).
 ENC_DIA    = 7.0
 FS_CTR     = 90.0
 FOOTSW     = [(BOX_W/2 - FS_CTR/2, 22.0), (BOX_W/2 + FS_CTR/2, 22.0)]   # 90 mm centres, up front (PANEL)
