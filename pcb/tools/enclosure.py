@@ -56,7 +56,7 @@ def to_board(x, y):
 #   the screen sticks to the top-face inner surface (foam tape) with its glass flush to the window,
 #   and J6 is a 1x4 I2C header on the board linked by a short flat cable. So the window is placed on
 #   the top face in its own right; the old header->window offset no longer applies.
-OLED_CTR    = (69.0, 88.0)                    # OLED window centre on the top face (free placement)
+OLED_CTR    = (69.0, 78.0)                    # OLED window centre; y aligned to the ENCODER (both y=78, moved fwd 2026-10-31)
 OLED_W, OLED_H = 33.0, 17.0                   # window CUT -- sits BETWEEN the active area (shows through) and the
                                               #   flat black "nice" glass (lip all round):
                                               #   active 29.42 x 14.7  <  WINDOW 33 x 17  <  nice glass 35.58 x 18.66
@@ -68,12 +68,12 @@ OLED_W, OLED_H = 33.0, 17.0                   # window CUT -- sits BETWEEN the a
 #   perf-top->glass-top 5.2; perf-top->hdr-row-ctr 2.0; side->nearest hdr-pin-ctr 10.16 (7-pin hdr; 4-pin differs).
 #   DEPTH: glass 1.83 proud of perf-top; module 3.10 thick (4.12 incl. lowest discrete) -> clears the 8.24 mm
 #   board->top-face gap (STANDOFF) with room. PCB ghost keep-clear 36x34 still covers the measured module.
-OLED_HEADER = (69.0, 67.0)                    # J6 1x4 header, just FWD of the window (cable folds flat
+OLED_HEADER = (65.5, 48.0)                    # J6 1x4 header (moved fwd 2026-10-31); FWD of the window (cable folds flat
                                               #   rearward to the screen). ⚠ board is source of truth.
 OLED_HDR_W, OLED_HDR_H = 10.0, 2.6            # 1x4 right-angle header strip (4 x 2.54), for the ghost
-ENCODER    = (108.0, 88.0)                    # encoder SHAFT centre. Board SW1 footprint ORIGIN is a
-                                              #   corner pin (64.5,65.5); the real shaft/bushing is the
-                                              #   F.Fab circle at board (57.0,63.0) -> (165-57, 63+25).
+ENCODER    = (108.0, 78.0)                    # encoder SHAFT centre (moved fwd 2026-10-31 to clear J8). SW1 ORIGIN is a
+                                              #   corner pin (64.5,55.5); the real shaft/bushing is the
+                                              #   F.Fab circle at board (57.0,53.0) -> enc(108,78).
 ENC_DIA    = 7.0
 FS_CTR     = 90.0
 FOOTSW     = [(BOX_W/2 - FS_CTR/2, 22.0), (BOX_W/2 + FS_CTR/2, 22.0)]   # 90 mm centres, up front (PANEL)
