@@ -31,9 +31,9 @@
 <text x="122.33" y="115.33" class="dim" text-anchor="middle">LED O3 x2 (shape-distinct)</text>
 <rect x="105.83" y="89.33" width="33.00" height="17.00" fill="none" stroke="#111" stroke-width="0.4"/>
 <text x="122.33" y="86.33" class="dim" text-anchor="middle">OLED 33x17</text>
-<rect x="113.83" y="126.53" width="10.00" height="2.60" fill="none" stroke="#06c" stroke-width="0.3" stroke-dasharray="2 1"/>
-<line x1="118.83" y1="127.83" x2="122.33" y2="97.83" stroke="#06c" stroke-width="0.2" stroke-dasharray="1 1"/>
-<text x="118.83" y="130.63" class="ctr" text-anchor="middle">OLED header (ghost)</text>
+<rect x="117.33" y="126.53" width="10.00" height="2.60" fill="none" stroke="#06c" stroke-width="0.3" stroke-dasharray="2 1"/>
+<line x1="122.33" y1="127.83" x2="122.33" y2="97.83" stroke="#06c" stroke-width="0.2" stroke-dasharray="1 1"/>
+<text x="122.33" y="130.63" class="ctr" text-anchor="middle">OLED header (ghost)</text>
 <circle cx="161.33" cy="97.83" r="3.50" fill="none" stroke="#111" stroke-width="0.3"/>
 <line x1="159.33" y1="97.83" x2="163.33" y2="97.83" stroke="#111" stroke-width="0.2"/>
 <line x1="161.33" y1="95.83" x2="161.33" y2="99.83" stroke="#111" stroke-width="0.2"/>

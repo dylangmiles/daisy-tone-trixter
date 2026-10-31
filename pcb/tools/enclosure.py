@@ -68,8 +68,13 @@ OLED_W, OLED_H = 33.0, 17.0                   # window CUT -- sits BETWEEN the a
 #   perf-top->glass-top 5.2; perf-top->hdr-row-ctr 2.0; side->nearest hdr-pin-ctr 10.16 (7-pin hdr; 4-pin differs).
 #   DEPTH: glass 1.83 proud of perf-top; module 3.10 thick (4.12 incl. lowest discrete) -> clears the 8.24 mm
 #   board->top-face gap (STANDOFF) with room. PCB ghost keep-clear 36x34 still covers the measured module.
-OLED_HEADER = (65.5, 48.0)                    # J6 1x4 header (moved fwd 2026-10-31); FWD of the window (cable folds flat
-                                              #   rearward to the screen). ⚠ board is source of truth.
+OLED_HEADER = (69.0, 48.0)                    # header STRIP CENTRE (the ghost rect is drawn CENTRED on this), x-aligned to
+                                              #   the window (OLED_CTR x=69.0); FWD of the window (cable folds flat rearward).
+                                              #   ⚠ NOT the footprint anchor: J6's anchor is PIN 1 at board (99.54,23); its 4
+                                              #   pins run -x to (91.92,23), so the real strip centre is board 95.73 = enc 69.27
+                                              #   -- already under the window (0.27 mm). Was 65.5 (= pin 1) which mis-drew the
+                                              #   ghost 3.8 mm left of the strip. No board move needed; nudge J6 x->99.81 only
+                                              #   if an exact 96.0 strip centre is ever wanted.
 OLED_HDR_W, OLED_HDR_H = 10.0, 2.6            # 1x4 right-angle header strip (4 x 2.54), for the ghost
 ENCODER    = (108.0, 78.0)                    # encoder SHAFT centre (moved fwd 2026-10-31 to clear J8). SW1 ORIGIN is a
                                               #   corner pin (64.5,55.5); the real shaft/bushing is the
@@ -134,7 +139,8 @@ def panel_anchors_board():
     """⚠ SUPERSEDED (see header). Returns the ORIGINAL auto-placement, NOT the hand-tuned board.
     Kept only so gen_place.py still imports; do not use it to reposition the committed board."""
     a = {
-        "J6":  (*to_board(*OLED_HEADER), 90, "F"),   # OLED header
+        "J6":  (*to_board(*OLED_HEADER), 90, "F"),   # OLED header ⚠ OLED_HEADER is now the STRIP CENTRE, not pin 1 — this
+                                                     #   dead entry would place pin 1 at the centre; recompute if ever revived.
         "SW1": (*to_board(*ENCODER),      0, "F"),   # encoder
         "D4":  (*to_board(*LEDS[0]),      0, "F"),   # LED
         "D5":  (*to_board(*LEDS[1]),      0, "F"),   # LED
