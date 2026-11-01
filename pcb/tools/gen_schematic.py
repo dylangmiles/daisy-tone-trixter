@@ -436,7 +436,7 @@ for pin, net in (("A", "ENC_A"), ("B", "ENC_B"), ("S1", "ENC_SW")):
     # pull-up + cap on the way
     px = (p[0] - (3*G if pin == "A" else 5*G)) if left else p[0] + 3*G
     r = R("10k", (px, p[1] - 4*G), 0); S.wire((px, p[1]), r.pin(2)); S.junction((px, p[1]))
-    S.wire(r.pin(1), (r.pin(1)[0], r.pin(1)[1] - G)); rail("+3V3D", (r.pin(1)[0], r.pin(1)[1] - G))
+    S.wire(r.pin(1), (r.pin(1)[0], r.pin(1)[1] - G)); rail("+3V3A", (r.pin(1)[0], r.pin(1)[1] - G))   # ⚠ pull-ups on +3V3A to MATCH the GNDA ground (2026-11-01): keeps the encoder's current loop local in the analog domain, no split crossing, no +3V3D copper over AGND. Encoder is slow/low-current so it won't load +3V3A.
     c = C("10n", (px, p[1] + 4*G), 0); S.wire((px, p[1]), c.pin(1)); gnd(c.pin(2), "GNDA")   # ⚠ encoder gnd on GNDA: slow/low-current + sits in the analog zone, so AGND avoids a GNDD finger (2026-10-31)
 for pin in ("C", "S2"):
     p = enc.pin(pin); q = (p[0] - G, p[1]) if pin == "C" else (p[0] + G, p[1])

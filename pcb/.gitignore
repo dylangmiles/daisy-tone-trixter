@@ -21,3 +21,4 @@ out/board.svg
 # review/design aids (regenerable)
 out/ground_domain_map.*
 out/ground_split_review.*
+out/power_domain_map.*

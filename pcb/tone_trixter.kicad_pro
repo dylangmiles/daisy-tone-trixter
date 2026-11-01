@@ -556,7 +556,7 @@
       },
       {
         "netclass": "Power",
-        "pattern": "BATT"
+        "pattern": "BATT*"
       },
       {
         "netclass": "Power",
@@ -569,6 +569,18 @@
       {
         "netclass": "Power",
         "pattern": "BST_SW"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "Net-(J3-Pin_1)"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "Net-(D1-A)"
+      },
+      {
+        "netclass": "Power",
+        "pattern": "Net-(D2-A)"
       }
     ]
   },
