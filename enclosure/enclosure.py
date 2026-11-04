@@ -32,7 +32,11 @@ WALL      = WALL_TOP               # back-compat alias (side elevation T_TOP use
 WALL_FR   = 2.5                    # FRONT & REAR wall thickness (measured 2026-10-27)
 WALL_SIDE = 2.3                    # LEFT & RIGHT wall thickness (measured 2026-10-27)
 CAVITY_H  = 33.0                   # internal cavity height (35.30 box - 2.3 top)
-BOTTOM_LID = 4.23                  # base-plate / bottom-lid thickness (measured 2026-10-27)
+BOTTOM_LID = 4.23                  # base-plate / bottom-lid thickness at the RIM (measured 2026-10-27)
+LID_CENTRE_T = 2.4                 # lid is THINNER in the centre (measured 2026-11-04): recessed floor inboard of the rim
+LID_RIM_W    = 4.43                # width of the raised rim around the lid edge (measured 2026-11-04)
+Z_RECESS     = -(BOTTOM_LID - LID_CENTRE_T)   # -1.83: recessed-centre floor below the nominal base (z=0); the IN B
+                                   #   combo barrel reaches into this over the centre (not the rim) -- see COMBO_Z
 # External top-face outline = internal plane + the REAL walls (NOT catalog nominal), and the mock-up
 # draws it CENTRED on the box centre so it matches the box when registered by the centre crosshair.
 EXT_W = BOX_W + 2*WALL_SIDE        # 142.6  (was catalog 145)
@@ -88,9 +92,10 @@ LED_DIA    = 3.0
 
 # Rear-wall holes, LEFT -> RIGHT: OUT, USB, DC, IN B, IN A  -- INPUT on the RIGHT.
 JACK_Y   = 102.9        # enclosure depth where the board-mounted jack bodies sit (barrel reaches wall)
-JACK_Z   = 9.31         # barrel axis above the base (bottom-mount). MEASURED 2026-10-29: K3599 barrel
-                        #   centre to board plane = 13.85 below the board bottom (Z_BRD_BOT 23.16) -> 9.31.
-                        #   (Was 10.8; 13.85 supersedes the earlier inferred 13.9 and the stale 12.39.)
+JACK_Z   = 10.55        # barrel axis above the base (bottom-mount). K3599 centre = 13.85 below the board
+                        #   bottom (measured 2026-10-29). ⚠ BOARD RAISED to the 7.0 gap 2026-11-04 (encoder
+                        #   body = 7.0, re-measured) -> Z_BRD_BOT 24.4 - 13.85 = 10.55 (was 9.31 at the 8.24 gap).
+                        #   Shared OUT / DC / IN A row; gen_side_elevation asserts this vs the gap-derived stack.
 # USB is now a PANEL-MOUNT extension (Micro Robotics PAN-USBCC), NOT the Seed's own port (decided 2026-10-29):
 #   the Seed sits crosswise on the board UNDERSIDE with its USB-C facing player-LEFT; a 150 mm flexible lead
 #   loops from that port to this nut-mount USB-C socket on the rear wall. So this hole is a free choice on the
@@ -105,10 +110,17 @@ USB_Z    = 16.0         # panel-hole centre above base -- sits just UNDER the bo
 # IN B is now the Neutrik NCJ9FI-H COMBO (XLR + switching 1/4in) -- a big Neutrik D / Combo-A cut-out,
 # NOT a small TRS hole (2026-10-30).
 COMBO_D = 24.0          # main connector hole O24 (standard Neutrik D / Combo-A cut-out).
-COMBO_Z = 17.0          # ⚠ PROVISIONAL barrel-axis height: deliberately higher than the TRS jacks (9.31)
-                        #   so the O24 clears the 33 mm wall. Set precisely from the NCJ9FI-H jack-axis-
-                        #   above-PCB + the board Z, then confirm on the real part. Plus 2x M3 mounting
-                        #   holes -- MARK THOSE FROM THE CONNECTOR (spacing per the NCJ9FI-H datasheet).
+COMBO_Z = 9.40          # barrel axis above the base. NCJ9FI-H axis = 15.0 above its PCB mount surface
+                        #   (datasheet); board bottom (7.0 gap) = 24.4 -> 24.4 - 15.0 = 9.40. ⚠ LOWER than
+                        #   the TRS row (10.55): the combo hangs 1.15 mm deeper. ⚠ FIT IS MARGINAL -- O23.4
+                        #   barrel bottom = -2.30 vs the recessed-lid floor Z_RECESS -1.83 -> ~0.5 mm over;
+                        #   closes with the recessed lid centre + ~2 mm grind of the rear rim + a touch off the
+                        #   30 mm ring. Confirm on the real part + lid. See datasheets/NCJ9FI-H_MEASURED_reference.md.
+# 2x M3 XLR mounting holes (NCJ9FI-H panel cut-out): Ø3.2 on a 20 (H) x 23 (V) mm diagonal about the barrel
+# (top-left + bottom-right). ⚠ Mark from the real connector; this is the datasheet nominal.
+COMBO_SCREW_D  = 3.2
+COMBO_SCREW_DX = 10.0   # +/- from the barrel centre -> 20 mm apart horizontally
+COMBO_SCREW_DY = 11.5   # +/- from the barrel centre -> 23 mm apart vertically (diagonal pair)
 REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
     ("J2",  "OUT",  24.2,  10.0,        "trs",  JACK_Z),
     (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead

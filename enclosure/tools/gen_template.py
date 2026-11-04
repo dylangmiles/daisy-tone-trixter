@@ -98,9 +98,8 @@ PAGE_W = 297.0                           # A4 LANDSCAPE
 PAGE_H = 210.0
 
 s = _hdr(PAGE_W, PAGE_H)
-s += _txt(MARGIN, 7,  "1590XX template -- OUTSIDE, ink up, drill from outside -- PRINT AT 100%", 'ttl', 'start')
-s += _txt(MARGIN, 11, "Box NET: TOP FACE centre; REAR WALL above (jacks); LEFT WALL to the left (HP jack); FRONT = small registration tab below. Each panel: FOLD -> top-face band -> panel -> LID SEAM.", 'note', 'start')
-s += _txt(MARGIN, 14.5,"Fold each panel over its wall; rear jack columns project straight down. IN on the RIGHT, OUT on the LEFT; encoder right of screen. IN B = Neutrik NCJ9FI-H combo (O24).", 'note', 'start')
+s += _txt(MARGIN, 7,  "1590XX drilling template -- tape OUTSIDE, ink up, drill from outside -- PRINT AT 100%", 'ttl', 'start')
+s += _txt(MARGIN, 11.5,"Fold each wall panel over its wall (jack columns project straight down). Register by the CENTRE crosshair (box diagonals). IN on the RIGHT, OUT on the LEFT. Confirm the 100 mm ruler before drilling.", 'note', 'start')
 
 # ============================================================ TOP FACE (player-natural) =========
 # external outline (dashed) = internal plane + the REAL walls, CENTRED on the box centre so it lines
@@ -186,8 +185,16 @@ for ref, label, xc, size, kind, z in e.REAR:
         if kind == "usbc":       # panel USB-C: dashed ghost = finished bezel OD (keep-clear vs neighbours)
             s += _circ(TX(xc), hy, e.USB_BEZEL_OD, stroke='#111', dash='1 1')
             s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} O{size:g} (bezel O{e.USB_BEZEL_OD:g})", 'dim')
-        elif kind == "combo":    # Neutrik D / Combo-A cut-out: O24 main hole + 2x M3 (mark from the part)
-            s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} combo O{size:g} +M3x2", 'dim')
+        elif kind == "combo":    # Neutrik D / Combo-A cut-out: O24 main hole + 2x M3 screws (mark from the part)
+            # Bottom-mounted combo -> rotated 180 vs the datasheet -> LL+UR diagonal (player-natural):
+            # LEFT screw is the LOW one (below the lid seam), RIGHT screw the HIGH one. ⚠ On this fold-up
+            # flap the lid seam is at the TOP edge, so the left/low screw draws near the top and folds
+            # down to the bottom; the low screw lands BELOW the lid seam (undrillable -- board-mount combo
+            # is held by its PCB pins, panel screws optional).
+            for _dx in (-e.COMBO_SCREW_DX, e.COMBO_SCREW_DX):
+                _dy = -e.COMBO_SCREW_DY if _dx < 0 else e.COMBO_SCREW_DY
+                s += _circ(TX(xc + _dx), RY(z + _dy), e.COMBO_SCREW_D) + _cross(TX(xc + _dx), RY(z + _dy), 1.2)
+            s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} combo O{size:g} + 2x M3 ({2*e.COMBO_SCREW_DX:g}x{2*e.COMBO_SCREW_DY:g} diag, mark from part)", 'dim')
         else:
             s += _vtxt(TX(xc), hy - size/2 - 2.0, f"{label} O{size:g}", 'dim')
 
