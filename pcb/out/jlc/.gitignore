@@ -1,0 +1,4 @@
+# Regenerable fab binaries (deterministic from the board). The diffable
+# bom.csv / cpl.csv are versioned; regenerate gerbers with kicad-cli.
+gerbers/
+gerbers.zip
