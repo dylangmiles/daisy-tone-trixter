@@ -182,7 +182,7 @@ f1   = S.add(Sym("Device", "Polyfuse", "F1", "500mA", g(14, 7), 90, footprint=FP
 d1   = S.add(Sym("Device", "D_Schottky", "D1", "SS34", g(22, 7), 180, footprint=FP["SMA"], fields={"LCSC": "C8678", "Note": "= 1N5822 role: adapter OR"}))
 j_bt = S.add(Sym("Connector", "Conn_01x02_Pin", "J4", "Battery lead", g(6, 14), 0, footprint=FP["JST2"], fields={"Note": "Beston 9 V pack: pin1 +, pin2 − (goes to OUT ring, not to GND)"}))
 d2   = S.add(Sym("Device", "D_Schottky", "D2", "SS34", g(22, 13), 180, footprint=FP["SMA"], fields={"LCSC": "C8678", "Note": "battery OR"}))
-d3   = S.add(Sym("Device", "D_TVS", "D3", "SMAJ15A", g(30, 10), 90, footprint=FP["SMA"], fields={"LCSC": "C129213"}))
+d3   = S.add(Sym("Device", "D_TVS", "D3", "SMAJ15A", g(30, 10), 90, footprint=FP["SMA"], fields={"LCSC": "C86819"}))  # C86819 = SMAJ15A/TR13, 59k stock (C129213 was out of stock)
 c_b1 = C("100u/25V", g(34, 10), 0, fp="Cel", polar=True)
 c_b2 = C("10u", g(38, 10), 0)
 c_b3 = C("100n", g(42, 10), 0)
@@ -664,6 +664,16 @@ LIB.write_text('(kicad_symbol_lib (version 20231120) (generator "tt_gen")\n'
 pro = HERE.parent / "tone_trixter.kicad_pro"
 if not pro.exists():
     pro.write_text('{\n  "meta": {"filename": "tone_trixter.kicad_pro", "version": 1},\n  "board": {"design_settings": {}},\n  "sheets": [["' + S.uuid + '", "Root"]],\n  "text_variables": {}\n}\n')
+# Mark hand-soldered / non-placed parts Do-Not-Place (dnp => in_bom no + dnp yes) so the
+# --exclude-dnp exports drop them from BOTH the JLC BOM and CPL. JLC then only ever sees the SMD
+# it actually places: no "unmatched" list, no "do not place" dialog. Covers THT jacks (K3599,
+# NCJ9FI combo), JST wire-lead connectors, the OLED pin-header, THT electrolytics, panel LEDs, the
+# rotary encoder, TestPoints, the NetTie, and the Daisy Seed module. (microSD DM3AT = SMD, stays.)
+_DNP_FP = ("Capacitor_THT:", "Connector_Audio:", "Connector_JST:", "Connector_PinHeader",
+           "LED_THT:", "Module:", "NetTie:", "Rotary_Encoder:", "K3599", "TestPoint:")
+_dnp = [s for s in S.syms if any(p in str(s.fp) for p in _DNP_FP)]
+for s in _dnp: s.dnp = True
+print(f"DNP (hand-solder/non-placed, out of JLC BOM+CPL): {len(_dnp)} — {sorted(s.ref for s in _dnp)}")
 for b in S.check(): print("CHECK:", b)
 S.write(OUT)
 print("wrote", OUT, "symbols", len(S.syms), "wires", len(S.wires))
