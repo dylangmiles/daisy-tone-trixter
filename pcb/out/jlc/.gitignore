@@ -2,3 +2,4 @@
 # bom.csv / cpl.csv are versioned; regenerate gerbers with kicad-cli.
 gerbers/
 gerbers.zip
+releases/*.zip
