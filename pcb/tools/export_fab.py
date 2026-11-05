@@ -20,7 +20,7 @@ csvs and the log are tracked as the per-release record.
 
   python3 pcb/tools/export_fab.py          # run from the daisy repo or from pcb/
 """
-import subprocess, sys, re, glob, datetime, pathlib, shutil, tempfile
+import subprocess, sys, os, re, glob, datetime, pathlib, shutil, tempfile, csv
 
 PROD  = "tone-trixie"
 HERE  = pathlib.Path(__file__).resolve().parent
@@ -87,9 +87,20 @@ def main():
     run([CLI, "sch", "export", "bom",
          "--fields", "Value,Reference,Footprint,LCSC,${QUANTITY}",
          "--labels", "Comment,Designator,Footprint,LCSC,Quantity",
-         "--group-by", "Value,Footprint,LCSC", "--exclude-dnp", "-o", str(bom_csv), str(SCH)])
+         "--group-by", "Value,Footprint,LCSC", "--ref-range-delimiter", "",
+         "--exclude-dnp", "-o", str(bom_csv), str(SCH)])  # ref-range-delimiter "" => explicit refs (JLC needs them, not C1-C4 ranges)
+    # CPL in JLCPCB Pick&Place format (Designator/Mid X/Mid Y/Layer/Rotation),
+    # absolute origin so it aligns with the gerbers (which default to absolute).
+    fd, raw_pos = tempfile.mkstemp(suffix="-pos.csv"); os.close(fd)
     run([CLI, "pcb", "export", "pos", "--format", "csv", "--units", "mm",
-         "--use-drill-file-origin", "--side", "both", "--exclude-dnp", "-o", str(cpl_csv), str(BOARD)])
+         "--side", "both", "--exclude-dnp", "-o", raw_pos, str(BOARD)])
+    with open(raw_pos) as rf, open(cpl_csv, "w", newline="") as of:
+        w = csv.writer(of)
+        w.writerow(["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
+        for row in csv.DictReader(rf):
+            w.writerow([row["Ref"], f'{float(row["PosX"]):.4f}mm',
+                        f'{float(row["PosY"]):.4f}mm', row["Side"].strip().capitalize(), row["Rot"]])
+    os.remove(raw_pos)
 
     commit = git("rev-parse", "--short", "HEAD") or "nogit"
     dirty  = "+dirty" if git("status", "--porcelain", str(BOARD)) else ""
