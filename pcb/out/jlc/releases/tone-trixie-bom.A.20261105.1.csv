@@ -65,7 +65,7 @@
 "+3V3A","TP12","TestPoint:TestPoint_Pad_D1.5mm","","1"
 "GNDA","TP13","TestPoint:TestPoint_Pad_D1.5mm","","1"
 "GNDD","TP14","TestPoint:TestPoint_Pad_D1.5mm","","1"
-"OPA1642AIDR","U1,U2,U3","Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","C126004","3"
+"OPA1642AIDR","U1,U2,U3","Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","C67640","3"
 "Daisy Seed3","U4","Module:Electrosmith_Daisy_Seed","","1"
 "TPA6130A2","U5","Package_DFN_QFN:QFN-20-1EP_4x4mm_P0.5mm_EP2.5x2.5mm","C130046","1"
 "INA163UA","U6","Package_SO:SOIC-14_3.9x8.7mm_P1.27mm","C962542","1"

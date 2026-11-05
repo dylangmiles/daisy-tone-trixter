@@ -167,12 +167,12 @@ def tp(name, at):
 
 def opamp_half(refname, unit, at, rot=0):
     return S.add(Sym("Amplifier_Operational", "OPA2134", refname, "OPA1642AIDR", at, rot, unit=unit, footprint=FP["OPA"],
-                     fields={"LCSC": "C126004", "Note": "TI OPA1642 SoundPlus JFET dual; Fig 3.3/3.6 topology"}))
+                     fields={"LCSC": "C67640", "Note": "TI OPA1642 SoundPlus JFET dual; Fig 3.3/3.6 topology. C67640 = JLC-assembly stock (C126004 was LCSC-catalog-only, not placeable)"}))
 def opamp_power(refname, at):
     # LCSC on EVERY unit (incl. this power unit) so the BOM doesn't split the dual
     # op-amp into with-LCSC / without-LCSC rows (JLC then flags "repeated designator").
     return S.add(Sym("Amplifier_Operational", "OPA2134", refname, "OPA1642AIDR", at, 0, unit=3, footprint=FP["OPA"],
-                     fields={"LCSC": "C126004"}))
+                     fields={"LCSC": "C67640"}))
 
 # ================================================================ 1. POWER (top-left)
 note("POWER — parallel diode-OR (pinmap §4n), no regulator. VIN abs max 17 V: 12 V adapters yes, 18 V no.", g(4, 3), 1.8)
