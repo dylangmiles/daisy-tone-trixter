@@ -5946,7 +5946,7 @@
     (property "Value" "500mA" (at 38.1 20.32 0) (effects (font (size 1.27 1.27))))
     (property "Footprint" "Fuse:Fuse_1812_4532Metric" (at 35.56 17.78 0) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Datasheet" "~" (at 35.56 17.78 0) (effects (font (size 1.27 1.27)) (hide yes)))
-    (property "LCSC" "C883116" (at 35.56 17.78 0) (effects (font (size 1.27 1.27)) (hide yes)))
+    (property "LCSC" "C883141" (at 35.56 17.78 0) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Note" "1812 PTC 0.5 A hold" (at 35.56 17.78 0) (effects (font (size 1.27 1.27)) (hide yes)))
     (pin "1" (uuid "00190c12-280b-509c-80aa-c058b7caa0c0"))
     (pin "2" (uuid "9f81ede0-d9d5-5343-bd4d-51ffe2a3214e"))

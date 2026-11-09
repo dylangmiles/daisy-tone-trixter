@@ -178,7 +178,7 @@ def opamp_power(refname, at):
 note("POWER — parallel diode-OR (pinmap §4n), no regulator. VIN abs max 17 V: 12 V adapters yes, 18 V no.", g(4, 3), 1.8)
 # DC jack lead (panel jack → JST 2-pin): pin1 = centre (−, Boss convention: sleeve +), pin2 = sleeve
 j_dc = S.add(Sym("Connector", "Conn_01x02_Pin", "J3", "DC 2.1mm lead", g(6, 8), 0, footprint=FP["JST2"], fields={"Note": "panel DC jack, centre-negative: pin1 +(sleeve) pin2 −(centre)"}))
-f1   = S.add(Sym("Device", "Polyfuse", "F1", "500mA", g(14, 7), 90, footprint=FP["PF"], fields={"LCSC": "C883116", "Note": "1812 PTC 0.5 A hold"}))
+f1   = S.add(Sym("Device", "Polyfuse", "F1", "500mA", g(14, 7), 90, footprint=FP["PF"], fields={"LCSC": "C883141", "Note": "1812 PTC 0.5 A hold, 30 V (BNstar BSMD1812-050-30V). NB: C883116 was a SUB-1812 pkg that did not match this 1812 land — JLC held order W2026110604070777 on it (manufacture log 2026-11-05); the LCSC package MUST match the footprint."}))
 d1   = S.add(Sym("Device", "D_Schottky", "D1", "SS34", g(22, 7), 180, footprint=FP["SMA"], fields={"LCSC": "C8678", "Note": "= 1N5822 role: adapter OR"}))
 j_bt = S.add(Sym("Connector", "Conn_01x02_Pin", "J4", "Battery lead", g(6, 14), 0, footprint=FP["JST2"], fields={"Note": "Beston 9 V pack: pin1 +, pin2 − (goes to OUT ring, not to GND)"}))
 d2   = S.add(Sym("Device", "D_Schottky", "D2", "SS34", g(22, 13), 180, footprint=FP["SMA"], fields={"LCSC": "C8678", "Note": "battery OR"}))
