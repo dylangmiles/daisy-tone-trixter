@@ -27,6 +27,7 @@ static volatile uint8_t   s_streaming  = 0;
 static volatile uint32_t  s_frames     = 0;
 static volatile uint32_t  s_underruns  = 0;
 static volatile uint32_t  s_overruns   = 0;
+static int32_t            s_rate_acc   = 0;   // smooth async rate-match accumulator
 
 static uint8_t  s_tx[AUDIO_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
 
@@ -34,11 +35,22 @@ static uint8_t  s_tx[AUDIO_MAX_PACKET] __attribute__((aligned(4), section(".sdra
 static void SendFrame(USBD_HandleTypeDef *pdev)
 {
     const uint32_t wr   = s_wr;
-    const uint32_t fill = (wr - s_rd) / AUDIO_CHANNELS;   // whole frames available
+    const int32_t  fill = (int32_t)((wr - s_rd) / AUDIO_CHANNELS);   // whole frames available
 
+    // ⚠ SMOOTH async rate-match (2026-11-10). The host (clock) and the pedal (clock master) drift, so
+    // the packet size must average slightly above/below 48 to keep the ring centred. The OLD code
+    // flipped 48<->49 the instant `fill` crossed a hard threshold, which — because `fill` wobbles with
+    // the 64-sample producer bursts — made the packet pattern jump around IRREGULARLY. macOS's input
+    // sample-rate converter ticks on those irregular jumps: that was the ~2 s record/monitor crackle.
+    // Instead steer `fill` toward a target with a proportional term fed through a fractional
+    // accumulator, so a correction emerges as a SMOOTH, REGULAR pattern (…48,48,…,49,…) the host's
+    // SRC tracks cleanly. Gain 1/ACC_UNIT; at ~10 ppm drift this is one 49 every ~2000 frames.
+    const int32_t TARGET   = 256;   // target ring, frames (~5.3 ms) — margin over the 64-frame bursts
+    const int32_t ACC_UNIT = 4096;  // accumulator units per ±1 sample (small gain = smooth)
+    s_rate_acc += (fill - TARGET);
     uint32_t samples = AUDIO_NOM_SAMPLES;
-    if(fill > (6U * AUDIO_NOM_SAMPLES))       samples = AUDIO_NOM_SAMPLES + 1U;
-    else if(fill < (2U * AUDIO_NOM_SAMPLES))  samples = AUDIO_NOM_SAMPLES - 1U;
+    if(s_rate_acc >= ACC_UNIT)       { samples += 1U; s_rate_acc -= ACC_UNIT; }
+    else if(s_rate_acc <= -ACC_UNIT) { samples -= 1U; s_rate_acc += ACC_UNIT; }
     if(samples > AUDIO_MAX_SAMPLES) samples = AUDIO_MAX_SAMPLES;
 
     const uint32_t want = samples * AUDIO_CHANNELS;       // int32 words wanted
@@ -107,6 +119,7 @@ static void StartStream(USBD_HandleTypeDef *pdev)
     USBD_LL_OpenEP(pdev, AUDIO_IN_EP, USBD_EP_TYPE_ISOC, AUDIO_MAX_PACKET);
     pdev->ep_in[AUDIO_IN_EP & 0x0FU].is_used = 1U;
     s_wr = s_rd = 0;
+    s_rate_acc = 0;
     s_streaming = 1;
     SendFrame(pdev);                 // prime: first transmit starts the DataIn cadence
 }

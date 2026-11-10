@@ -1790,6 +1790,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  help              this list");
         hw.PrintLine("  status            board + audio + SD report");
         hw.PrintLine("  times             worst-case loop timings + cpu, then RESET");
+        hw.PrintLine("  usbaud            USB-audio counters (frames/underruns/overruns/fill)");
         hw.PrintLine("  dfu               reboot to the bootloader");
         hw.PrintLine(" -- presets / audio --");
         hw.PrintLine("  presets           list presets");
@@ -1899,6 +1900,16 @@ static void HandleCommand(const char* line)
         // change -- and it never comes back down to tell you the change helped.
         g_cpu_pk = 0.f;
         hw.PrintLine("(reset)");
+        return;
+    }
+    if(strcmp(line, "usbaud") == 0)
+    {
+        // USB-audio health: dev state, streaming, frames sent, underruns, overruns, ring fill.
+        // Type it a couple of seconds apart while the studio streams to see un/ov climb (the ~2 s
+        // crackle) and whether fill is drifting to a limit.
+        char buf[96];
+        usb_audio_diag(buf, sizeof(buf));
+        hw.PrintLine("usbaud: %s", buf);
         return;
     }
     if(strcmp(line, "dfu") == 0)
