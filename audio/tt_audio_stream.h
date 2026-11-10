@@ -30,6 +30,13 @@ extern "C" {
 #define AUDIO_AC_INTERFACE  2U
 #define AUDIO_AS_INTERFACE  3U
 
+// ---- UAC2 entity IDs (clock-source port, 2026-11-10) ----------------------------------------------
+// macOS does smooth async sample-rate conversion only when the device declares a UAC2 Clock Source
+// entity it can query for the rate; UAC1 (no clock entity) made it drop a sample every ~2 s.
+#define AUDIO_IT_ID         0x01U   // Input Terminal (microphone)
+#define AUDIO_OT_ID         0x02U   // Output Terminal (USB streaming)
+#define AUDIO_CLOCK_ID      0x03U   // Clock Source entity
+
 // ---- ops the composite class calls ----------------------------------------------------------------
 void    tt_audio_init(void);                                    // reset static state (composite Init)
 void    tt_audio_deinit(USBD_HandleTypeDef* pdev);              // close EP if open (composite DeInit)
@@ -42,6 +49,8 @@ uint8_t  tt_audio_streaming(void);
 uint32_t tt_audio_frames(void);
 uint32_t tt_audio_underruns(void);
 uint32_t tt_audio_overruns(void);
+uint32_t tt_audio_isoincomp(void);
+uint32_t tt_audio_recenter(void);
 uint32_t tt_audio_ring_fill(void);
 
 #ifdef __cplusplus

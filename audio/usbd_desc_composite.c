@@ -9,7 +9,7 @@
 #include "stm32h7xx_hal.h"
 
 #define TT_USBD_VID              0x0483
-#define TT_USBD_PID              0x5752
+#define TT_USBD_PID              0x5753   // bumped for UAC2 (force macOS to re-read descriptors, not cached UAC1)
 #define TT_USBD_LANGID           1033
 #define TT_MANUFACTURER_STRING   "Dylan Miles"
 #define TT_PRODUCT_STRING        "Tone Trixie"

@@ -27,30 +27,41 @@ static volatile uint8_t   s_streaming  = 0;
 static volatile uint32_t  s_frames     = 0;
 static volatile uint32_t  s_underruns  = 0;
 static volatile uint32_t  s_overruns   = 0;
-static int32_t            s_rate_acc   = 0;   // smooth async rate-match accumulator
+static volatile uint32_t  s_isoincomp  = 0;   // iso IN tokens the host missed (dropped frames)
+static volatile uint32_t  s_recenter   = 0;   // times the ring was force-drained back to target
 
 static uint8_t  s_tx[AUDIO_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
 
 // ---- frame assembly + transmit (OTG interrupt) ----------------------------------------------------
 static void SendFrame(USBD_HandleTypeDef *pdev)
 {
-    const uint32_t wr   = s_wr;
-    const int32_t  fill = (int32_t)((wr - s_rd) / AUDIO_CHANNELS);   // whole frames available
+    const uint32_t wr = s_wr;
+    uint32_t fill = (wr - s_rd) / AUDIO_CHANNELS;   // whole frames available
 
-    // ⚠ SMOOTH async rate-match (2026-11-10). The host (clock) and the pedal (clock master) drift, so
-    // the packet size must average slightly above/below 48 to keep the ring centred. The OLD code
-    // flipped 48<->49 the instant `fill` crossed a hard threshold, which — because `fill` wobbles with
-    // the 64-sample producer bursts — made the packet pattern jump around IRREGULARLY. macOS's input
-    // sample-rate converter ticks on those irregular jumps: that was the ~2 s record/monitor crackle.
-    // Instead steer `fill` toward a target with a proportional term fed through a fractional
-    // accumulator, so a correction emerges as a SMOOTH, REGULAR pattern (…48,48,…,49,…) the host's
-    // SRC tracks cleanly. Gain 1/ACC_UNIT; at ~10 ppm drift this is one 49 every ~2000 frames.
-    const int32_t TARGET   = 256;   // target ring, frames (~5.3 ms) — margin over the 64-frame bursts
-    const int32_t ACC_UNIT = 4096;  // accumulator units per ±1 sample (small gain = smooth)
-    s_rate_acc += (fill - TARGET);
+    // ⚠ KEEP THE RING NEAR TARGET so it can't fill and overflow under DSP load — the overflow-drop
+    // (tt_audio_push dropping whole 64-sample blocks) was the crackle: `ov` climbed while `fill` rode
+    // near full (1947/2048) with the chain engaged. A transient (a preset load blocks ~100s of ms,
+    // the IR re-inits under the callback) pumps the ring up, and a weak ±1 drain can't claw it back.
+    //   1) Hard re-center: if the ring ever runs far over, drop the oldest frames back to TARGET in
+    //      one step. One small discontinuity on a rare transient beats continuous overflow drops.
+    //   2) Strong proportional drain: send up to +2 samples/frame when backed up so the ring returns
+    //      to TARGET in ~1 s. macOS tolerates the packet-size variation (the UAC2 test proved the
+    //      host SRC is not the issue), so a firm controller is fine.
+    const int32_t TARGET = 256;                 // ~5.3 ms
+    if(fill > (uint32_t)(4 * TARGET))           // ~21 ms backlog -> recover now
+    {
+        s_rd = wr - (uint32_t)TARGET * AUDIO_CHANNELS;
+        fill = (uint32_t)TARGET;
+        s_recenter++;
+    }
+    // Proportional drain, firm enough to hold the ring against the ~1.6% producer/consumer imbalance
+    // (the smooth ±1 loop couldn't, and fell back on ~1 re-center/s — audible). Sends up to +2 so the
+    // ring stays near TARGET without overflow or re-centering (ov0/rc0 in testing).
+    const int32_t err = (int32_t)fill - TARGET;
     uint32_t samples = AUDIO_NOM_SAMPLES;
-    if(s_rate_acc >= ACC_UNIT)       { samples += 1U; s_rate_acc -= ACC_UNIT; }
-    else if(s_rate_acc <= -ACC_UNIT) { samples -= 1U; s_rate_acc += ACC_UNIT; }
+    if(err > 192)       samples = AUDIO_NOM_SAMPLES + 2U;   // well over -> drain hard (50)
+    else if(err > 8)    samples = AUDIO_NOM_SAMPLES + 1U;   // over      -> drain (49)
+    else if(err < -8)   samples = AUDIO_NOM_SAMPLES - 1U;   // under     -> ease  (47)
     if(samples > AUDIO_MAX_SAMPLES) samples = AUDIO_MAX_SAMPLES;
 
     const uint32_t want = samples * AUDIO_CHANNELS;       // int32 words wanted
@@ -119,7 +130,6 @@ static void StartStream(USBD_HandleTypeDef *pdev)
     USBD_LL_OpenEP(pdev, AUDIO_IN_EP, USBD_EP_TYPE_ISOC, AUDIO_MAX_PACKET);
     pdev->ep_in[AUDIO_IN_EP & 0x0FU].is_used = 1U;
     s_wr = s_rd = 0;
-    s_rate_acc = 0;
     s_streaming = 1;
     SendFrame(pdev);                 // prime: first transmit starts the DataIn cadence
 }
@@ -169,9 +179,43 @@ uint8_t tt_audio_setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
             break;
 
         case USB_REQ_TYPE_CLASS:
-            // No feature unit -> no controls. Acknowledge an empty data stage, stall anything with data.
-            if(req->wLength) { USBD_CtlError(pdev, req); return USBD_FAIL; }
-            break;
+        {
+            // UAC2 Clock Source controls. macOS queries the sample rate + validity from the clock
+            // entity (ID AUDIO_CLOCK_ID) before it will stream, and uses the reported rate to drive
+            // its (smooth) async sample-rate converter — the whole reason for the UAC2 port.
+            static uint8_t ctl[14];
+            const uint8_t entity = (uint8_t)(req->wIndex >> 8);     // high byte of wIndex = entity ID
+            const uint8_t cs     = (uint8_t)(req->wValue >> 8);     // high byte of wValue = control sel
+            if((req->bmRequest & 0x80U) && entity == AUDIO_CLOCK_ID)
+            {
+                const uint32_t f = AUDIO_FREQ;
+                if(cs == 0x01U && req->bRequest == 0x01U)            // SAM_FREQ, GET CUR -> u32 rate
+                {
+                    ctl[0] = (uint8_t)f; ctl[1] = (uint8_t)(f >> 8);
+                    ctl[2] = (uint8_t)(f >> 16); ctl[3] = (uint8_t)(f >> 24);
+                    USBD_CtlSendData(pdev, ctl, 4U);
+                    return USBD_OK;
+                }
+                if(cs == 0x01U && req->bRequest == 0x02U)            // SAM_FREQ, GET RANGE
+                {
+                    ctl[0] = 0x01U; ctl[1] = 0x00U;                   // wNumSubRanges = 1
+                    ctl[2] = (uint8_t)f; ctl[3] = (uint8_t)(f >> 8);  // MIN
+                    ctl[4] = (uint8_t)(f >> 16); ctl[5] = (uint8_t)(f >> 24);
+                    ctl[6] = ctl[2]; ctl[7] = ctl[3]; ctl[8] = ctl[4]; ctl[9] = ctl[5];  // MAX
+                    ctl[10] = 0; ctl[11] = 0; ctl[12] = 0; ctl[13] = 0;                   // RES = 0
+                    USBD_CtlSendData(pdev, ctl, 14U);
+                    return USBD_OK;
+                }
+                if(cs == 0x02U && req->bRequest == 0x01U)            // CLOCK_VALID, GET CUR -> 1 = valid
+                {
+                    ctl[0] = 1U;
+                    USBD_CtlSendData(pdev, ctl, 1U);
+                    return USBD_OK;
+                }
+            }
+            USBD_CtlError(pdev, req);
+            return USBD_FAIL;
+        }
 
         default:
             USBD_CtlError(pdev, req);
@@ -189,6 +233,7 @@ void tt_audio_isoincomplete(USBD_HandleTypeDef *pdev)
 {
     if(s_streaming)
     {
+        s_isoincomp++;
         USBD_LL_FlushEP(pdev, AUDIO_IN_EP);
         SendFrame(pdev);
     }
@@ -199,4 +244,6 @@ uint8_t  tt_audio_streaming(void)  { return s_streaming; }
 uint32_t tt_audio_frames(void)     { return s_frames; }
 uint32_t tt_audio_underruns(void)  { return s_underruns; }
 uint32_t tt_audio_overruns(void)   { return s_overruns; }
+uint32_t tt_audio_isoincomp(void)  { return s_isoincomp; }
+uint32_t tt_audio_recenter(void)   { return s_recenter; }
 uint32_t tt_audio_ring_fill(void)  { return (s_wr - s_rd) / AUDIO_CHANNELS; }

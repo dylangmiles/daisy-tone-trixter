@@ -56,8 +56,9 @@ uint32_t usb_audio_overruns(void)   { return tt_audio_overruns(); }
 
 void usb_audio_diag(char *out, int cap)
 {
-    snprintf(out, cap, "st%d strm%d fr%lu un%lu ov%lu fill%lu",
+    snprintf(out, cap, "st%d strm%d fr%lu un%lu ov%lu ii%lu rc%lu fill%lu",
              (int)hUsbDeviceFS.dev_state, (int)tt_audio_streaming(),
              (unsigned long)tt_audio_frames(), (unsigned long)tt_audio_underruns(),
-             (unsigned long)tt_audio_overruns(), (unsigned long)tt_audio_ring_fill());
+             (unsigned long)tt_audio_overruns(), (unsigned long)tt_audio_isoincomp(),
+             (unsigned long)tt_audio_recenter(), (unsigned long)tt_audio_ring_fill());
 }

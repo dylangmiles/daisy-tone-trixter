@@ -15,7 +15,7 @@
 #include "usbd_core.h"
 #include "usbd_cdc.h"       // extern USBD_ClassTypeDef USBD_CDC (ST's CDC class vtable)
 
-#define TT_COMPOSITE_CFG_SIZ  174U     // = 0xAE, computed below
+#define TT_COMPOSITE_CFG_SIZ  193U     // = 0xC1 (CDC 75 + UAC2 audio 118), computed below
 
 // ---- the composite configuration descriptor -------------------------------------------------------
 __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
@@ -41,32 +41,42 @@ __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
     0x07, USB_DESC_TYPE_ENDPOINT, 0x01, 0x02, 0x40, 0x00, 0x00,  // EP0x01 bulk OUT 64
     0x07, USB_DESC_TYPE_ENDPOINT, 0x81, 0x02, 0x40, 0x00, 0x00,  // EP0x81 bulk IN  64
 
-    // ================= Audio function (IAD + IF2 control + IF3 streaming) =================
-    // ---- IAD: Audio (8) ----
-    0x08, 0x0B, AUDIO_AC_INTERFACE, 0x02, 0x01, 0x01, 0x00, 0x00,  // first IF2, 2 IFs, AUDIO/ctrl
+    // ================= Audio function — USB Audio Class 2.0 (clock-source port) =================
+    // ⚠ UAC2 so macOS does SMOOTH async sample-rate conversion (UAC1 dropped a sample every ~2 s).
+    // The Clock Source entity (ID3) is the key addition; the host reads the rate from it (handled in
+    // usbd_audio_in.c tt_audio_setup). Interface protocol is 0x20 (IP_VERSION_02_00) throughout.
+    // ---- IAD: Audio (8) ----  AUDIO / (subclass 0) / IP 2.00
+    0x08, 0x0B, AUDIO_AC_INTERFACE, 0x02, 0x01, 0x00, 0x20, 0x00,
 
-    // ---- IF2: AudioControl (9) ----
-    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AC_INTERFACE, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,
-    // AC header (9): bcdADC 1.00, wTotalLength 30, 1 streaming IF = IF3
-    0x09, 0x24, 0x01, 0x00, 0x01, 0x1E, 0x00, 0x01, AUDIO_AS_INTERFACE,
-    // Input Terminal (12): ID1, Microphone (0x0201), 4 ch
-    0x0C, 0x24, 0x02, 0x01, 0x01, 0x02, 0x00, AUDIO_CHANNELS, 0x00, 0x00, 0x00, 0x00,
-    // Output Terminal (9): ID2, USB streaming (0x0101), from ID1
-    0x09, 0x24, 0x03, 0x02, 0x01, 0x01, 0x00, 0x01, 0x00,
+    // ---- IF2: AudioControl alt 0 (9) ----  AUDIOCONTROL, protocol 0x20
+    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AC_INTERFACE, 0x00, 0x00, 0x01, 0x01, 0x20, 0x00,
+    // AC header (9): bcdADC 2.00, bCategory I/O box, wTotalLength 46 (0x2E), bmControls 0
+    0x09, 0x24, 0x01, 0x00, 0x02, 0x08, 0x2E, 0x00, 0x00,
+    // Clock Source (8): ID3, internal FIXED clock (async, not SOF-synced), freq control read-only
+    0x08, 0x24, 0x0A, AUDIO_CLOCK_ID, 0x01, 0x01, 0x00, 0x00,
+    // Input Terminal (17): ID1 Microphone (0x0201), clock=ID3, 4 ch
+    0x11, 0x24, 0x02, AUDIO_IT_ID, 0x01, 0x02, 0x00, AUDIO_CLOCK_ID, AUDIO_CHANNELS,
+    0x00, 0x00, 0x00, 0x00,   // bmChannelConfig
+    0x00,                     // iChannelNames
+    0x00, 0x00,               // bmControls / iTerminal
+    0x00,
+    // Output Terminal (12): ID2 USB streaming (0x0101), from IT ID1, clock=ID3
+    0x0C, 0x24, 0x03, AUDIO_OT_ID, 0x01, 0x01, 0x00, AUDIO_IT_ID, AUDIO_CLOCK_ID, 0x00, 0x00, 0x00,
 
-    // ---- IF3: AudioStreaming alt 0 (idle) (9) ----
-    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_INTERFACE, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00,
+    // ---- IF3: AudioStreaming alt 0 (idle) (9) ----  protocol 0x20
+    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_INTERFACE, 0x00, 0x00, 0x01, 0x02, 0x20, 0x00,
     // ---- IF3: AudioStreaming alt 1 (9) ----
-    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_INTERFACE, 0x01, 0x01, 0x01, 0x02, 0x00, 0x00,
-    // AS general (7): terminal link = OT id 2, PCM
-    0x07, 0x24, 0x01, 0x02, 0x01, 0x01, 0x00,
-    // Format type I (11): 4 ch, AUDIO_SUBFRAME bytes, AUDIO_BITS, one rate 48000
-    0x0B, 0x24, 0x02, 0x01, AUDIO_CHANNELS, AUDIO_SUBFRAME, AUDIO_BITS, 0x01, 0x80, 0xBB, 0x00,
-    // Std iso IN endpoint (9): 0x83, iso + async
-    0x09, USB_DESC_TYPE_ENDPOINT, AUDIO_IN_EP, 0x05, LOBYTE(AUDIO_MAX_PACKET), HIBYTE(AUDIO_MAX_PACKET),
-    0x01, 0x00, 0x00,
-    // CS AS iso data endpoint (7)
-    0x07, 0x25, 0x01, 0x00, 0x00, 0x00, 0x00,
+    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_INTERFACE, 0x01, 0x01, 0x01, 0x02, 0x20, 0x00,
+    // AS general (16): terminal link = OT id2, PCM format, 4 ch
+    0x10, 0x24, 0x01, AUDIO_OT_ID, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, AUDIO_CHANNELS,
+    0x00, 0x00, 0x00, 0x00, 0x00,
+    // Format type I (6): subslot = AUDIO_SUBFRAME bytes, resolution = AUDIO_BITS
+    0x06, 0x24, 0x02, 0x01, AUDIO_SUBFRAME, AUDIO_BITS,
+    // Std iso IN endpoint (7): 0x83, iso + async
+    0x07, USB_DESC_TYPE_ENDPOINT, AUDIO_IN_EP, 0x05,
+    LOBYTE(AUDIO_MAX_PACKET), HIBYTE(AUDIO_MAX_PACKET), 0x01,
+    // CS AS iso data endpoint (8)
+    0x08, 0x25, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 __ALIGN_BEGIN static uint8_t s_devqual[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END = {
