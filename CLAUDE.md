@@ -271,6 +271,67 @@ The first time a Mac sees the device it asks **"Allow accessory to connect?"** �
    answering mid-enumeration). `usb_msc_start()` now calls it; `usb_msc_diag()/diag2()` remain for
    the next time (device state, VBUS seen, frame number, DCTL/GCCFG/GUSBCFG/PWR).
 
+### USB audio interface mode — the Trixie as a USB soundcard INPUT (Phase 1, 2026-11-09)
+
+⚠ **BUILT + compiles, NOT yet bench-tested.** One-way record (pedal → Mac), class-compliant UAC 1.0,
+no driver on macOS. First half of "audio + control interface over USB"; the control half (a Mac
+tone-shaping GUI driving the chain over CDC) is Phase 2.
+
+**Increment 2 (2026-11-10): now a COMPOSITE Audio+CDC device, ALWAYS-ON — no gesture.** Plug USB and
+it enumerates as a 4-in soundcard **and** the serial console at once (device class 0xEF/IAD, PID
+0x5752, product "Tone Trixie", mfr "Dylan Miles"). `usb_audio_start()` replaces `StartLog()` at boot
+unconditionally; the composite's CDC half **is** libDaisy's CDC (so the logger, `CDC_Transmit_FS` and
+`UsbRx` — the whole console + command set — work unchanged), and the audio rides EP 0x83 alongside.
+Enumerates as 4-in / 48 kHz / 16-bit (flip `AUDIO_BITS` to 24 in `tt_audio_stream.h`):
+
+| USB ch | Carries |
+|---|---|
+| 1 / 2 | **MAIN** — the full mix out to the jack (processed + looper + backing), mono duplicated |
+| 3 | **CH A DRY** — raw piezo, pre-DSP (`in[0]`) |
+| 4 | **CH A WET** — processed guitar only, no looper/backing (`g_usb_wet`, snapshot after `dsp_chain_process`) |
+
+Pieces: `audio/usb_audio.{h,cpp}` (composite start + FIFO re-carve + status/push), `audio/usbd_composite.c`
+(composite class + config descriptor), `audio/usbd_desc_composite.c` (device + strings, PID `0x5752`),
+`audio/usbd_audio_in.c` + `audio/tt_audio_stream.h` (SPSC ring in `.sdram_bss`, iso-IN drain, alt handling
+the composite calls). The callback taps dry/wet/master and `usb_audio_push()`es them to the ring the OTG
+IN interrupt drains. (Phase-1 `usbd_desc_audio.c`, PID 0x5751, is superseded and out of the build.)
+
+⚠ **The pedal is the clock master, so the iso IN endpoint is ASYNCHRONOUS** — ~48 samples/frame
+nudged ±1 to centre the ring. No feedback endpoint (that is an OUT-sink concern), no resampler.
+
+⚠⚠ **The FS FIFO is re-carved** (`usb_audio.cpp:RecarveFifo()`): libDaisy's default fills all 320
+words (Rx `0x80`+Tx0 `0x40`+Tx1 `0x80`), with no room for a 4th IN endpoint. After `USBD_Init` and
+before `USBD_Start` we re-call `HAL_PCDEx_Set*FiFo` (each recomputes its start address from the live
+registers): **Rx 0x50 / Tx0 0x20 / Tx1 CDC-data 0x20 / Tx2 CDC-cmd 0x10 / Tx3 audio 0x98 = 312 ≤ 320**.
+Tx3 (152 words = 608 B) is sized for the 24-bit worst case, so flipping `AUDIO_BITS` needs no FIFO change.
+
+⚠⚠ **THE COMPOSITE GOTCHA that cost a bench cycle (2026-11-10): `USBD_MAX_NUM_INTERFACES`.** ST's
+`USBD_StdItfReq` (usbd_ctlreq.c:181) gates **every** interface request with
+`LOBYTE(wIndex) <= USBD_MAX_NUM_INTERFACES`, and libDaisy ships that macro = **1**. So the host's
+`SET_INTERFACE(IF3, alt=1)` — the request that *starts* the audio stream — was **stalled by the core**
+before reaching the class. Symptom: device enumerates (CDC + 4-in both show up) but recording fails
+with "Internal PortAudio error". It's why Phase 1 worked (audio was IF1 ≤ 1) and composite didn't
+(audio is IF3). The macro is defined **unguarded**, so `-D` can't override it; its ONLY use in the
+whole core is that one comparison. Fix without forking libDaisy: `audio/usbd_override/usbd_conf.h` is a
+byte-identical shadow with the value bumped to **8**, placed first on the include path
+(`-Iaudio/usbd_override`), and the Makefile recompiles `usbd_ctlreq.c` in-app so it picks it up (the
+shared include guard makes the shadow win; our `usbd_ctlreq.o` shadows libDaisy's at link). ⚠ Re-sync
+the shadow if libDaisy's pin moves. (`USBD_CoreFindIF` returns 0 in the non-composite build, so the
+request then routes to our one class.)
+
+⚠ **No libDaisy fork.** The device is created on libDaisy's own `hUsbDeviceFS`; `usbd_composite.c` is a
+single class that dispatches each USB callback to ST's `USBD_CDC` vtable (classId 0 — `CDC.Init` opens
+0x81/0x01/0x82 because `USBD_CoreGetEPAdd` is `#ifdef USE_USBD_COMPOSITE`, off here) or to the
+`tt_audio_*` ops (`usbd_audio_in.c`). `EP0_RxReady` is forwarded to CDC (SET_LINE_CODING needs it).
+The audio streaming logic moved to `usbd_audio_in.c` + `tt_audio_stream.h`; the ring is now int32 at
+24-bit scale and `SendFrame` packs 2 or 3 bytes per `AUDIO_BITS`.
+
+⚠ **Power = 9 V jack, USB data-only** (USB power puts the front-end Vref out of spec). Reuses the
+drive-mode USB lore: voltage detector + ULPI-sleep-disable in `usb_audio_start()`, idle stays
+`Delay(1)` not `__WFI`. Bench guide + failure modes:
+`private/docs/debugging/daisy_usb_audio_2026-11-09/README.md`. **V2 (two inputs) = 6 ch** (adds CH B
+dry/wet).
+
 ### Song mode — a set list on the card
 
 `/tonetrix/songs.txt` (`sdcard_template/tonetrix/`): a song is a **name** and a **backing** track (a

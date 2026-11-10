@@ -27,6 +27,7 @@
 #include "audio/oled_shim.h"
 #include "audio/backing.h"
 #include "audio/usb_msc.h"
+#include "audio/usb_audio.h"
 #include "audio/looper.h"
 extern "C" {
 #include "ff.h"
@@ -629,6 +630,17 @@ static float            g_work[kWorkMax];
 // was my error, and it only showed once an IR actually loaded and the convolver first ran.
 static float            g_conv[kWorkMax];
 
+// ⚠ USB AUDIO INTERFACE MODE (audio/usb_audio.h). Set once at boot from a footswitch gesture; the
+// whole pedal runs as normal and the audio callback also streams the capture to the Mac. g_usb_wet
+// snapshots the WET signal (processed guitar, no looper/backing) at the one instant it exists in the
+// callback -- right after dsp_chain_process, before looper_process overwrites g_work.
+// ⚠ In SDRAM, NOT DTCM. DTCMRAM is ~96% full and the stack grows down from its top (_estack), so
+// every DTCM byte of .bss is a byte off the stack. Loading an IR (FFT re-init + FatFs + float
+// snprintf) is the deepest stack path there is; a 1 KB buffer here was enough to tip it into a
+// stack-overflow freeze on preset select (2026-11-09). Touched per-sample in the callback, which
+// SDRAM handles fine (so do the backing ring and IR buffer). Only written when the host is recording.
+static float            g_usb_wet[kWorkMax] __attribute__((section(".sdram_bss")));
+
 // ⚠ DRY-BLEND on the IR (2026-09-25). The body IR is 100% wet and kills the pick-on-string CLACK
 // along with the piezo quack. g_ir_dry (0..1, from the preset's ir.dry or the menu) mixes a
 // HIGH-PASSED slice of the dry piezo back onto the wet signal: the HP corner (~2.5 kHz) lets the
@@ -655,6 +667,10 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     g_cb_count++;
     if(size > kWorkMax)
         return;                             // refuse rather than overflow
+
+    // USB capture is live only while the host has the audio stream open (SET_INTERFACE alt 1), so the
+    // wet snapshot and the push below cost nothing on a pedal that is just being played.
+    const bool usb_rec = usb_audio_streaming();
 
     // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
     for(size_t i = 0; i < size; i++)
@@ -706,6 +722,12 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
 
     dsp_chain_process(g_work, (int)size);   // EQ -> Dynamics -> Output level (all off when bypassed)
 
+    // ⚠ WET tap for USB ch 4 (CH A wet): the processed guitar ALONE, captured here because the next
+    // two lines (looper, backing) fold their own audio into g_work. Cheap and only when recording.
+    if(usb_rec)
+        for(size_t i = 0; i < size; i++)
+            g_usb_wet[i] = g_work[i];
+
     // ⚠ Looper AFTER the chain, BEFORE the backing: a layer captures the sound the player heard,
     // and the loop is then a bed exactly like a backing track. Cheap when idle (one state read).
     looper_process(g_work, (int)size);
@@ -734,6 +756,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     }
     if(opk > g_out_peak)
         g_out_peak = opk;
+
+    // ⚠ USB capture: ch 1/2 = MAIN (g_work, the final mix out to the jack), ch 3 = DRY (in[0]),
+    // ch 4 = WET (snapshot above). No-op unless the host is recording. Lock-free; never blocks.
+    if(usb_rec)
+        usb_audio_push(g_work, in[0], g_usb_wet, (uint32_t)size);
 
     // ⚠ Charged against the block PERIOD, not against wall time: what matters is the fraction of
     // each 1.33 ms slot this callback consumes, because that is what runs out.
@@ -2191,7 +2218,14 @@ int main(void)
     //
     // The boot report is instead REPEATED periodically in the monitor loop, so a terminal attached
     // at any time still sees the results. Better than blocking: the board always runs.
-    hw.StartLog(false);
+    // ⚠ USB: start the COMPOSITE Audio+CDC device, in place of StartLog() (which would init plain CDC
+    // on the same handle and port). The composite's CDC half IS libDaisy's CDC, so the console, the
+    // logger (CDC_Transmit_FS) and UsbRx all work exactly as before -- the 4-ch audio input just rides
+    // alongside on EP 0x83. ALWAYS-ON: it enumerates as a soundcard whenever plugged, no gesture (the
+    // bypass-hold gesture is gone). Sits where StartLog did, already ahead of the display / I2C / SD
+    // (the USB-first ordering rule from drive mode). ⚠ Audio is only VALID on the 9 V jack; on
+    // USB-only power the front-end Vref is out of spec, but it still enumerates and the pedal still runs.
+    usb_audio_start();
     setvbuf(stdout, NULL, _IONBF, 0);   // printf → _write immediately, not at 1 kB (see _write above)
     hw.usb_handle.SetReceiveCallback(UsbRx, UsbHandle::FS_INTERNAL);
 
