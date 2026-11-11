@@ -50,6 +50,10 @@ uint32_t usb_audio_overruns(void);     // blocks dropped at push because the rin
 // Bring-up diagnostics, same spirit as usb_msc_diag: dev_state, streaming, frames, under/overruns, fill.
 void     usb_audio_diag(char* out, int cap);
 
+// Machine-parseable USB-health telemetry for the studio panel (cumulative counters + per-interval
+// packet-size histogram + fill range; the histogram/range reset on each call). Line prefix "usbstat ".
+void     usb_audio_stat(char* out, int cap);
+
 #ifdef __cplusplus
 }
 #endif

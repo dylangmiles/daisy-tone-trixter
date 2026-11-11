@@ -28,7 +28,19 @@ static volatile uint32_t  s_frames     = 0;
 static volatile uint32_t  s_underruns  = 0;
 static volatile uint32_t  s_overruns   = 0;
 static volatile uint32_t  s_isoincomp  = 0;   // iso IN tokens the host missed (dropped frames)
+static volatile uint32_t  s_sof        = 0;   // USB SOFs seen while streaming (host frame clock)
+static volatile uint32_t  s_hist[4]    = {0, 0, 0, 0};  // packet-size histogram since last read: [47,48,49,50]
+static volatile uint32_t  s_fmin       = 0xFFFFFFFFU;   // ring fill min since last read (frames)
+static volatile uint32_t  s_fmax       = 0;             // ring fill max since last read
 static volatile uint32_t  s_recenter   = 0;   // times the ring was force-drained back to target
+
+// Fill controller: a 64-sample block lands in the ring at once while the wire drains ~48/frame, so the
+// INSTANTANEOUS fill rides a ~±32-frame sawtooth at the block rate. Controlling the fine 47/49 nudge on
+// that sawtooth makes it hunt every frame (seen on the studio USB panel). So the fine decision runs on an
+// EMA of the fill (τ ≈ 2^FILL_AVG_K frames) that smooths the sawtooth out; the fast safety drain + the
+// re-center still use the RAW fill so a real backlog is caught immediately.
+#define FILL_AVG_K  5                 // EMA shift: τ ≈ 32 frames ≈ 32 ms (sawtooth period is ~1.3 frames)
+static int32_t  s_favg = 0;           // EMA accumulator; filtered fill = s_favg >> FILL_AVG_K (0 = unseeded)
 
 static uint8_t  s_tx[AUDIO_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
 
@@ -37,6 +49,8 @@ static void SendFrame(USBD_HandleTypeDef *pdev)
 {
     const uint32_t wr = s_wr;
     uint32_t fill = (wr - s_rd) / AUDIO_CHANNELS;   // whole frames available
+    if(fill < s_fmin) s_fmin = fill;                // telemetry: fill range before any re-center
+    if(fill > s_fmax) s_fmax = fill;
 
     // ⚠ KEEP THE RING NEAR TARGET so it can't fill and overflow under DSP load — the overflow-drop
     // (tt_audio_push dropping whole 64-sample blocks) was the crackle: `ov` climbed while `fill` rode
@@ -53,16 +67,26 @@ static void SendFrame(USBD_HandleTypeDef *pdev)
         s_rd = wr - (uint32_t)TARGET * AUDIO_CHANNELS;
         fill = (uint32_t)TARGET;
         s_recenter++;
+        s_favg = (int32_t)TARGET << FILL_AVG_K; // re-seed the filter after a hard jump
     }
-    // Proportional drain, firm enough to hold the ring against the ~1.6% producer/consumer imbalance
-    // (the smooth ±1 loop couldn't, and fell back on ~1 re-center/s — audible). Sends up to +2 so the
-    // ring stays near TARGET without overflow or re-centering (ov0/rc0 in testing).
-    const int32_t err = (int32_t)fill - TARGET;
+    // Update the fill EMA (seed on the first frame so it doesn't ramp from 0).
+    if(s_favg == 0) s_favg = (int32_t)fill << FILL_AVG_K;
+    else            s_favg += (int32_t)fill - (s_favg >> FILL_AVG_K);
+    const int32_t fill_avg = s_favg >> FILL_AVG_K;
+
+    // Two-rate controller. FAST (raw fill): a real backlog drains hard NOW — up to +2/frame — so a DSP-
+    // load / IR-load pump (seen on the studio USB panel as fill climbing past target with the chain
+    // engaged) is clawed back before it grows. FINE (filtered fill): the ±1 nudge that holds the ring
+    // against the slow codec-vs-USB clock drift runs on the SMOOTHED fill, so it no longer hunts 47/49
+    // on the per-block sawtooth — which was most of the packet-size variation macOS glitches on.
+    const int32_t err_raw = (int32_t)fill - TARGET;
+    const int32_t err     = fill_avg - TARGET;
     uint32_t samples = AUDIO_NOM_SAMPLES;
-    if(err > 192)       samples = AUDIO_NOM_SAMPLES + 2U;   // well over -> drain hard (50)
-    else if(err > 8)    samples = AUDIO_NOM_SAMPLES + 1U;   // over      -> drain (49)
-    else if(err < -8)   samples = AUDIO_NOM_SAMPLES - 1U;   // under     -> ease  (47)
+    if(err_raw > 192)   samples = AUDIO_NOM_SAMPLES + 2U;   // real backlog  -> drain hard (50), fast
+    else if(err > 8)    samples = AUDIO_NOM_SAMPLES + 1U;   // drifting over -> ease drain (49)
+    else if(err < -8)   samples = AUDIO_NOM_SAMPLES - 1U;   // drifting under-> ease fill  (47)
     if(samples > AUDIO_MAX_SAMPLES) samples = AUDIO_MAX_SAMPLES;
+    if(samples >= 47U && samples <= 50U) s_hist[samples - 47U]++;   // telemetry: packet-size histogram
 
     const uint32_t want = samples * AUDIO_CHANNELS;       // int32 words wanted
     const uint32_t have = (want <= (wr - s_rd)) ? want : (wr - s_rd);
@@ -116,7 +140,7 @@ void usb_audio_push(const float *master, const float *dry, const float *wet, uin
 // ---- ops called by the composite class ------------------------------------------------------------
 void tt_audio_init(void)
 {
-    s_alt = 0; s_streaming = 0; s_wr = s_rd = 0;
+    s_alt = 0; s_streaming = 0; s_wr = s_rd = 0; s_favg = 0;
 }
 
 void tt_audio_deinit(USBD_HandleTypeDef *pdev)
@@ -130,6 +154,7 @@ static void StartStream(USBD_HandleTypeDef *pdev)
     USBD_LL_OpenEP(pdev, AUDIO_IN_EP, USBD_EP_TYPE_ISOC, AUDIO_MAX_PACKET);
     pdev->ep_in[AUDIO_IN_EP & 0x0FU].is_used = 1U;
     s_wr = s_rd = 0;
+    s_favg = 0;                      // fresh fill filter each time recording (re)starts
     s_streaming = 1;
     SendFrame(pdev);                 // prime: first transmit starts the DataIn cadence
 }
@@ -246,4 +271,20 @@ uint32_t tt_audio_underruns(void)  { return s_underruns; }
 uint32_t tt_audio_overruns(void)   { return s_overruns; }
 uint32_t tt_audio_isoincomp(void)  { return s_isoincomp; }
 uint32_t tt_audio_recenter(void)   { return s_recenter; }
+uint32_t tt_audio_sof_count(void)  { return s_sof; }
+void     tt_audio_sof(void)        { if(s_streaming) s_sof++; }   // called from the composite SOF cb
+
+// Snapshot + reset the per-interval telemetry (packet histogram, fill range). For the USB-health panel.
+void tt_audio_hist_take(uint32_t out[4])
+{
+    out[0] = s_hist[0]; out[1] = s_hist[1]; out[2] = s_hist[2]; out[3] = s_hist[3];
+    s_hist[0] = s_hist[1] = s_hist[2] = s_hist[3] = 0;
+}
+void tt_audio_fill_range_take(uint32_t *mn, uint32_t *mx)
+{
+    *mn = (s_fmin == 0xFFFFFFFFU) ? 0U : s_fmin;
+    *mx = s_fmax;
+    s_fmin = 0xFFFFFFFFU;
+    s_fmax = 0;
+}
 uint32_t tt_audio_ring_fill(void)  { return (s_wr - s_rd) / AUDIO_CHANNELS; }

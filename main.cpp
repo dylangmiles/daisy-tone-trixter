@@ -1912,6 +1912,15 @@ static void HandleCommand(const char* line)
         hw.PrintLine("usbaud: %s", buf);
         return;
     }
+    if(strcmp(line, "usbstat") == 0)
+    {
+        // Machine-parseable USB-health line for the studio panel (polled ~1/s). Packet-size histogram
+        // + fill range are per-interval (reset on read); counters are cumulative.
+        char buf[160];
+        usb_audio_stat(buf, sizeof(buf));
+        hw.PrintLine("%s", buf);
+        return;
+    }
     if(strcmp(line, "dfu") == 0)
     {
         hw.PrintLine("rebooting to bootloader...");
@@ -2405,6 +2414,19 @@ int main(void)
     g_dsp_bypass = true;
 
     hw.StartAudio(AudioCb);
+
+    // ⚠ USB-audio servicing vs DSP load. libDaisy sets BOTH the SAI DMA stream IRQs and OTG_FS to NVIC
+    // preempt-priority 0, so they cannot preempt each other. The audio callback — and the IR convolution
+    // with it — runs inside the SAI RX DMA ISR (DMA1_Stream0, ~0.58 ms at peak); while it runs, the
+    // equal-priority OTG ISR cannot service an iso-IN token, so with the chain engaged the pedal misses
+    // ~1.8% of USB frames (studio USB panel: pedal tx ~980 < host poll ~998) and must send ~49 samples/
+    // frame to keep 48 kHz up — the sustained packet-size variation macOS crackles on. Drop the two SAI
+    // DMA streams one level BELOW OTG so OTG preempts the DSP and always transmits on time. The OTG ISR
+    // is ~10 µs, far inside the 1.33 ms audio budget, so audio is unaffected. (Block A = RX = Stream0
+    // carries the callback; Block B = TX = Stream1.) Remove these two lines to revert.
+    HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 1, 0);
+
     // Report what the hardware ACTUALLY runs at, rather than what we asked for. If these disagree
     // with 48000 / kBlock, that is the bug rather than anything in the chain.
     hw.PrintLine("  actual: %d Hz, block %u, IN 1 -> OUT 1+2",

@@ -137,6 +137,7 @@ static uint8_t EP0_TxSent(USBD_HandleTypeDef *pdev)
 
 static uint8_t SOF(USBD_HandleTypeDef *pdev)
 {
+    tt_audio_sof();   // count host frames while streaming (diagnostic: host frame rate vs transmits)
     return USBD_CDC.SOF ? USBD_CDC.SOF(pdev) : (uint8_t)USBD_OK;
 }
 

@@ -51,6 +51,10 @@ uint32_t tt_audio_underruns(void);
 uint32_t tt_audio_overruns(void);
 uint32_t tt_audio_isoincomp(void);
 uint32_t tt_audio_recenter(void);
+uint32_t tt_audio_sof_count(void);
+void     tt_audio_sof(void);
+void     tt_audio_hist_take(uint32_t out[4]);
+void     tt_audio_fill_range_take(uint32_t *mn, uint32_t *mx);
 uint32_t tt_audio_ring_fill(void);
 
 #ifdef __cplusplus
