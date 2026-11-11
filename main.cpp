@@ -2413,6 +2413,29 @@ int main(void)
     biquad_highpass(&g_dry_hp, 48000.f, 2500.f, 0.707f);   // dry-blend high-pass (see g_ir_dry)
     g_dsp_bypass = true;
 
+    // ── SOF-lock Phase 1: trim the audio clock to TRUE 48 kHz ─────────────────────────────────────
+    // libDaisy clocks SAI1 from PLL3P with N=295 → 49.1667 MHz, but the SAI's fixed "48 kHz" divider
+    // assumes 49.152 MHz, so the pedal actually samples at ~48014.4 Hz — **+299 ppm fast**. That fixed
+    // offset is a big part of the residual USB drift (the pedal padding with occasional 49-sample
+    // frames → the last pops). Re-point PLL3 to N=294 + FRACN=7471 → 49.1520 MHz (<0.1 ppm), which
+    // pulls the real sample rate down to 48000.0 Hz. Done ONCE here, before StartAudio, so the SAI
+    // comes up on the corrected clock. PLL3 also feeds I2C4 / ADC / SAI2-3 — all ppm-insensitive — and
+    // USB runs off HSI48, so this does NOT move the USB clock (verified in libDaisy system.cpp).
+    {
+        RCC_PeriphCLKInitTypeDef p = {0};
+        p.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
+        p.PLL3.PLL3M = 6;  p.PLL3.PLL3N = 294;  p.PLL3.PLL3P = 16;
+        p.PLL3.PLL3Q = 4;  p.PLL3.PLL3R = 32;   p.PLL3.PLL3FRACN = 7471;
+        p.PLL3.PLL3RGE    = RCC_PLL3VCIRANGE_1;
+        p.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
+        p.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL3;
+        if(HAL_RCCEx_PeriphCLKConfig(&p) == HAL_OK)
+            hw.PrintLine("  SOF-prep: SAI1 clock -> %lu Hz (target 49152000; was ~49166667)",
+                         (unsigned long)HAL_RCCEx_GetPeriphCLKFreq(RCC_PERIPHCLK_SAI1));
+        else
+            hw.PrintLine("  SOF-prep: PLL3 reconfig FAILED — audio clock unchanged (~+299 ppm)");
+    }
+
     hw.StartAudio(AudioCb);
 
     // ⚠ USB-audio servicing vs DSP load. libDaisy sets BOTH the SAI DMA stream IRQs and OTG_FS to NVIC
