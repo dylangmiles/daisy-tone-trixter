@@ -288,3 +288,140 @@ void tt_audio_fill_range_take(uint32_t *mn, uint32_t *mx)
     s_fmax = 0;
 }
 uint32_t tt_audio_ring_fill(void)  { return (s_wr - s_rd) / AUDIO_CHANNELS; }
+
+// ======================================================================================================
+// ---- REAMP OUT: host -> pedal iso-OUT stream (spike, 2026-11-12) --------------------------------------
+// Mirrors the IN path the other way: a lock-free SPSC ring, producer = the OTG OUT interrupt
+// (tt_reamp_dataout), consumer = the audio callback (tt_reamp_read). ADAPTIVE sync, NO feedback EP — the
+// ring absorbs host-vs-SAI clock drift (host ahead -> drop oldest; host behind -> app pads silence). Good
+// enough to PROVE the OUT endpoint enumerates + drains; a looped reamp clip never needs tighter than this.
+// Samples arrive 24-bit LE; stored as float [-1,1) for the app. ⚠ Spike loops them straight to the jack.
+// ======================================================================================================
+#define REAMP_RING   4096U
+#define REAMP_RMASK  (REAMP_RING - 1U)
+static float             s_ro[REAMP_RING] __attribute__((section(".sdram_bss")));
+static volatile uint32_t s_ro_wr, s_ro_rd;
+static uint8_t           s_ro_rx[REAMP_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
+static volatile uint8_t  s_ro_alt       = 0;
+static volatile uint8_t  s_ro_streaming = 0;
+static volatile uint32_t s_ro_packets   = 0;
+
+void tt_reamp_init(void)
+{
+    s_ro_alt = 0; s_ro_streaming = 0; s_ro_wr = s_ro_rd = 0; s_ro_packets = 0;
+}
+
+void tt_reamp_deinit(USBD_HandleTypeDef *pdev)
+{
+    if(s_ro_streaming) USBD_LL_CloseEP(pdev, REAMP_OUT_EP);
+    s_ro_alt = 0; s_ro_streaming = 0;
+}
+
+static void ReampStart(USBD_HandleTypeDef *pdev)
+{
+    USBD_LL_OpenEP(pdev, REAMP_OUT_EP, USBD_EP_TYPE_ISOC, REAMP_MAX_PACKET);
+    pdev->ep_out[REAMP_OUT_EP & 0x0FU].is_used = 1U;
+    s_ro_wr = s_ro_rd = 0;
+    s_ro_streaming = 1;
+    USBD_LL_PrepareReceive(pdev, REAMP_OUT_EP, s_ro_rx, REAMP_MAX_PACKET);  // arm the first receive
+}
+
+static void ReampStop(USBD_HandleTypeDef *pdev)
+{
+    s_ro_streaming = 0;
+    USBD_LL_FlushEP(pdev, REAMP_OUT_EP);
+    USBD_LL_CloseEP(pdev, REAMP_OUT_EP);
+    pdev->ep_out[REAMP_OUT_EP & 0x0FU].is_used = 0U;
+}
+
+uint8_t tt_reamp_setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+    // IF4 is an AudioStreaming interface: only standard interface requests (GET/SET_INTERFACE, status).
+    // The clock entity lives on the AudioControl interface, so no class requests reach here.
+    if((req->bmRequest & USB_REQ_TYPE_MASK) != USB_REQ_TYPE_STANDARD)
+    {
+        USBD_CtlError(pdev, req);
+        return USBD_FAIL;
+    }
+    switch(req->bRequest)
+    {
+        case USB_REQ_GET_INTERFACE:
+        {
+            uint8_t alt = s_ro_alt;
+            USBD_CtlSendData(pdev, &alt, 1U);
+            break;
+        }
+        case USB_REQ_SET_INTERFACE:
+        {
+            uint8_t alt = (uint8_t)(req->wValue & 0xFFU);
+            if(alt != s_ro_alt)
+            {
+                if(alt == 1U)           ReampStart(pdev);
+                else if(s_ro_streaming) ReampStop(pdev);
+                s_ro_alt = alt;
+            }
+            break;
+        }
+        case USB_REQ_GET_STATUS:
+        {
+            uint16_t st = 0U;
+            USBD_CtlSendData(pdev, (uint8_t *)&st, 2U);
+            break;
+        }
+        default:
+            USBD_CtlError(pdev, req);
+            return USBD_FAIL;
+    }
+    return USBD_OK;
+}
+
+void tt_reamp_dataout(USBD_HandleTypeDef *pdev, uint8_t epnum)
+{
+    if(!s_ro_streaming) return;
+    const uint32_t bytes = USBD_LL_GetRxDataSize(pdev, epnum);
+    const uint32_t n     = bytes / (REAMP_CHANNELS * AUDIO_SUBFRAME);   // mono samples this packet
+    uint32_t w = s_ro_wr;
+    const uint8_t *p = s_ro_rx;
+    for(uint32_t i = 0; i < n; i++)
+    {
+#if AUDIO_SUBFRAME == 3
+        int32_t v = (int32_t)(((uint32_t)p[0] << 8) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 24));
+        v >>= 8;                        // sign-extend 24-bit into 32-bit
+        p += 3;
+#else
+        int32_t v = (int32_t)(int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+        v <<= 8;                        // 16 -> 24-bit scale
+        p += 2;
+#endif
+        if((w - s_ro_rd) >= REAMP_RING) s_ro_rd++;   // ring full -> drop oldest (host ahead of SAI)
+        s_ro[w++ & REAMP_RMASK] = (float)v * (1.0f / 8388608.0f);
+    }
+    __DMB();
+    s_ro_wr = w;
+    s_ro_packets++;
+    USBD_LL_PrepareReceive(pdev, REAMP_OUT_EP, s_ro_rx, REAMP_MAX_PACKET);  // re-arm for the next packet
+}
+
+void tt_reamp_isoincomplete(USBD_HandleTypeDef *pdev)
+{
+    if(s_ro_streaming)
+    {
+        USBD_LL_FlushEP(pdev, REAMP_OUT_EP);
+        USBD_LL_PrepareReceive(pdev, REAMP_OUT_EP, s_ro_rx, REAMP_MAX_PACKET);
+    }
+}
+
+uint32_t tt_reamp_read(float *out, uint32_t n)
+{
+    uint32_t rd = s_ro_rd;
+    const uint32_t avail = s_ro_wr - rd;
+    const uint32_t have  = (n <= avail) ? n : avail;
+    for(uint32_t i = 0;    i < have; i++) out[i] = s_ro[rd++ & REAMP_RMASK];
+    for(uint32_t i = have; i < n;    i++) out[i] = 0.0f;   // pad on underrun
+    s_ro_rd = rd;
+    return have;
+}
+
+uint8_t  tt_reamp_streaming(void) { return s_ro_streaming; }
+uint32_t tt_reamp_packets(void)   { return s_ro_packets; }
+uint32_t tt_reamp_ring_fill(void) { return s_ro_wr - s_ro_rd; }

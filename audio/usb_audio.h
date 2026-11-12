@@ -54,6 +54,14 @@ void     usb_audio_diag(char* out, int cap);
 // packet-size histogram + fill range; the histogram/range reset on each call). Line prefix "usbstat ".
 void     usb_audio_stat(char* out, int cap);
 
+// ---- REAMP OUT spike (host -> pedal iso-OUT; 2026-11-12) -------------------------------------------
+// App side of the OUT stream (defined in usbd_audio_in.c). The audio callback loops received audio to
+// the jack to prove the OUT endpoint drains; later this feeds the chain input (bit-exact reamp).
+uint8_t  tt_reamp_streaming(void);               // host streaming INTO the pedal (IF4 iso-OUT alt-1)
+uint32_t tt_reamp_read(float* out, uint32_t n);  // drain n mono samples to out[] (pads silence); returns got
+uint32_t tt_reamp_packets(void);                 // OUT packets received (bench telemetry)
+uint32_t tt_reamp_ring_fill(void);               // OUT ring fill (samples)
+
 #ifdef __cplusplus
 }
 #endif

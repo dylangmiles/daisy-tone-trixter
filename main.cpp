@@ -641,6 +641,14 @@ static float            g_conv[kWorkMax];
 // SDRAM handles fine (so do the backing ring and IR buffer). Only written when the host is recording.
 static float            g_usb_wet[kWorkMax] __attribute__((section(".sdram_bss")));
 
+// ⚠ USB REAMP inject (2026-11-12). The host streams a mono signal INTO the pedal over the iso-OUT
+// endpoint; it is summed into the CHAIN INPUT (not the output) so the chain processes it exactly as it
+// would the live piezo: chain_in = in[0]*live_level + reamp*reamp_level. Normal play = live1/reamp0;
+// bit-exact A/B = live0/reamp1 (the recorded DRY replayed through the chain). Set with `reampmix`.
+static volatile float   g_live_level  = 1.f;   // live piezo gain into the chain input
+static volatile float   g_reamp_level = 0.f;   // USB reamp inject gain (0 = off, normal play)
+static float            g_reamp_buf[kWorkMax]; // per-block reamp samples pulled from the OUT ring (DTCM)
+
 // ⚠ DRY-BLEND on the IR (2026-09-25). The body IR is 100% wet and kills the pick-on-string CLACK
 // along with the piezo quack. g_ir_dry (0..1, from the preset's ir.dry or the menu) mixes a
 // HIGH-PASSED slice of the dry piezo back onto the wet signal: the HP corner (~2.5 kHz) lets the
@@ -672,6 +680,15 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     // wet snapshot and the push below cost nothing on a pedal that is just being played.
     const bool usb_rec = usb_audio_streaming();
 
+    // ⚠ USB REAMP: pull this block's reamp samples from the OUT ring and sum them into the chain input
+    // below (additive mix per the routing convention). Only touches the ring while the host is streaming
+    // AND a reamp level is set, so normal play pays nothing. Metering stays on the LIVE input (in[0]).
+    const bool  reamp_on = tt_reamp_streaming() && g_reamp_level > 0.f;
+    const float live_g   = g_live_level;
+    const float reamp_g  = g_reamp_level;
+    if(reamp_on)
+        tt_reamp_read(g_reamp_buf, (uint32_t)size);
+
     // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
     for(size_t i = 0; i < size; i++)
     {
@@ -683,7 +700,8 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
             g_clips++;
             g_clip_recent = true;
         }
-        g_work[i] = in[0][i];
+        // chain input = live piezo * live_level + USB reamp * reamp_level (unchanged = in[0] when off)
+        g_work[i] = reamp_on ? (in[0][i] * live_g + g_reamp_buf[i] * reamp_g) : in[0][i];
     }
     if(pk > g_peak)
         g_peak = pk;
@@ -1808,6 +1826,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  bk                list backing tracks");
         hw.PrintLine("  bk <n>|off        play / stop a backing track");
         hw.PrintLine("  bklevel <0..2>    backing level");
+        hw.PrintLine("  reamp             USB reamp OUT status (streaming, packets, mix)");
+        hw.PrintLine("  reampmix <l> <r>  chain-in mix: 1 0 play / 0 1 bit-exact A/B / 1 1 over");
         hw.PrintLine("  bk stat           ring %%, underruns, service vs budget");
         hw.PrintLine("  bk bench          card read speed (audio WILL glitch)");
         hw.PrintLine(" -- encoder diagnostics --");
@@ -1919,6 +1939,33 @@ static void HandleCommand(const char* line)
         char buf[160];
         usb_audio_stat(buf, sizeof(buf));
         hw.PrintLine("%s", buf);
+        return;
+    }
+    if(strcmp(line, "reamp") == 0)
+    {
+        // Reamp OUT status: is the host streaming audio INTO the pedal, packets, ring fill, mix levels.
+        hw.PrintLine("reamp streaming=%u packets=%lu fill=%lu samples  live=%.2f reamp=%.2f",
+                     (unsigned)tt_reamp_streaming(),
+                     (unsigned long)tt_reamp_packets(),
+                     (unsigned long)tt_reamp_ring_fill(),
+                     (double)g_live_level, (double)g_reamp_level);
+        return;
+    }
+    if(strncmp(line, "reampmix", 8) == 0)
+    {
+        // Set the chain-input mix: `reampmix <live> <reamp>`. live1/reamp0 = normal play; live0/reamp1 =
+        // bit-exact A/B (recorded DRY through the chain); live1/reamp1 = play over the loop. Bare = report.
+        char* p = (char*)line + 8;
+        char* q = p;
+        float lv = (float)strtod(p, &p);
+        if(p != q)   // an argument was given
+        {
+            float rv = (float)strtod(p, &p);
+            g_live_level  = lv < 0.f ? 0.f : lv;
+            g_reamp_level = rv < 0.f ? 0.f : rv;
+        }
+        hw.PrintLine("reampmix live=%.2f reamp=%.2f  (streaming=%u)",
+                     (double)g_live_level, (double)g_reamp_level, (unsigned)tt_reamp_streaming());
         return;
     }
     if(strcmp(line, "dfu") == 0)

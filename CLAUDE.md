@@ -282,7 +282,13 @@ it enumerates as a 4-in soundcard **and** the serial console at once (device cla
 0x5752, product "Tone Trixie", mfr "Dylan Miles"). `usb_audio_start()` replaces `StartLog()` at boot
 unconditionally; the composite's CDC half **is** libDaisy's CDC (so the logger, `CDC_Transmit_FS` and
 `UsbRx` — the whole console + command set — work unchanged), and the audio rides EP 0x83 alongside.
-Enumerates as 4-in / 48 kHz / 16-bit (flip `AUDIO_BITS` to 24 in `tt_audio_stream.h`):
+Enumerates as 4-in / 48 kHz / **24-bit** (`AUDIO_BITS = 24U` in `tt_audio_stream.h`; brought up at 16,
+flipped to 24 once it enumerated — `Tx3` is sized for the 24-bit worst case so no FIFO change). 24-bit is
+the deliberate standing choice: the floor to measure is the TAC5242's −120 dB, which 24-bit (−144) captures
+with margin where 16-bit (−96) could not. When CH B lands (6 ch), route **MAIN as mono** (it is a pointless
+ch1/ch2 dup today) to free the one channel 24-bit+reamp needs on the FS FIFO; aux OUT is the first feature to
+shed. 32-bit is impossible on FS (6 ch × 4 B × 48 = 1152 B/frame > the 1023 iso cap) and would measure nothing
+more:
 
 | USB ch | Carries |
 |---|---|
@@ -591,7 +597,20 @@ stage/param language — it only ever needed a line of text delivered to it. Boa
 in front of it in `HandleCommand()`.
 
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
-`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `dfu` — plus every `dsp_chain` command.
+`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `reamp` · `reampmix <live> <reamp>` · `dfu`
+— plus every `dsp_chain` command.
+
+⚠ **USB REAMP OUT — bit-exact digital reamp, WORKING on hardware (2026-11-12).** The host streams a mono
+signal INTO the pedal over a new UAC2 **iso-OUT endpoint (IF4, EP 0x03)** and it is summed into the
+**chain input**: `chain_in = in[0]*live + reamp*reamp_level` (set with **`reampmix`**: `1 0` normal play,
+`0 1` bit-exact A/B — the recorded DRY replayed through the chain exactly as the DSP saw it live, more
+faithful than a cable, `1 1` play-over). ADAPTIVE sync, NO feedback EP (ring absorbs drift) — proven to
+work on macOS, so no FIFO re-carve (mono 24-bit OUT ≤150 B fits the existing RxFIFO). ⚠ The Audio **IAD
+interface count must cover IF2+IF3+IF4 (=3)** — under-counting it (left at 2) made the host reject the whole
+config = "device not recognised"; the descriptor byte-count (277) + AC wTotalLength (75) must also be exact.
+Pieces: `usbd_composite.c` (IF4 + terminals + dispatch), `usbd_audio_in.c` (`tt_reamp_*` OUT ring),
+`main.cpp` (inject + `reamp`/`reampmix`). The studio drives it: clip player → pedal reamp-IN, monitor WET →
+headphones, auto-`reampmix` on play/stop (see [[project_usb_audio_routing_convention]]).
 
 ⚠ **`dump` prints the chain stages AND a `--- board ---` section** (2026-09-27): IR file + taps, `ir.dry`,
 `byp.level`, `bk.level`, `lp.level`, `pga` (stub), preset, bypass/tuner. `dsp_chain`'s own dump only

@@ -15,13 +15,13 @@
 #include "usbd_core.h"
 #include "usbd_cdc.h"       // extern USBD_ClassTypeDef USBD_CDC (ST's CDC class vtable)
 
-#define TT_COMPOSITE_CFG_SIZ  193U     // = 0xC1 (CDC 75 + UAC2 audio 118), computed below
+#define TT_COMPOSITE_CFG_SIZ  277U     // CDC 75 + UAC2 audio-IN 118 + reamp OUT (IT+OT 29 + IF4 55)
 
 // ---- the composite configuration descriptor -------------------------------------------------------
 __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
     // ---- Configuration (9) ----
     0x09, USB_DESC_TYPE_CONFIGURATION, LOBYTE(TT_COMPOSITE_CFG_SIZ), HIBYTE(TT_COMPOSITE_CFG_SIZ),
-    0x04,                   // bNumInterfaces (CDC comm+data, Audio ctl+stream)
+    0x05,                   // bNumInterfaces (CDC comm+data, Audio ctl + IN stream + reamp OUT stream)
     0x01, 0x00, 0xC0, 0x32, // cfg value / iConfig / self-powered / 100 mA
 
     // ================= CDC function (IAD + IF0 comm + IF1 data) =================
@@ -45,13 +45,13 @@ __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
     // ⚠ UAC2 so macOS does SMOOTH async sample-rate conversion (UAC1 dropped a sample every ~2 s).
     // The Clock Source entity (ID3) is the key addition; the host reads the rate from it (handled in
     // usbd_audio_in.c tt_audio_setup). Interface protocol is 0x20 (IP_VERSION_02_00) throughout.
-    // ---- IAD: Audio (8) ----  AUDIO / (subclass 0) / IP 2.00
-    0x08, 0x0B, AUDIO_AC_INTERFACE, 0x02, 0x01, 0x00, 0x20, 0x00,
+    // ---- IAD: Audio (8) ----  AUDIO / (subclass 0) / IP 2.00 — spans IF2 (AC) + IF3 (AS-IN) + IF4 (AS-OUT)
+    0x08, 0x0B, AUDIO_AC_INTERFACE, 0x03, 0x01, 0x00, 0x20, 0x00,
 
     // ---- IF2: AudioControl alt 0 (9) ----  AUDIOCONTROL, protocol 0x20
     0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AC_INTERFACE, 0x00, 0x00, 0x01, 0x01, 0x20, 0x00,
-    // AC header (9): bcdADC 2.00, bCategory I/O box, wTotalLength 46 (0x2E), bmControls 0
-    0x09, 0x24, 0x01, 0x00, 0x02, 0x08, 0x2E, 0x00, 0x00,
+    // AC header (9): bcdADC 2.00, bCategory I/O box, wTotalLength 75 (0x4B: +reamp IT+OT), bmControls 0
+    0x09, 0x24, 0x01, 0x00, 0x02, 0x08, 0x4B, 0x00, 0x00,
     // Clock Source (8): ID3, internal FIXED clock (async, not SOF-synced), freq control read-only
     0x08, 0x24, 0x0A, AUDIO_CLOCK_ID, 0x01, 0x01, 0x00, 0x00,
     // Input Terminal (17): ID1 Microphone (0x0201), clock=ID3, 4 ch
@@ -62,6 +62,15 @@ __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
     0x00,
     // Output Terminal (12): ID2 USB streaming (0x0101), from IT ID1, clock=ID3
     0x0C, 0x24, 0x03, AUDIO_OT_ID, 0x01, 0x01, 0x00, AUDIO_IT_ID, AUDIO_CLOCK_ID, 0x00, 0x00, 0x00,
+    // --- REAMP OUT path entities (host -> pedal) ---
+    // Input Terminal (17): ID4 USB streaming (0x0101) INTO the device, clock=ID3, mono
+    0x11, 0x24, 0x02, REAMP_IT_ID, 0x01, 0x01, 0x00, AUDIO_CLOCK_ID, REAMP_CHANNELS,
+    0x00, 0x00, 0x00, 0x00,   // bmChannelConfig
+    0x00,                     // iChannelNames
+    0x00, 0x00,               // bmControls / iTerminal
+    0x00,
+    // Output Terminal (12): ID5 Speaker (0x0301), from IT ID4, clock=ID3 — the reamp sink (jack/chain in)
+    0x0C, 0x24, 0x03, REAMP_OT_ID, 0x01, 0x03, 0x00, REAMP_IT_ID, AUDIO_CLOCK_ID, 0x00, 0x00, 0x00,
 
     // ---- IF3: AudioStreaming alt 0 (idle) (9) ----  protocol 0x20
     0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_INTERFACE, 0x00, 0x00, 0x01, 0x02, 0x20, 0x00,
@@ -77,6 +86,22 @@ __ALIGN_BEGIN static uint8_t s_cfg[TT_COMPOSITE_CFG_SIZ] __ALIGN_END = {
     LOBYTE(AUDIO_MAX_PACKET), HIBYTE(AUDIO_MAX_PACKET), 0x01,
     // CS AS iso data endpoint (8)
     0x08, 0x25, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+    // ================= REAMP OUT AudioStreaming (IF4, host -> pedal, ADAPTIVE) =================
+    // ---- IF4: AudioStreaming alt 0 (idle) (9) ----
+    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_OUT_INTERFACE, 0x00, 0x00, 0x01, 0x02, 0x20, 0x00,
+    // ---- IF4: AudioStreaming alt 1 (9) ----
+    0x09, USB_DESC_TYPE_INTERFACE, AUDIO_AS_OUT_INTERFACE, 0x01, 0x01, 0x01, 0x02, 0x20, 0x00,
+    // AS general (16): terminal link = IT id4, PCM, mono
+    0x10, 0x24, 0x01, REAMP_IT_ID, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, REAMP_CHANNELS,
+    0x00, 0x00, 0x00, 0x00, 0x00,
+    // Format type I (6): subslot = AUDIO_SUBFRAME bytes, resolution = AUDIO_BITS
+    0x06, 0x24, 0x02, 0x01, AUDIO_SUBFRAME, AUDIO_BITS,
+    // Std iso OUT endpoint (7): 0x03, iso + ADAPTIVE (0x09, no feedback), bInterval 1
+    0x07, USB_DESC_TYPE_ENDPOINT, REAMP_OUT_EP, 0x09,
+    LOBYTE(REAMP_MAX_PACKET), HIBYTE(REAMP_MAX_PACKET), 0x01,
+    // CS AS iso data endpoint (8)
+    0x08, 0x25, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 __ALIGN_BEGIN static uint8_t s_devqual[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END = {
@@ -88,12 +113,14 @@ __ALIGN_BEGIN static uint8_t s_devqual[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
 static uint8_t Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
     uint8_t r = USBD_CDC.Init(pdev, cfgidx);   // opens CDC EPs, allocates its classdata at classId 0
-    tt_audio_init();                           // audio EP opens later on SET_INTERFACE alt 1
+    tt_audio_init();                           // audio IN EP opens later on SET_INTERFACE alt 1
+    tt_reamp_init();                           // reamp OUT EP opens later on IF4 SET_INTERFACE alt 1
     return r;
 }
 
 static uint8_t DeInit(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
+    tt_reamp_deinit(pdev);
     tt_audio_deinit(pdev);
     return USBD_CDC.DeInit(pdev, cfgidx);
 }
@@ -105,10 +132,12 @@ static uint8_t Setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
 
     // Interface-recipient standard/class requests aimed at the audio interfaces go to the audio half.
     if((req->bmRequest & USB_REQ_RECIPIENT_MASK) == USB_REQ_RECIPIENT_INTERFACE
-       && (ifn == AUDIO_AS_INTERFACE || ifn == AUDIO_AC_INTERFACE)
        && (type == USB_REQ_TYPE_STANDARD || type == USB_REQ_TYPE_CLASS))
     {
-        return tt_audio_setup(pdev, req);
+        if(ifn == AUDIO_AS_OUT_INTERFACE)                          // IF4: reamp OUT stream
+            return tt_reamp_setup(pdev, req);
+        if(ifn == AUDIO_AS_INTERFACE || ifn == AUDIO_AC_INTERFACE) // IF3 IN stream / IF2 control
+            return tt_audio_setup(pdev, req);
     }
     return USBD_CDC.Setup(pdev, req);          // everything else is CDC's (incl. its class requests)
 }
@@ -121,6 +150,7 @@ static uint8_t DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
 
 static uint8_t DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
+    if(epnum == (REAMP_OUT_EP & 0x0FU)) { tt_reamp_dataout(pdev, epnum); return USBD_OK; }
     return USBD_CDC.DataOut(pdev, epnum);      // CDC data OUT (0x01)
 }
 
@@ -148,6 +178,13 @@ static uint8_t IsoINIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
     return USBD_OK;
 }
 
+static uint8_t IsoOUTIncomplete(USBD_HandleTypeDef *pdev, uint8_t epnum)
+{
+    (void)epnum;
+    tt_reamp_isoincomplete(pdev);   // missed reamp OUT token -> flush + re-arm receive
+    return USBD_OK;
+}
+
 static uint8_t *GetFSCfg(uint16_t *length)    { *length = sizeof(s_cfg);     return s_cfg; }
 static uint8_t *GetHSCfg(uint16_t *length)    { *length = sizeof(s_cfg);     return s_cfg; }
 static uint8_t *GetOtherCfg(uint16_t *length) { *length = sizeof(s_cfg);     return s_cfg; }
@@ -163,7 +200,7 @@ USBD_ClassTypeDef USBD_TT_Composite = {
     DataOut,
     SOF,
     IsoINIncomplete,
-    NULL,                 // IsoOUTIncomplete
+    IsoOUTIncomplete,
     GetHSCfg,
     GetFSCfg,
     GetOtherCfg,
