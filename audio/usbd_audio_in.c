@@ -292,13 +292,15 @@ uint32_t tt_audio_ring_fill(void)  { return (s_wr - s_rd) / AUDIO_CHANNELS; }
 // ======================================================================================================
 // ---- REAMP OUT: host -> pedal iso-OUT stream (spike, 2026-11-12) --------------------------------------
 // Mirrors the IN path the other way: a lock-free SPSC ring, producer = the OTG OUT interrupt
-// (tt_reamp_dataout), consumer = the audio callback (tt_reamp_read). ADAPTIVE sync, NO feedback EP — the
-// ring absorbs host-vs-SAI clock drift (host ahead -> drop oldest; host behind -> app pads silence). Good
-// enough to PROVE the OUT endpoint enumerates + drains; a looped reamp clip never needs tighter than this.
-// Samples arrive 24-bit LE; stored as float [-1,1) for the app. ⚠ Spike loops them straight to the jack.
+// (tt_reamp_dataout, writes s_ro_wr only), consumer = the audio callback (tt_reamp_read, writes s_ro_rd
+// only). ADAPTIVE sync, NO feedback EP — the consumer RE-CENTERS the ring on host-vs-SAI clock drift
+// (too full -> skip to ~21 ms target in one step; too empty -> pad silence), so it holds near target
+// instead of saturating and crackling. Samples arrive 24-bit LE, stored as float [-1,1); main.cpp sums
+// them into the chain input as the reamp source (reampmix).
 // ======================================================================================================
 #define REAMP_RING   4096U
 #define REAMP_RMASK  (REAMP_RING - 1U)
+#define REAMP_TARGET 1024U       // ~21 ms target fill; the consumer re-centers to this if it drifts too full
 static float             s_ro[REAMP_RING] __attribute__((section(".sdram_bss")));
 static volatile uint32_t s_ro_wr, s_ro_rd;
 static uint8_t           s_ro_rx[REAMP_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
@@ -393,8 +395,11 @@ void tt_reamp_dataout(USBD_HandleTypeDef *pdev, uint8_t epnum)
         v <<= 8;                        // 16 -> 24-bit scale
         p += 2;
 #endif
-        if((w - s_ro_rd) >= REAMP_RING) s_ro_rd++;   // ring full -> drop oldest (host ahead of SAI)
-        s_ro[w++ & REAMP_RMASK] = (float)v * (1.0f / 8388608.0f);
+        // Only write if there's room — the CONSUMER owns s_ro_rd (it re-centers), so the producer never
+        // writes it (SPSC). On a genuinely full ring, drop the incoming sample; the consumer's re-center
+        // keeps the fill well below full, so this is just a safety and rarely fires.
+        if((w - s_ro_rd) < REAMP_RING)
+            s_ro[w++ & REAMP_RMASK] = (float)v * (1.0f / 8388608.0f);
     }
     __DMB();
     s_ro_wr = w;
@@ -413,8 +418,14 @@ void tt_reamp_isoincomplete(USBD_HandleTypeDef *pdev)
 
 uint32_t tt_reamp_read(float *out, uint32_t n)
 {
+    const uint32_t wr = s_ro_wr;
     uint32_t rd = s_ro_rd;
-    const uint32_t avail = s_ro_wr - rd;
+    // Re-center: if the ring drifted too full (host clock faster than the SAI), skip ahead to the ~21 ms
+    // target in ONE step — one small glitch per drift-period instead of the continuous crackle the ring
+    // makes once it saturates (the "goes crackly after a while, a reset clears it" symptom). Done here in
+    // the consumer, which owns s_ro_rd, so the ring stays single-writer-per-index (SPSC-correct).
+    if((wr - rd) > REAMP_TARGET * 2U) rd = wr - REAMP_TARGET;
+    const uint32_t avail = wr - rd;
     const uint32_t have  = (n <= avail) ? n : avail;
     for(uint32_t i = 0;    i < have; i++) out[i] = s_ro[rd++ & REAMP_RMASK];
     for(uint32_t i = have; i < n;    i++) out[i] = 0.0f;   // pad on underrun

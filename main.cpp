@@ -648,6 +648,7 @@ static float            g_usb_wet[kWorkMax] __attribute__((section(".sdram_bss")
 static volatile float   g_live_level  = 1.f;   // live piezo gain into the chain input
 static volatile float   g_reamp_level = 0.f;   // USB reamp inject gain (0 = off, normal play)
 static float            g_reamp_buf[kWorkMax]; // per-block reamp samples pulled from the OUT ring (DTCM)
+static float            g_usb_dry[kWorkMax] __attribute__((section(".sdram_bss"))); // USB ch3 DRY = chain input
 
 // ⚠ DRY-BLEND on the IR (2026-09-25). The body IR is 100% wet and kills the pick-on-string CLACK
 // along with the piezo quack. g_ir_dry (0..1, from the preset's ir.dry or the menu) mixes a
@@ -703,6 +704,13 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         // chain input = live piezo * live_level + USB reamp * reamp_level (unchanged = in[0] when off)
         g_work[i] = reamp_on ? (in[0][i] * live_g + g_reamp_buf[i] * reamp_g) : in[0][i];
     }
+    // ⚠ USB ch3 DRY = the CHAIN INPUT (post reamp-mix), not the raw ADC. In normal play the chain input
+    // IS in[0] (unchanged), but during a USB reamp this makes DRY show the REAMP SOURCE the chain is
+    // processing — so the studio's DRY trace and the DRY↔WET transfer stay meaningful while reamping
+    // (they were flat/subdued before, because DRY tracked the muted live input).
+    if(usb_rec)
+        for(size_t i = 0; i < size; i++)
+            g_usb_dry[i] = g_work[i];
     if(pk > g_peak)
         g_peak = pk;
     // Fast attack, slow release (~0.7 s at 750 blocks/s) -- tracks a decaying string, not a transient.
@@ -778,7 +786,7 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     // ⚠ USB capture: ch 1/2 = MAIN (g_work, the final mix out to the jack), ch 3 = DRY (in[0]),
     // ch 4 = WET (snapshot above). No-op unless the host is recording. Lock-free; never blocks.
     if(usb_rec)
-        usb_audio_push(g_work, in[0], g_usb_wet, (uint32_t)size);
+        usb_audio_push(g_work, g_usb_dry, g_usb_wet, (uint32_t)size);
 
     // ⚠ Charged against the block PERIOD, not against wall time: what matters is the fraction of
     // each 1.33 ms slot this callback consumes, because that is what runs out.
