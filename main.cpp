@@ -1684,6 +1684,10 @@ static uint32_t g_fsend_crc    = 0xFFFFFFFFu;
 // in-flight chunk must never be reused. We read the next chunk into the OTHER buffer and only flip once
 // the previous transmit is accepted (which proves the prior buffer's DMA finished).
 static uint8_t  g_fsend_buf[2][kFsendChunk] __attribute__((section(".sdram_bss")));
+// Source can be a file (fsend) OR a RAM buffer (irtaps streams g_ir_buf's raw f32 taps for the host FFT).
+static bool           g_fsend_is_mem  = false;
+static const uint8_t* g_fsend_mem     = nullptr;
+static uint32_t       g_fsend_mem_pos = 0, g_fsend_mem_len = 0;
 
 static uint32_t Crc32Update(uint32_t crc, const uint8_t* d, uint32_t n)
 {
@@ -1704,8 +1708,28 @@ static void FsendStart(const char* path)
     g_fsend_w       = 0;
     g_fsend_len     = 0;
     g_fsend_done    = false;
+    g_fsend_is_mem  = false;
     g_fsend_active  = true;
     hw.PrintLine("fbegin %s %lu", path, (unsigned long)f_size(&g_fsend_fil));   // one line, fine to block
+}
+
+// Close the file only if that's the source; deactivate. (RAM sources have nothing to close.)
+static void FsendFinish(void) { if(!g_fsend_is_mem) f_close(&g_fsend_fil); g_fsend_active = false; }
+
+// Stream a RAM buffer (e.g. g_ir_buf's raw f32 taps for the host FFT) over the same non-blocking pump.
+static void FsendStartMem(const uint8_t* mem, uint32_t len, const char* label)
+{
+    if(g_fsend_active && !g_fsend_is_mem) f_close(&g_fsend_fil);
+    g_fsend_mem     = mem;
+    g_fsend_mem_len = len;
+    g_fsend_mem_pos = 0;
+    g_fsend_crc     = 0xFFFFFFFFu;
+    g_fsend_w       = 0;
+    g_fsend_len     = 0;
+    g_fsend_done    = false;
+    g_fsend_is_mem  = true;
+    g_fsend_active  = true;
+    hw.PrintLine("fbegin %s %lu", label, (unsigned long)len);
 }
 
 // Called every main-loop pass. Sends at most kFsendPerPass lines, and only while CDC TX is idle.
@@ -1720,13 +1744,20 @@ static void FsendPump(void)
             if(CDC_Transmit_FS(g_fsend_buf[g_fsend_w], (uint16_t)g_fsend_len) != 0)
                 return;                       // BUSY: prior transfer still in flight -- keep buf[w], retry
             g_fsend_len = 0;                  // accepted: buf[w] is now the in-flight buffer
-            if(g_fsend_done) { f_close(&g_fsend_fil); g_fsend_active = false; return; }
+            if(g_fsend_done) { FsendFinish(); return; }
             g_fsend_w ^= 1;                   // read next into the OTHER buffer (prior one has finished)
         }
         uint8_t* buf = g_fsend_buf[g_fsend_w];
         UINT     br  = 0;
-        FRESULT  fr  = f_read(&g_fsend_fil, buf, kFsendChunk, &br);
-        if(fr != FR_OK)   // read error -> text marker (host will usually time out mid-binary; rare)
+        bool     err = false;
+        if(g_fsend_is_mem)                    // RAM source (irtaps): copy the next chunk
+        {
+            uint32_t remain = g_fsend_mem_len - g_fsend_mem_pos;
+            br = remain < (uint32_t)kFsendChunk ? remain : (uint32_t)kFsendChunk;
+            if(br) { memcpy(buf, g_fsend_mem + g_fsend_mem_pos, br); g_fsend_mem_pos += br; }
+        }
+        else if(f_read(&g_fsend_fil, buf, kFsendChunk, &br) != FR_OK) err = true;
+        if(err)           // read error -> text marker (host usually times out mid-binary; rare)
         {
             g_fsend_len  = snprintf((char*)buf, kBufSz, "fend ERR\n");
             g_fsend_done = true;
@@ -1922,6 +1953,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  ircomb            300-pt log-magnitude of the loaded IR (studio comb overlay)");
         hw.PrintLine("  sdbench [path]    measure SD read KB/s (default: current IR; pass a backing track)");
         hw.PrintLine("  fsend <path>      stream a file to the host (async, non-blocking; studio reassembles)");
+        hw.PrintLine("  irtaps            stream the loaded IR's raw f32 taps (studio EXACT host-FFT overlay)");
         hw.PrintLine("  lplevel <0..2>    looper playback level");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
@@ -2236,6 +2268,12 @@ static void HandleCommand(const char* line)
     if(strncmp(line, "fsend ", 6) == 0)   // async file -> host (non-blocking, foreground-paced over CDC)
     {
         FsendStart(line + 6);
+        return;
+    }
+    if(strcmp(line, "irtaps") == 0)   // stream the loaded IR's raw f32 taps for the EXACT host-side FFT overlay
+    {
+        if(!g_ir_active || g_ir_len <= 0) { hw.PrintLine("fbegin irtaps 0"); hw.PrintLine("fend 00000000"); return; }
+        FsendStartMem((const uint8_t*)g_ir_buf, (uint32_t)g_ir_len * 4u, "irtaps");  // g_ir_len f32 samples
         return;
     }
     if(strncmp(line, "iron", 4) == 0)   // IR on/off A/B toggle: gates the convolution, keeps the loaded IR
