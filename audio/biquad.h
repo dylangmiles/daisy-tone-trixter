@@ -49,6 +49,22 @@ static inline void biquad_highpass(Biquad *bq, float fs, float f0, float q) {
     biquad_reset(bq);
 }
 
+// RBJ low-pass — roll off highs above f0 (slide fizz / scrape tamer). Mirrors the high-pass with
+// (1 - cos) numerator terms instead of (1 + cos).
+static inline void biquad_lowpass(Biquad *bq, float fs, float f0, float q) {
+    float w0    = 2.0f * TT_BIQUAD_PI * f0 / fs;
+    float cw    = cosf(w0);
+    float sw    = sinf(w0);
+    float alpha = sw / (2.0f * q);
+    float a0    = 1.0f + alpha;
+    bq->b0 =  (1.0f - cw) * 0.5f / a0;
+    bq->b1 =  (1.0f - cw)        / a0;
+    bq->b2 =  (1.0f - cw) * 0.5f / a0;
+    bq->a1 =  (-2.0f * cw)       / a0;
+    bq->a2 =  (1.0f - alpha)     / a0;
+    biquad_reset(bq);
+}
+
 // RBJ peaking EQ — boost/cut a band around f0. gain_db > 0 boosts, < 0 cuts.
 // q sets bandwidth (higher q = narrower).
 static inline void biquad_peaking(Biquad *bq, float fs, float f0, float q, float gain_db) {

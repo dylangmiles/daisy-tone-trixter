@@ -23,7 +23,9 @@ static float g_fs = 48000.0f;
 // ---------------------------------------------------------------------------
 // Stage 1: 3-band EQ — low shelf, mid peak (sweepable freq/Q), high shelf
 // ---------------------------------------------------------------------------
-enum { EQ_LO_F, EQ_LO_G, EQ_MID_F, EQ_MID_G, EQ_MID_Q, EQ_HI_F, EQ_HI_G, EQ_N };
+// HP/LP appended so existing indices (EQ_LO_F=0 …) don't shift. Butterworth Q (0.707). Off at the
+// extreme of their range (hp_freq ≤ 25 Hz, lp_freq ≥ 19 kHz) — so default presets are untouched.
+enum { EQ_LO_F, EQ_LO_G, EQ_MID_F, EQ_MID_G, EQ_MID_Q, EQ_HI_F, EQ_HI_G, EQ_HP_F, EQ_LP_F, EQ_N };
 
 static Param s_eq_params[EQ_N] = {   // voiced for warm open-G acoustic slide (K&K), dialed 2026-06-08
     { "lo_freq",   150.0f,   40.0f,   500.0f,   5.0f, "Hz" },   // +3 dB shelf: body/warmth
@@ -33,9 +35,11 @@ static Param s_eq_params[EQ_N] = {   // voiced for warm open-G acoustic slide (K
     { "mid_q",       1.0f,    0.3f,     4.0f,   0.1f, "Q"  },
     { "hi_freq",  1500.0f, 1500.0f, 12000.0f,  50.0f, "Hz" },   // -2 dB shelf: roll off slide scrape
     { "hi_gain",    -2.0f,  -15.0f,    15.0f,   0.5f, "dB" },
+    { "hp_freq",    20.0f,   20.0f,   400.0f,   5.0f, "Hz" },   // low-cut (rumble/boom); 20 = off
+    { "lp_freq", 20000.0f, 2000.0f, 20000.0f, 100.0f, "Hz" },   // high-cut (fizz/scrape); 20k = off
 };
 
-typedef struct { Biquad lo, mid, hi; } EqState;
+typedef struct { Biquad lo, mid, hi, hp, lp; bool hp_on, lp_on; } EqState;
 static EqState s_eq_state;
 
 static void eq_recompute(Stage *s, float fs) {
@@ -45,21 +49,31 @@ static void eq_recompute(Stage *s, float fs) {
     float lz1 = st->lo.z1,  lz2 = st->lo.z2;
     float mz1 = st->mid.z1, mz2 = st->mid.z2;
     float hz1 = st->hi.z1,  hz2 = st->hi.z2;
+    float pz1 = st->hp.z1,  pz2 = st->hp.z2;
+    float qz1 = st->lp.z1,  qz2 = st->lp.z2;
     biquad_lowshelf (&st->lo,  fs, p[EQ_LO_F].value,  0.707f,           p[EQ_LO_G].value);
     biquad_peaking  (&st->mid, fs, p[EQ_MID_F].value, p[EQ_MID_Q].value, p[EQ_MID_G].value);
     biquad_highshelf(&st->hi,  fs, p[EQ_HI_F].value,  0.707f,           p[EQ_HI_G].value);
+    st->hp_on = p[EQ_HP_F].value > 25.0f;           // below ~25 Hz the low-cut is effectively off
+    st->lp_on = p[EQ_LP_F].value < 19000.0f;        // above ~19 kHz the high-cut is effectively off
+    if (st->hp_on) biquad_highpass(&st->hp, fs, p[EQ_HP_F].value, 0.707f);
+    if (st->lp_on) biquad_lowpass (&st->lp, fs, p[EQ_LP_F].value, 0.707f);
     st->lo.z1 = lz1;  st->lo.z2 = lz2;
     st->mid.z1 = mz1; st->mid.z2 = mz2;
     st->hi.z1 = hz1;  st->hi.z2 = hz2;
+    st->hp.z1 = pz1;  st->hp.z2 = pz2;
+    st->lp.z1 = qz1;  st->lp.z2 = qz2;
 }
 
 static void eq_process(Stage *s, float *buf, int n) {
     EqState *st = (EqState *)s->state;
     for (int i = 0; i < n; i++) {
         float x = buf[i];
+        if (st->hp_on) x = biquad_process(&st->hp, x);   // low-cut first (kill rumble before the rest)
         x = biquad_process(&st->lo,  x);
         x = biquad_process(&st->mid, x);
         x = biquad_process(&st->hi,  x);
+        if (st->lp_on) x = biquad_process(&st->lp, x);    // high-cut last
         buf[i] = x;
     }
 }

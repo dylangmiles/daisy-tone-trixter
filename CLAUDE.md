@@ -597,8 +597,9 @@ stage/param language — it only ever needed a line of text delivered to it. Boa
 in front of it in `HandleCommand()`.
 
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
-`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `reamp` · `reampmix <live> <reamp>` · `dfu`
-— plus every `dsp_chain` command.
+`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `reamp` · `reampmix <live> <reamp>` · `usbstat` ·
+`heartbeat on|off` · `dfu` — plus every `dsp_chain` command. ⚠ The 5 s status **heartbeat defaults OFF**
+(2026-11-13) to keep a connected console quiet; `heartbeat on` restores it, `status` prints the state on demand.
 
 ⚠ **USB REAMP OUT — bit-exact digital reamp, WORKING on hardware (2026-11-12).** The host streams a mono
 signal INTO the pedal over a new UAC2 **iso-OUT endpoint (IF4, EP 0x03)** and it is summed into the

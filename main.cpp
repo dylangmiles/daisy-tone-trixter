@@ -179,6 +179,9 @@ static bool          g_gr_on    = true;    // GR band on the home screen
 // the state to measure in -- you cannot characterise a noise floor while the display is repainting
 // into the input.
 static bool g_meters_on = true;
+// ⚠ The 5 s status heartbeat defaults OFF now — it kept a connected console busy. `heartbeat on` brings
+// it back when debugging; `status` prints the same state on demand either way.
+static bool g_heartbeat = false;
 
 // ⚠ STATS SCREEN — LONG PRESS from home, short click to leave.
 //
@@ -687,7 +690,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     const bool  reamp_on = tt_reamp_streaming() && g_reamp_level > 0.f;
     const float live_g   = g_live_level;
     const float reamp_g  = g_reamp_level;
-    if(reamp_on)
+    // ⚠ Always DRAIN the reamp ring whenever the host is streaming — even when NOT injecting (reamp_level
+    // 0). The studio sends silence continuously, so a ring that's only drained while injecting idle-fills
+    // to full (seen: fill=4096). Draining every block keeps it bounded/primed; the samples are only mixed
+    // into the chain input when reamp_on.
+    if(tt_reamp_streaming())
         tt_reamp_read(g_reamp_buf, (uint32_t)size);
 
     // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
@@ -1836,6 +1843,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  bklevel <0..2>    backing level");
         hw.PrintLine("  reamp             USB reamp OUT status (streaming, packets, mix)");
         hw.PrintLine("  reampmix <l> <r>  chain-in mix: 1 0 play / 0 1 bit-exact A/B / 1 1 over");
+        hw.PrintLine("  usbstat           USB-health line (packet mix, fill, counters)");
+        hw.PrintLine("  heartbeat on|off  the 5 s status line (default off)");
         hw.PrintLine("  bk stat           ring %%, underruns, service vs budget");
         hw.PrintLine("  bk bench          card read speed (audio WILL glitch)");
         hw.PrintLine(" -- encoder diagnostics --");
@@ -1947,6 +1956,13 @@ static void HandleCommand(const char* line)
         char buf[160];
         usb_audio_stat(buf, sizeof(buf));
         hw.PrintLine("%s", buf);
+        return;
+    }
+    if(strncmp(line, "heartbeat", 9) == 0)
+    {
+        if(strcmp(line + 9, " on") == 0)       g_heartbeat = true;
+        else if(strcmp(line + 9, " off") == 0) g_heartbeat = false;
+        hw.PrintLine("heartbeat=%s  (5 s status line)", g_heartbeat ? "on" : "off");
         return;
     }
     if(strcmp(line, "reamp") == 0)
@@ -2716,7 +2732,7 @@ int main(void)
         // terminal, so the boot report may already have scrolled past -- or never been seen at all
         // if the board was powered from the 9 V jack. This makes the state observable whenever a
         // console is attached, instead of only in the first second after reset.
-        if(t - last_report >= 5000)
+        if(g_heartbeat && t - last_report >= 5000)
         {
             last_report = t;
 
