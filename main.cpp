@@ -1661,6 +1661,90 @@ static void IrScan(void)
     f_closedir(&dir);
 }
 
+// ---- Async file send over CDC (foreground-paced, NON-BLOCKING, RAW BINARY) ------------------------
+// ⚠ A big one-shot dump (irdump) spun the foreground in TransmitSync and stalled USB audio. This hands a
+// chunk to the USB only when the CDC TX is idle (CDC_Transmit_FS returns BUSY otherwise), a bounded number
+// per main-loop pass, so the foreground never blocks and the audio IRQ keeps its slots. Protocol:
+//     fbegin <path> <size>\n      (one text line)
+//     <size> RAW BINARY bytes     (the file -- host reads exactly <size> bytes, no hex/framing)
+//     fend <crc32>\n              (one text line) -- host checks CRC, saves.
+// The host switches to binary capture on fbegin and back to line mode after <size> bytes.
+extern "C" uint8_t CDC_Transmit_FS(uint8_t* buf, uint16_t len);
+
+static constexpr int kFsendChunk   = 128;   // raw data bytes per CDC chunk (tune vs SD/CDC rates)
+static constexpr int kFsendPerPass = 6;     // max chunks handed to the USB per main-loop pass (bounds block)
+
+static bool     g_fsend_active = false;
+static bool     g_fsend_done   = false;     // EOF/err reached; deactivate once the final chunk is sent
+static int      g_fsend_w      = 0;         // chunk buffer to fill / holding the unsent chunk
+static int      g_fsend_len    = 0;         // bytes in buf[w] awaiting CDC_Transmit_FS (0 = need to read)
+static FIL      g_fsend_fil;
+static uint32_t g_fsend_crc    = 0xFFFFFFFFu;
+// ⚠ DOUBLE-BUFFERED: CDC_Transmit_FS is async (DMA keeps reading the buffer after it returns OK), so the
+// in-flight chunk must never be reused. We read the next chunk into the OTHER buffer and only flip once
+// the previous transmit is accepted (which proves the prior buffer's DMA finished).
+static uint8_t  g_fsend_buf[2][kFsendChunk] __attribute__((section(".sdram_bss")));
+
+static uint32_t Crc32Update(uint32_t crc, const uint8_t* d, uint32_t n)
+{
+    for(uint32_t i = 0; i < n; i++)
+    {
+        crc ^= d[i];
+        for(int b = 0; b < 8; b++)
+            crc = (crc >> 1) ^ (0xEDB88320u & (uint32_t)(-(int32_t)(crc & 1u)));
+    }
+    return crc;
+}
+
+static void FsendStart(const char* path)
+{
+    if(g_fsend_active) { f_close(&g_fsend_fil); }
+    if(f_open(&g_fsend_fil, path, FA_READ) != FR_OK) { hw.PrintLine("fsend: open FAILED: %s", path); return; }
+    g_fsend_crc     = 0xFFFFFFFFu;
+    g_fsend_w       = 0;
+    g_fsend_len     = 0;
+    g_fsend_done    = false;
+    g_fsend_active  = true;
+    hw.PrintLine("fbegin %s %lu", path, (unsigned long)f_size(&g_fsend_fil));   // one line, fine to block
+}
+
+// Called every main-loop pass. Sends at most kFsendPerPass lines, and only while CDC TX is idle.
+static void FsendPump(void)
+{
+    if(!g_fsend_active) return;
+    const int kBufSz = (int)sizeof g_fsend_buf[0];
+    for(int pass = 0; pass < kFsendPerPass; pass++)
+    {
+        if(g_fsend_len > 0)   // a chunk is ready in buf[w]; hand it to the USB (only if the prior finished)
+        {
+            if(CDC_Transmit_FS(g_fsend_buf[g_fsend_w], (uint16_t)g_fsend_len) != 0)
+                return;                       // BUSY: prior transfer still in flight -- keep buf[w], retry
+            g_fsend_len = 0;                  // accepted: buf[w] is now the in-flight buffer
+            if(g_fsend_done) { f_close(&g_fsend_fil); g_fsend_active = false; return; }
+            g_fsend_w ^= 1;                   // read next into the OTHER buffer (prior one has finished)
+        }
+        uint8_t* buf = g_fsend_buf[g_fsend_w];
+        UINT     br  = 0;
+        FRESULT  fr  = f_read(&g_fsend_fil, buf, kFsendChunk, &br);
+        if(fr != FR_OK)   // read error -> text marker (host will usually time out mid-binary; rare)
+        {
+            g_fsend_len  = snprintf((char*)buf, kBufSz, "fend ERR\n");
+            g_fsend_done = true;
+        }
+        else if(br == 0)  // EOF -> the fend text line follows the last binary byte
+        {
+            g_fsend_len  = snprintf((char*)buf, kBufSz, "fend %08lx\n",
+                                    (unsigned long)(g_fsend_crc ^ 0xFFFFFFFFu));
+            g_fsend_done = true;
+        }
+        else              // a raw binary chunk
+        {
+            g_fsend_crc = Crc32Update(g_fsend_crc, buf, br);
+            g_fsend_len = (int)br;
+        }
+    }
+}
+
 // Switch preset and load whatever IR it names.
 //
 // ⚠ NOT audio-safe, and deliberately so: reading a WAV off the SD card blocks for a few hundred
@@ -1831,6 +1915,14 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  bypass on|off     chain bypass");
         hw.PrintLine("  byplevel <0..8>   bypass make-up, to level-match the A/B");
         hw.PrintLine("  irdry <0..1>      dry-piezo blend (HP 2.5 kHz) back onto the IR -- pick-attack");
+        hw.PrintLine("  irs               list IRs in /tonetrix/ir + the current one");
+        hw.PrintLine("  iron on|off       IR on/off A/B toggle (gates the body IR, keeps it loaded)");
+        hw.PrintLine("  ir <name>         load an IR live (not saved to the preset)");
+        hw.PrintLine("  irfreq            24-pt smoothed log-magnitude of the loaded IR (studio overlay)");
+        hw.PrintLine("  ircomb            300-pt log-magnitude of the loaded IR (studio comb overlay)");
+        hw.PrintLine("  sdbench [path]    measure SD read KB/s (default: current IR; pass a backing track)");
+        hw.PrintLine("  fsend <path>      stream a file to the host (async, non-blocking; studio reassembles)");
+        hw.PrintLine("  lplevel <0..2>    looper playback level");
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
@@ -2115,10 +2207,155 @@ static void HandleCommand(const char* line)
         hw.PrintLine("irdry=%.2f  (0 = pure IR; HP 2.5 kHz dry for the pick attack)", (double)g_ir_dry);
         return;
     }
+    if(strncmp(line, "sdbench", 7) == 0)   // measure SD read throughput (bit-bang SPI) -- sizes the file channel
+    {
+        const char* path = line + 7;
+        while(*path == ' ') path++;
+        if(!*path) path = g_ir_name;           // default: the current IR (pass a big backing track for realism)
+        FIL f;
+        if(f_open(&f, path, FA_READ) != FR_OK) { hw.PrintLine("sdbench: open FAILED: %s", path); return; }
+        static uint8_t buf[2048] __attribute__((section(".sdram_bss")));   // keep it out of precious DTCM
+        uint32_t total = 0, t0 = System::GetNow();
+        int passes = 0;
+        do {
+            f_lseek(&f, 0);
+            UINT br;
+            do {
+                if(f_read(&f, buf, sizeof buf, &br) != FR_OK) { br = 0; break; }
+                total += br;
+            } while(br == sizeof buf);
+            passes++;
+        } while(System::GetNow() - t0 < 300 && passes < 4000);   // loop ~300 ms so small files still time well
+        uint32_t dt = System::GetNow() - t0;
+        f_close(&f);
+        float kbps = dt > 0 ? (float)total / 1.024f / (float)dt : 0.f;   // bytes/ms * 1000/1024
+        hw.PrintLine("sdbench %s: %lu B / %lu ms = %.0f KB/s (%d passes, 2 KB reads)",
+                     path, (unsigned long)total, (unsigned long)dt, (double)kbps, passes);
+        return;
+    }
+    if(strncmp(line, "fsend ", 6) == 0)   // async file -> host (non-blocking, foreground-paced over CDC)
+    {
+        FsendStart(line + 6);
+        return;
+    }
+    if(strncmp(line, "iron", 4) == 0)   // IR on/off A/B toggle: gates the convolution, keeps the loaded IR
+    {
+        const char* a = line + 4;
+        while(*a == ' ') a++;
+        if(*a)   // arg -> set; bare `iron` just reports
+            dsp_chain_set_ir_enabled(!(a[0] == '0' || strncmp(a, "off", 3) == 0));
+        hw.PrintLine("iron=%d", dsp_chain_ir_on() ? 1 : 0);
+        return;
+    }
+    if(strcmp(line, "irs") == 0)   // list scanned IRs + the current one (machine line for the studio)
+    {
+        const char* cur = strrchr(g_ir_name, '/');
+        cur = cur ? cur + 1 : g_ir_name;
+        char buf[128];   // PrintLine caps at 128 B; en= goes before files= so the toggle state never truncates
+        int off = snprintf(buf, sizeof buf, "irs cur=%s en=%d files=", cur, dsp_chain_ir_on() ? 1 : 0);
+        for(int i = 0; i < g_ir_file_count && off < (int)sizeof(buf) - 36; i++)
+            off += snprintf(buf + off, sizeof(buf) - off, "%s%s", i ? "," : "", g_ir_files[i]);
+        hw.PrintLine("%s", buf);
+        return;
+    }
+    if(strncmp(line, "ir ", 3) == 0)   // load an IR live (basename in /tonetrix/ir); NOT saved to preset
+    {
+        const char* nm = line + 3;
+        g_ir_active = false;            // ⚠ stop the callback touching the convolver during re-init
+        bool ok = LoadIr(nm);
+        g_ir_active = ok;
+        hw.PrintLine("ir=%s %s", nm, ok ? "ok" : "FAILED");
+        return;
+    }
+    if(strcmp(line, "ircomb") == 0)   // 300-pt log-magnitude of the loaded IR -> studio comb overlay
+    {
+        // 300 log-spaced points (matches the studio's BUCKETS) sent 24/line across 13 lines; the studio
+        // smooths them with the SAME smooth_freq as the wet/dry traces. ⚠ Keep it to 13 lines: a bigger
+        // dump's long CDC TransmitSync burst (contending with the IRQ-driven audio IN on the shared USB
+        // core) dropped the wet/dry stream.
+        if(!g_ir_active || g_ir_len <= 0) { hw.PrintLine("ircomb n=0"); return; }
+        const int   N   = 300;
+        const int   PER = 24;
+        const float fs  = 48000.f;
+        for(int base = 0; base < N; base += PER)
+        {
+            char buf[128];
+            int  off = snprintf(buf, sizeof buf, "ircomb n=%d o=%d db=", N, base);
+            int  end = base + PER; if(end > N) end = N;
+            for(int i = base; i < end; i++)
+            {
+                float f = 20.f * powf(1000.f, (float)i / (float)(N - 1));
+                float w = 6.2831853f * f / fs;
+                float c = cosf(w), s = -sinf(w);
+                float cr = 1.f, ci = 0.f, ar = 0.f, ai = 0.f;
+                for(int n = 0; n < g_ir_len; n++)
+                {
+                    float h = g_ir_buf[n];
+                    ar += h * cr; ai += h * ci;
+                    float nr = cr * c - ci * s;
+                    ci = cr * s + ci * c;
+                    cr = nr;
+                }
+                float p  = ar * ar + ai * ai;
+                float db = 10.f * log10f(p < 1e-12f ? 1e-12f : p);
+                if(db < -60.f) db = -60.f; else if(db > 24.f) db = 24.f;
+                int   q  = (int)(db < 0.f ? db - 0.5f : db + 0.5f);
+                off += snprintf(buf + off, sizeof buf - off, "%s%d", (i > base) ? "," : "", q);
+            }
+            hw.PrintLine("%s", buf);
+        }
+        return;
+    }
+    if(strcmp(line, "irfreq") == 0)   // 24-pt log-magnitude of the loaded IR -> studio body-IR overlay
+    {
+        // Direct DFT at 24 log-spaced freqs (20 Hz..20 kHz) over the loaded taps, via a per-freq phasor
+        // (no per-tap trig). Foreground one-shot (~ms) -- the audio callback uses g_convolver, not g_ir_buf.
+        // Integer dB clamped [-60,24] keeps the whole reply inside the 128-byte logger line.
+        if(!g_ir_active || g_ir_len <= 0) { hw.PrintLine("irfreq n=0"); return; }
+        const int   N  = 24;          // display points, log-spaced 20 Hz..20 kHz
+        const int   M  = 8;           // sub-freqs per point: 1-octave POWER average smooths the raw comb
+        const float fs = 48000.f;
+        char buf[128];
+        int  off = snprintf(buf, sizeof buf, "irfreq n=%d db=", N);
+        for(int i = 0; i < N; i++)
+        {
+            float fc   = 20.f * powf(1000.f, (float)i / (float)(N - 1));
+            float psum = 0.f;
+            for(int m = 0; m < M; m++)
+            {
+                float frac = (float)m / (float)(M - 1) - 0.5f;   // -0.5..+0.5
+                float f    = fc * powf(2.f, frac * 0.5f);        // 1/2-octave band: smooths the comb, keeps character
+                float w    = 6.2831853f * f / fs;
+                float c = cosf(w), s = -sinf(w);                 // phasor step exp(-j w)
+                float cr = 1.f, ci = 0.f, ar = 0.f, ai = 0.f;
+                for(int n = 0; n < g_ir_len; n++)
+                {
+                    float h = g_ir_buf[n];
+                    ar += h * cr; ai += h * ci;
+                    float nr = cr * c - ci * s;
+                    ci = cr * s + ci * c;
+                    cr = nr;
+                }
+                psum += ar * ar + ai * ai;                       // sum power, not magnitude
+            }
+            float db = 10.f * log10f(psum < 1e-12f ? 1e-12f : psum / (float)M); // power -> 10log10
+            if(db < -60.f) db = -60.f; else if(db > 24.f) db = 24.f;
+            int   q  = (int)(db < 0.f ? db - 0.5f : db + 0.5f);
+            off += snprintf(buf + off, sizeof buf - off, "%s%d", i ? "," : "", q);
+        }
+        hw.PrintLine("%s", buf);
+        return;
+    }
     if(strncmp(line, "bklevel ", 8) == 0)
     {
         backing_set_level((float)atof(line + 8));
         hw.PrintLine("bklevel=%.2f", (double)backing_level());
+        return;
+    }
+    if(strncmp(line, "lplevel ", 8) == 0)
+    {
+        looper_set_level((float)atof(line + 8));
+        hw.PrintLine("lplevel=%.2f", (double)looper_level());
         return;
     }
 
@@ -2854,6 +3091,8 @@ int main(void)
             else if(d > g_t_service)
                 g_t_service = d;
         }
+
+        FsendPump();   // async file->host transfer: at most kFsendPerPass lines/pass, only while TX idle
 
         // Drain the tuner buffer here, where a few hundred microseconds costs nothing.
         if(g_tuner_on)

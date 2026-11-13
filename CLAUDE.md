@@ -597,8 +597,18 @@ stage/param language — it only ever needed a line of text delivered to it. Boa
 in front of it in `HandleCommand()`.
 
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
-`bk` · `bk <n>|off` · `bklevel <0..2>` · `irdry <0..1>` · `reamp` · `reampmix <live> <reamp>` · `usbstat` ·
-`heartbeat on|off` · `dfu` — plus every `dsp_chain` command. ⚠ The 5 s status **heartbeat defaults OFF**
+`bk` · `bk <n>|off` · `bklevel <0..2>` · `lplevel <0..2>` · `irdry <0..1>` · `irs` · `ir <name>` ·
+`irfreq` · `ircomb` · `iron on|off` · `reamp` · `reampmix <live> <reamp>` · `usbstat` · `heartbeat on|off`
+· `dfu` — plus every `dsp_chain` command.
+⚠ `irs` lists /tonetrix/ir + current; `ir <name>` loads one LIVE (not saved to the preset — same as the
+encoder menu pick) — the studio's IR picker dropdown uses these. `ircomb` prints the loaded IR's 300-pt
+log-magnitude across **13 lines** (24/line); the studio smooths it with the SAME `smooth_freq`/radius as
+the wet/dry traces (matched granularity). ⚠ Keep it to 13 lines — a bigger dump (`irdump`, ~80 raw-sample
+lines) dropped the wet/dry stream: the long foreground CDC `TransmitSync` burst contends with the
+IRQ-driven audio IN (`tt_audio_datain`) on the shared USB core. The audio IN is NOT foreground-pumped, so
+this is contention, not a foreground stall. `irfreq`
+(24-pt ½-octave DFT) is the older single-line overlay, now dormant. `iron on|off` gates the IR convolution
+for quick A/B (keeps the IR loaded; via `dsp_chain_set_ir_enabled`); `irs` reports it as `en=0|1`. ⚠ The 5 s status **heartbeat defaults OFF**
 (2026-11-13) to keep a connected console quiet; `heartbeat on` restores it, `status` prints the state on demand.
 
 ⚠ **USB REAMP OUT — bit-exact digital reamp, WORKING on hardware (2026-11-12).** The host streams a mono

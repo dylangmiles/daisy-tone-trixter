@@ -323,6 +323,7 @@ bool dsp_chain_ir_enabled(void) { return s_ir.enabled && !g_dsp_bypass; }
 // Host-driven IR stage enable (main.cpp sets this from the current IR selection:
 // off when "none" is selected, on when a real IR is loaded).
 void dsp_chain_set_ir_enabled(bool on) { s_ir.enabled = on; }
+bool dsp_chain_ir_on(void)             { return s_ir.enabled; }
 
 // Peak compressor gain reduction (dB, <= 0) since the last call; resets each call so
 // a periodic reader gets "peak GR over the interval". 0 dB = not compressing.

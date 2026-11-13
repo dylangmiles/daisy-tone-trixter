@@ -62,6 +62,9 @@ bool dsp_chain_ir_enabled(void);
 // selection logic — convolution is off when the "none" IR is selected.
 void dsp_chain_set_ir_enabled(bool on);
 
+// Raw IR-stage enable flag (ignores global bypass) — for reporting the toggle state.
+bool dsp_chain_ir_on(void);
+
 // Peak compressor gain reduction in dB (<= 0) since the last call; resets each call.
 // For a live "GR meter" while dialing the comp threshold. 0 dB = not compressing.
 float dsp_chain_comp_gr_db(void);
