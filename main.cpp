@@ -2276,6 +2276,15 @@ static void HandleCommand(const char* line)
         FsendStartMem((const uint8_t*)g_ir_buf, (uint32_t)g_ir_len * 4u, "irtaps");  // g_ir_len f32 samples
         return;
     }
+    if(strcmp(line, "cgr") == 0)   // comp meter for the studio: peak gain-reduction + peak input since last poll
+    {
+        // Host-path peak-hold (own copy, doesn't steal the OLED meter). Both <=0-ish dB. When the comp
+        // stage is bypassed/off the reduction reads 0 (the dsp just leaves gain=1).
+        float gr = dsp_chain_comp_gr_db_host();   // <= 0 dB, 0 = not compressing
+        float in = dsp_chain_comp_in_db_host();   // dBFS peak into the comp
+        hw.PrintLine("cgr gr=%.2f in=%.2f", (double)gr, (double)in);
+        return;
+    }
     if(strncmp(line, "iron", 4) == 0)   // IR on/off A/B toggle: gates the convolution, keeps the loaded IR
     {
         const char* a = line + 4;

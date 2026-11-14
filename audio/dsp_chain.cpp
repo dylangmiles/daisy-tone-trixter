@@ -104,6 +104,10 @@ typedef struct {
 static CompState s_cp_state;
 static float     s_comp_gr_peak = 1.0f;   // min comp gain since last meter read (1.0 = no reduction)
 static float     s_comp_in_peak = 0.0f;   // peak |input| to the comp since last meter read
+// Separate peak-hold pair for the HOST (studio CDC) reader, so a periodic `cgr` poll never races
+// the OLED home GR meter — each consumer resets only its own copy (both read-and-reset).
+static float     s_comp_gr_host = 1.0f;
+static float     s_comp_in_host = 0.0f;
 
 // Recompute the gain only every CP_CTRL samples. The envelope moves on ms time
 // constants, so a ~6 kHz gain update (48k/8) is inaudible but avoids a per-sample
@@ -131,6 +135,7 @@ static void comp_process(Stage *s, float *buf, int n) {
         float x = buf[i];
         float a = fabsf(x);
         if (a > s_comp_in_peak) s_comp_in_peak = a;   // meter: peak input level
+        if (a > s_comp_in_host) s_comp_in_host = a;   // host meter (own peak-hold)
         // Peak detector: fast attack toward rising peaks, slow release. Per-sample.
         if (a > env) env = st->att * env + (1.0f - st->att) * a;
         else         env = st->rel * env + (1.0f - st->rel) * a;
@@ -139,6 +144,7 @@ static void comp_process(Stage *s, float *buf, int n) {
         if ((i & (CP_CTRL - 1)) == 0) {
             gain = (env > thr && env > 1e-9f) ? powf(env / thr, slope) : 1.0f;
             if (gain < s_comp_gr_peak) s_comp_gr_peak = gain;   // meter: track peak reduction
+            if (gain < s_comp_gr_host) s_comp_gr_host = gain;   // host meter (own peak-hold)
         }
         buf[i] = x * gain * makeup;
     }
@@ -340,6 +346,22 @@ float dsp_chain_comp_gr_db(void) {
 float dsp_chain_comp_in_db(void) {
     float p = s_comp_in_peak;
     s_comp_in_peak = 0.0f;
+    if (p < 1e-6f) return -120.0f;
+    return 20.0f * log10f(p);
+}
+
+// Host (studio) copies of the two meters — independent read-and-reset peak-hold, so polling `cgr`
+// from the Mac doesn't steal the OLED meter's peaks (or vice-versa).
+float dsp_chain_comp_gr_db_host(void) {
+    float g = s_comp_gr_host;
+    s_comp_gr_host = 1.0f;
+    if (g >= 1.0f) return 0.0f;
+    if (g < 1e-6f) g = 1e-6f;
+    return 20.0f * log10f(g);
+}
+float dsp_chain_comp_in_db_host(void) {
+    float p = s_comp_in_host;
+    s_comp_in_host = 0.0f;
     if (p < 1e-6f) return -120.0f;
     return 20.0f * log10f(p);
 }

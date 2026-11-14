@@ -73,6 +73,11 @@ float dsp_chain_comp_gr_db(void);
 // comp.thresh relative to this to know where the stage actually engages.
 float dsp_chain_comp_in_db(void);
 
+// Host (studio-CDC) copies of the two comp meters — independent read-and-reset peak-hold so a
+// periodic `cgr` poll from the Mac never races the OLED home GR meter. Same units as above.
+float dsp_chain_comp_gr_db_host(void);
+float dsp_chain_comp_in_db_host(void);
+
 // --- Presets: named bundles of (IR ref + every stage's params/enables) ----------
 // A preset is plain data so it can come from the built-in table OR be parsed from
 // an SD card (see audio/tt_store) and installed at runtime. `ir` names the impulse
