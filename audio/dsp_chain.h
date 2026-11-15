@@ -50,6 +50,8 @@ void dsp_chain_init(float fs, float out_level_lin);
 // Bypass make-up gain, 0..8, 1.0 = true unity. See byp_level in the Preset struct.
 void  dsp_chain_set_byp_level(float g);
 float dsp_chain_byp_level(void);
+void  dsp_chain_set_comp_auto(bool on);   // comp auto-makeup (1/avg-GR) for unity gain staging
+bool  dsp_chain_comp_auto(void);
 
 // Process one mono block of n samples in place through all enabled stages.
 void dsp_chain_process(float *buf, int n);
@@ -130,6 +132,10 @@ typedef struct {
     // discipline as dry_mix/bk.level; the card stays cross-readable.
     bool  xfmr_on;
     float xf_drive, xf_tilt, xf_bias, xf_hf_f, xf_hf_g, xf_mix;
+    // ⚠ DAISY ADDITION (2026-11-15): unity gain staging opt-in. ir_norm normalises the IR to 0 dB in-band on
+    // load; comp_auto switches the comp to auto-makeup (1/avg-GR, net-unity, ignoring the fixed mkup). Both
+    // default 0 (off) so other presets are unchanged. Pico parser ignores "ir.norm"/"comp.auto".
+    int   ir_norm, comp_auto;
 } Preset;
 
 int         dsp_chain_preset_count(void);

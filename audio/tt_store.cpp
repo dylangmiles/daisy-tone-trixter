@@ -191,6 +191,8 @@ static void parse_presets(char *buf) {
                 else if (strcmp(k, "ir.dry") == 0)    cur.dry_mix   = strtof(v, NULL);
                 else if (strcmp(k, "byp.level") == 0) cur.byp_level = strtof(v, NULL); // ⚠ Daisy addition
                 else if (strcmp(k, "bk.level") == 0) cur.bk_level = strtof(v, NULL);   // ⚠ Daisy addition
+                else if (strcmp(k, "ir.norm") == 0)  cur.ir_norm   = (int)parse_bool(v); // ⚠ Daisy: unity staging
+                else if (strcmp(k, "comp.auto") == 0) cur.comp_auto = (int)parse_bool(v); // ⚠ Daisy: unity staging
                 else if (strcmp(k, "pga") == 0)       cur.pga = (int)strtol(v, NULL, 10);   // ES8388 PGA dB (K&K 12, Garrison 6)
                 else if (strcmp(k, "eq.lo") == 0)  { int c = parse_list(v, a, 2); if (c>=1) cur.lo_f=a[0]; if (c>=2) cur.lo_g=a[1]; }
                 else if (strcmp(k, "eq.mid") == 0) { int c = parse_list(v, a, 3); if (c>=1) cur.mid_f=a[0]; if (c>=2) cur.mid_g=a[1]; if (c>=3) cur.mid_q=a[2]; }

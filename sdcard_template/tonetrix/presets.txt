@@ -266,12 +266,21 @@ in.on: 1
 eq.on: 1
 comp.on: 1
 out.on: 1
-in.level: 0.75
+# ⚠ UNITY GAIN STAGING (2026-11-15) — the first preset on it. `ir.norm` normalises the IR to 0 dB in-band on
+# load (firmware measured walden-nt1a band-RMS 2.24 → ×0.446); `comp.auto` puts the comp on auto-makeup
+# (1/avg-GR, net-unity, the fixed comp makeup below is IGNORED). With both on, in/out/byp are REAL levels, no
+# longer IR/comp make-up. out.level = 1.88 MEASURED: at 1.80 the chain read WET-DRY = -0.36 dB over a 108 s
+# `levels` average, so the true in-band loss through this (normalised) IR + EQ + xfmr is ~5.5 dB; 1.88
+# (= 1.80·10^(0.36/20)) lands it on ~0.0 dB = unity. comp threshold -30 (was -28) — dialed for the squeeze on
+# the quieter normalised signal; the makeup field (5th) is 0 because `comp.auto` ignores it (1/avg-GR instead).
+ir.norm: 1
+comp.auto: 1
+in.level: 1.0
 eq.lo: [120, 0.0]
 eq.mid: [600, -3.5, 1.0]
 eq.hi: [3500, -1.0]
-comp: [-28, 3.0, 10, 400, 16]
-out.level: 0.45
+comp: [-30, 3.0, 10, 400, 0]
+out.level: 1.88
 pga: 0
 # ⚠ Neve-style transformer saturation (xfmr, Daisy-only). Sits post-EQ / pre-comp. Adds low-order
 # harmonics weighted to the lows/low-mids for "1073" body and warmth -- it thickens, it does NOT
@@ -281,8 +290,8 @@ pga: 0
 # xfmr: [drive_dB, tilt_dB, bias, hf_freq_Hz, hf_gain_dB, mix]  (mix 0 = OFF; keep drive <=6).
 xfmr.on: 1
 xfmr: [6, 4, 0.1, 10000, -1.5, 1.0]
-# Same levelling as the others -- see tanglewood-slide. 1.6 was ear-derived on the Tanglewood with the
-# same pickup. ⚠ Re-trim on the BYP level menu row at playing level: the new IR + transformer attenuate
-# differently, so the loudness match is not guaranteed to hold at 1.6.
-byp.level: 1.6
+# ⚠ byp.level = 1.0 (true unity) under unity gain staging: engaged is now level-matched to dry BY
+# CONSTRUCTION (ir.norm + comp.auto + the levels above), so bypass needs no make-up. The old 1.6 was the
+# ear-derived make-up for the un-normalised IR + fixed comp makeup — both gone now.
+byp.level: 1.0
 bk.level: 1.00

@@ -643,6 +643,8 @@ static float            g_conv[kWorkMax];
 // stack-overflow freeze on preset select (2026-11-09). Touched per-sample in the callback, which
 // SDRAM handles fine (so do the backing ring and IR buffer). Only written when the host is recording.
 static float            g_usb_wet[kWorkMax] __attribute__((section(".sdram_bss")));
+static double           g_lvl_dry = 0.0, g_lvl_wet = 0.0;   // sum-of-squares accumulators for `levels`
+static uint32_t         g_lvl_n   = 0;                       // samples accumulated since last `levels` read
 
 // ⚠ USB REAMP inject (2026-11-12). The host streams a mono signal INTO the pedal over the iso-OUT
 // endpoint; it is summed into the CHAIN INPUT (not the output) so the chain processes it exactly as it
@@ -768,6 +770,16 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     if(usb_rec)
         for(size_t i = 0; i < size; i++)
             g_usb_wet[i] = g_work[i];
+
+    // Level accumulation for the `levels` command: RMS of DRY (raw in[0]) vs WET (processed g_work, pre
+    // looper/backing) over the window since the last `levels` call — the honest loudness measure for gain
+    // staging (peak meters mislead once the comp tames peaks). Cheap; always on.
+    for(size_t i = 0; i < size; i++)
+    {
+        g_lvl_dry += (double)in[0][i] * in[0][i];
+        g_lvl_wet += (double)g_work[i] * g_work[i];
+    }
+    g_lvl_n += size;
 
     // ⚠ Looper AFTER the chain, BEFORE the backing: a layer captures the sound the player heard,
     // and the loop is then a bed exactly like a backing track. Cheap when idle (one state read).
@@ -1596,6 +1608,30 @@ static void OledTuner(void)
     oled_flush();
 }
 
+// ⚠ IR normalisation (experimental, toggle `irnorm`, default OFF). The captured IRs are deliberately hot
+// and hand-loudness-matched by ear, so the preset level trims (in/out/byp) carry the IR's make-up. Goal:
+// normalise each IR to 0 dB gain over the guitar band (80 Hz–6 kHz RMS of |H(f)|) on load, so IRs
+// auto-match and the trims stop carrying IR level. Band-RMS (not full-band L2) because the energy — and the
+// ear — live in-band; on the Walden it lands out.level ≈ 0.45·2.30 ≈ 1.0, i.e. ~unity. Default OFF until
+// bench recordings confirm the level through the (nonlinear) comp. Direct DFT, no FFT dep; LoadIr blocks.
+static bool  g_ir_norm         = false;
+static float g_ir_norm_applied = 1.0f;   // the scale LoadIr last applied (1.0 = off/none)
+static float IrBandRms(const float* h, int n, float fs)
+{
+    const int   BINS = 40;
+    const float f0 = 80.0f, f1 = 6000.0f;
+    double acc = 0.0;
+    for(int b = 0; b < BINS; b++)
+    {
+        const float  f = f0 * powf(f1 / f0, (float)b / (float)(BINS - 1));
+        const double w = 2.0 * 3.14159265358979 * (double)f / (double)fs;
+        double re = 0.0, im = 0.0;
+        for(int k = 0; k < n; k++) { re += h[k] * cos(w * k); im -= h[k] * sin(w * k); }
+        acc += re * re + im * im;
+    }
+    return (float)sqrt(acc / (double)BINS);
+}
+
 static bool LoadIr(const char* name)
 {
     // ⚠ RESOLVE THE NAME TO A PATH. presets.txt names an IR as a bare filename
@@ -1629,6 +1665,18 @@ static bool LoadIr(const char* name)
     }
     if(avail > (uint32_t)kIrMaxTaps)
         hw.PrintLine("  ⚠ IR truncated: %lu taps available, using %d", (unsigned long)avail, n);
+
+    // Normalise to 0 dB in-band, if enabled — scales the taps by a constant (changes level, NOT tone shape,
+    // so a preset's EQ fit is unaffected; only the level trims re-balance).
+    if(g_ir_norm)
+    {
+        const float g = IrBandRms(g_ir_buf, n, 48000.0f);
+        g_ir_norm_applied = (g > 1e-6f) ? (1.0f / g) : 1.0f;
+        for(int k = 0; k < n; k++) g_ir_buf[k] *= g_ir_norm_applied;
+        hw.PrintLine("  IR normalised: band-RMS %.3f -> x%.4f (0 dB in-band)", (double)g, (double)g_ir_norm_applied);
+    }
+    else
+        g_ir_norm_applied = 1.0f;
 
     if(!g_convolver.init(kIrHeadBlock, kIrTailBlock, g_ir_buf, (size_t)n))
     {
@@ -1828,6 +1876,14 @@ static void SelectPreset(int idx)
 
     if(pl && idx < np && pl[idx].bk_level > 0.f)
         backing_set_level(pl[idx].bk_level);
+
+    // ⚠ Unity gain staging opt-in (0/absent = off = old behaviour). Set BEFORE LoadIr so the IR normalises
+    // on this load; comp_auto flips the comp to auto-makeup. Only Walden opts in so far.
+    if(pl && idx < np)
+    {
+        g_ir_norm = (pl[idx].ir_norm != 0);
+        dsp_chain_set_comp_auto(pl[idx].comp_auto != 0);
+    }
 
     const char* ir = dsp_chain_preset_ir(idx);
     if(ir && *ir)
@@ -2303,6 +2359,42 @@ static void HandleCommand(const char* line)
         if(*a)   // arg -> set; bare `iron` just reports
             dsp_chain_set_ir_enabled(!(a[0] == '0' || strncmp(a, "off", 3) == 0));
         hw.PrintLine("iron=%d", dsp_chain_ir_on() ? 1 : 0);
+        return;
+    }
+    if(strncmp(line, "irnorm", 6) == 0)   // normalise loaded IR to 0 dB in-band (experimental; reloads the IR)
+    {
+        const char* a = line + 6;
+        while(*a == ' ') a++;
+        if(*a)   // arg -> set + reload the current IR so it takes effect; bare `irnorm` just reports
+        {
+            g_ir_norm = !(a[0] == '0' || strncmp(a, "off", 3) == 0);
+            if(g_ir_name[0] && strcmp(g_ir_name, "none") != 0)   // reload (NOT audio-safe: drop convolver first)
+            {
+                g_ir_active = false;
+                g_ir_active = LoadIr(g_ir_name);
+            }
+        }
+        hw.PrintLine("irnorm=%d  applied=x%.4f", g_ir_norm ? 1 : 0, (double)g_ir_norm_applied);
+        return;
+    }
+    if(strncmp(line, "compauto", 8) == 0)   // comp auto-makeup (1/avg-GR) — unity gain staging (experimental)
+    {
+        const char* a = line + 8;
+        while(*a == ' ') a++;
+        if(*a) dsp_chain_set_comp_auto(!(a[0] == '0' || strncmp(a, "off", 3) == 0));
+        hw.PrintLine("compauto=%d  (1 = auto-makeup, fixed comp.makeup ignored)", dsp_chain_comp_auto() ? 1 : 0);
+        return;
+    }
+    if(strcmp(line, "levels") == 0)   // RMS of DRY vs WET since the last call -> loudness match (not peaks)
+    {
+        uint32_t n = g_lvl_n;
+        if(n == 0) { hw.PrintLine("levels: no samples — play, then `levels` again"); return; }
+        double rd = sqrt(g_lvl_dry / (double)n), rw = sqrt(g_lvl_wet / (double)n);
+        g_lvl_dry = g_lvl_wet = 0.0; g_lvl_n = 0;   // reset the window
+        double ddb = 20.0 * log10(rd > 1e-9 ? rd : 1e-9);
+        double wdb = 20.0 * log10(rw > 1e-9 ? rw : 1e-9);
+        hw.PrintLine("levels n=%lu (%.2fs)  DRY=%.1f  WET=%.1f dBFS RMS  WET-DRY=%+.2f dB",
+                     (unsigned long)n, (double)n / 48000.0, ddb, wdb, wdb - ddb);
         return;
     }
     if(strcmp(line, "irs") == 0)   // list scanned IRs + the current one (machine line for the studio)

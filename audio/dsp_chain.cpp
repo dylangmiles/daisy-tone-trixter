@@ -100,8 +100,17 @@ typedef struct {
     float thr_lin;      // threshold, linear
     float slope;        // 1/ratio - 1  (<= 0)
     float makeup_lin;
+    float gr_avg;       // running-average applied gain (~0.7 s) for auto-makeup; 1.0 = no reduction
+    float auto_a;       // smoothing coeff for gr_avg (set from fs in recompute)
 } CompState;
 static CompState s_cp_state;
+// Auto-makeup (toggle `compauto`, default OFF). Instead of the fixed CP_MAKEUP, lift by 1/gr_avg — the
+// inverse of the running-average gain reduction — so the comp restores, on average, exactly the RMS it
+// took: net-unity level, dynamics still shaped. The foundation of unity gain staging (in/out/byp -> 1).
+static bool  s_comp_auto = false;
+#define CP_GR_FLOOR 0.1f   // clamp gr_avg so auto-makeup caps at +20 dB
+void dsp_chain_set_comp_auto(bool on) { s_comp_auto = on; }
+bool dsp_chain_comp_auto(void) { return s_comp_auto; }
 static float     s_comp_gr_peak = 1.0f;   // min comp gain since last meter read (1.0 = no reduction)
 static float     s_comp_in_peak = 0.0f;   // peak |input| to the comp since last meter read
 // Separate peak-hold pair for the HOST (studio CDC) reader, so a periodic `cgr` poll never races
@@ -122,15 +131,21 @@ static void comp_recompute(Stage *s, float fs) {
     st->thr_lin    = powf(10.0f, p[CP_THRESH].value / 20.0f);
     st->slope      = (1.0f / p[CP_RATIO].value) - 1.0f;
     st->makeup_lin = powf(10.0f, p[CP_MAKEUP].value / 20.0f);
+    st->auto_a     = 1.0f - expf(-(float)CP_CTRL / (fs * 0.7f));   // ~0.7 s running-average for auto-makeup
+    if (st->gr_avg < 1e-3f) st->gr_avg = 1.0f;                     // init / recover from zero-init
 }
 
 static void comp_process(Stage *s, float *buf, int n) {
     CompState *st = (CompState *)s->state;
-    float env  = st->env;
-    float gain = st->gain;
+    float env   = st->env;
+    float gain  = st->gain;
+    float grv   = st->gr_avg;
     const float thr    = st->thr_lin;
     const float slope  = st->slope;
     const float makeup = st->makeup_lin;
+    const bool  autom  = s_comp_auto;
+    const float aa     = st->auto_a;
+    float mk = autom ? (1.0f / (grv < CP_GR_FLOOR ? CP_GR_FLOOR : grv)) : makeup;
     for (int i = 0; i < n; i++) {
         float x = buf[i];
         float a = fabsf(x);
@@ -145,11 +160,15 @@ static void comp_process(Stage *s, float *buf, int n) {
             gain = (env > thr && env > 1e-9f) ? powf(env / thr, slope) : 1.0f;
             if (gain < s_comp_gr_peak) s_comp_gr_peak = gain;   // meter: track peak reduction
             if (gain < s_comp_gr_host) s_comp_gr_host = gain;   // host meter (own peak-hold)
+            // auto-makeup: track the ~0.7 s average gain and lift by its inverse (restore what was taken)
+            grv += (gain - grv) * aa;
+            if (autom) mk = 1.0f / (grv < CP_GR_FLOOR ? CP_GR_FLOOR : grv);
         }
-        buf[i] = x * gain * makeup;
+        buf[i] = x * gain * mk;
     }
-    st->env  = env;
-    st->gain = gain;
+    st->env    = env;
+    st->gain   = gain;
+    st->gr_avg = grv;
 }
 
 // ---------------------------------------------------------------------------
