@@ -101,12 +101,18 @@ in.on: 1
 eq.on: 1
 comp.on: 1
 out.on: 1
-in.level: 0.75
+# ⚠ UNITY GAIN STAGING (2026-11-15). ir.norm normalises the IR to 0 dB in-band (band-RMS 1.74 → ×0.573);
+# comp.auto = auto-makeup (net-unity, fixed comp makeup IGNORED). out.level 1.49 MEASURED: WET-DRY -3.46 dB
+# over 45 s at out=1 (DRY -27.7 dBFS) → 10^(3.46/20) = 1.49 = unity. comp threshold -28 → -30 (quieter
+# normalised signal); makeup (5th) zeroed. in/byp are now REAL unity, no make-up.
+ir.norm: 1
+comp.auto: 1
+in.level: 1.0
 eq.lo: [185, -5.0]
 eq.mid: [500, -8.0, 2.5]
 eq.hi: [3500, 5.0]
-comp: [-28, 4.0, 10, 300, 16]
-out.level: 0.45
+comp: [-30, 4.0, 10, 300, 0]
+out.level: 1.49
 ir.dry: 0.15
 pga: 0
 # ⚠ Neve-style transformer saturation (xfmr, Daisy-only). Sits post-EQ / pre-comp. Adds low-order
@@ -123,19 +129,11 @@ pga: 0
 #   mix    wet/dry. ⚠ 0 = OFF. Drop toward 0 to dial the effect back; raise the drive for more grit.
 xfmr.on: 1
 xfmr: [6, 4, 0.1, 10000, -1.5, 1.0]
-# ⚠ OUTPUT LEVELLED 2026-09-09. The voiced presets share in.level 0.75, comp make-up 16 dB and
-# out.level 0.45, so they are MUTUALLY MATCHED -- switching preset no longer changes loudness.
-# ⚠ byp.level 1.6 is EAR-DERIVED at playing level, 2026-09-10 -- it is NOT the static figure. (Pre-
-# transformer: static chain gain -2.5 + 16 - 6.9 = +6.6 dB, i.e. 2.12x; 2.1 sounded slightly loud in
-# bypass, 1.6 is +4.1 dB.) ⚠ The transformer now sits in the chain (gain-compensated, so roughly
-# neutral) -- re-trim byp.level on the BYP level menu row at playing level to confirm the match holds.
-# ⚠ The 2.5 dB gap IS the compressor: below the -28 dB threshold the chain runs at full static gain,
-# but at playing level gain reduction pulls it back, so the make-up to match bypass is less -- a rough
-# read of the average GR at this builder's playing level on this guitar.
-# ⚠ 0.45 is NOT arithmetic unity -- unity would be out.level 0.21 (-13.5 dB). It is the builder's ear
-# setting, and with a compressor in circuit "unity" is level-dependent anyway. Trim by ear at PLAYING
-# level; if you do move it, move byp.level with it or the A/B stops being honest.
-byp.level: 1.6
+# ⚠ byp.level = 1.0 (true unity) under unity gain staging: engaged = dry loudness BY CONSTRUCTION (ir.norm +
+# comp.auto + the levels above — measured WET-DRY -3.46 dB corrected to 0 by out.level 1.49), so bypass needs
+# no make-up. The old levelling (in 0.75 / comp makeup 16 / out 0.45 / byp 1.6, mutually matched across the
+# voiced presets) is SUPERSEDED — see the unity note at the top of this preset. Migrated 2026-11-15.
+byp.level: 1.0
 # ⚠ Bed at 1.00 now that the presets are levelled -- it no longer has to duck a hot guitar.
 bk.level: 1.00
 
