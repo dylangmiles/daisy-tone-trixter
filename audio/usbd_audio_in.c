@@ -300,18 +300,26 @@ uint32_t tt_audio_ring_fill(void)  { return (s_wr - s_rd) / AUDIO_CHANNELS; }
 // ======================================================================================================
 #define REAMP_RING   4096U
 #define REAMP_RMASK  (REAMP_RING - 1U)
-#define REAMP_TARGET 1024U       // ~21 ms target fill; the consumer re-centers to this if it drifts too full
+#define REAMP_TARGET 1024U       // ~21 ms target fill; the consumer eases back toward this as the clock drifts
+#define REAMP_DEAD   256U        // deadband (~5 ms) around target before a single-sample slip corrects drift
 static float             s_ro[REAMP_RING] __attribute__((section(".sdram_bss")));
 static volatile uint32_t s_ro_wr, s_ro_rd;
 static uint8_t           s_ro_rx[REAMP_MAX_PACKET] __attribute__((aligned(4), section(".sdram_bss")));
 static volatile uint8_t  s_ro_alt       = 0;
 static volatile uint8_t  s_ro_streaming = 0;
 static volatile uint32_t s_ro_packets   = 0;
+static volatile uint8_t  s_ro_recenter  = 0;   // consumer primes the ring to target on its next read when set
 
 void tt_reamp_init(void)
 {
-    s_ro_alt = 0; s_ro_streaming = 0; s_ro_wr = s_ro_rd = 0; s_ro_packets = 0;
+    s_ro_alt = 0; s_ro_streaming = 0; s_ro_wr = s_ro_rd = 0; s_ro_packets = 0; s_ro_recenter = 0;
 }
+
+// Ask the consumer to prime the ring to the ~21 ms target on its next read. Called when a reamp actually
+// STARTS (studio `reampmix 0 1`) so playback never begins from a ring that drifted to an edge over a long
+// idle — the "play a clip after leaving it on for ages → crackly + out of sync" symptom. Only sets a flag:
+// the consumer owns s_ro_rd, so this stays SPSC-correct when called from the foreground command handler.
+void tt_reamp_recenter(void) { s_ro_recenter = 1; }
 
 void tt_reamp_deinit(USBD_HandleTypeDef *pdev)
 {
@@ -324,6 +332,7 @@ static void ReampStart(USBD_HandleTypeDef *pdev)
     USBD_LL_OpenEP(pdev, REAMP_OUT_EP, USBD_EP_TYPE_ISOC, REAMP_MAX_PACKET);
     pdev->ep_out[REAMP_OUT_EP & 0x0FU].is_used = 1U;
     s_ro_wr = s_ro_rd = 0;
+    s_ro_recenter = 0;
     s_ro_streaming = 1;
     USBD_LL_PrepareReceive(pdev, REAMP_OUT_EP, s_ro_rx, REAMP_MAX_PACKET);  // arm the first receive
 }
@@ -420,11 +429,18 @@ uint32_t tt_reamp_read(float *out, uint32_t n)
 {
     const uint32_t wr = s_ro_wr;
     uint32_t rd = s_ro_rd;
-    // Re-center: if the ring drifted too full (host clock faster than the SAI), skip ahead to the ~21 ms
-    // target in ONE step — one small glitch per drift-period instead of the continuous crackle the ring
-    // makes once it saturates (the "goes crackly after a while, a reset clears it" symptom). Done here in
-    // the consumer, which owns s_ro_rd, so the ring stays single-writer-per-index (SPSC-correct).
-    if((wr - rd) > REAMP_TARGET * 2U) rd = wr - REAMP_TARGET;
+    // Prime on play-start: jump rd to a target-fill buffer of the most-recent samples, so a clip never
+    // begins from a ring that drifted near-empty (continuous underrun) or near-full during a long idle.
+    if(s_ro_recenter) { rd = (wr > REAMP_TARGET) ? (wr - REAMP_TARGET) : rd; s_ro_recenter = 0; }
+    // Gentle drift correction (host clock vs the SAI): when the ring sits past the deadband around target,
+    // skip exactly ONE sample this block — many sub-sample slips track the drift inaudibly, like the monitor
+    // ring's ±1 nudge. The OLD code jumped the full ~21 ms to target in one step, which clicked once per
+    // drift-period = the "goes crackly after a while, re-plug clears it" symptom (fill sat mid-cycle at ~1120
+    // between jumps). The empty side is covered by the pad below + the prime-on-start above (re-primed each
+    // play). A hard re-center only guards a catastrophic gap. Consumer owns s_ro_rd, so this stays SPSC.
+    const uint32_t fill = wr - rd;
+    if(fill > REAMP_RING - 2U * REAMP_TARGET) rd = wr - REAMP_TARGET; // catastrophic: one big step beats garbage
+    else if(fill > REAMP_TARGET + REAMP_DEAD) rd++;                   // a bit too full: drop one sample
     const uint32_t avail = wr - rd;
     const uint32_t have  = (n <= avail) ? n : avail;
     for(uint32_t i = 0;    i < have; i++) out[i] = s_ro[rd++ & REAMP_RMASK];

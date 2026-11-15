@@ -80,6 +80,7 @@ uint32_t tt_reamp_read(float* out, uint32_t n);                 // app: drain n 
 uint8_t  tt_reamp_streaming(void);
 uint32_t tt_reamp_packets(void);                                // telemetry: OUT packets received
 uint32_t tt_reamp_ring_fill(void);                              // OUT ring fill (samples)
+void     tt_reamp_recenter(void);                               // prime ring to target on play-start
 
 #ifdef __cplusplus
 }

@@ -740,7 +740,15 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_tun_w = w;
     }
 
-    // IR first, then the chain -- same order as the Pico build.
+    // Input trim — applied HERE, BEFORE the IR, so the signal order is input -> in -> IR -> EQ -> ... and
+    // the studio panel shows `in` first. The IR is LINEAR, so trim-before-IR is tonally identical to the old
+    // trim-after (in_process is a no-op now; the gain comes back via dsp_chain_in_gain, which returns 1.0
+    // under bypass/off so bypass stays true unity). g_usb_dry (ch3) is captured upstream = raw, unaffected.
+    const float in_g = dsp_chain_in_gain();
+    if(in_g != 1.0f)
+        for(size_t i = 0; i < size; i++) g_work[i] *= in_g;
+
+    // Then the IR, then the chain -- same order as the Pico build.
     if(g_ir_active && dsp_chain_ir_enabled())
     {
         g_convolver.process(g_work, g_conv, size);      // ⚠ NOT in-place -- see g_conv
@@ -2111,6 +2119,9 @@ static void HandleCommand(const char* line)
             float rv = (float)strtod(p, &p);
             g_live_level  = lv < 0.f ? 0.f : lv;
             g_reamp_level = rv < 0.f ? 0.f : rv;
+            // Starting a reamp (reamp inject > 0) → prime the OUT ring to target so playback never begins
+            // from a ring that drifted to an edge over a long idle (the "crackly + out of sync" symptom).
+            if(g_reamp_level > 0.f && tt_reamp_streaming()) tt_reamp_recenter();
         }
         hw.PrintLine("reampmix live=%.2f reamp=%.2f  (streaming=%u)",
                      (double)g_live_level, (double)g_reamp_level, (unsigned)tt_reamp_streaming());

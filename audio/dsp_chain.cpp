@@ -291,10 +291,12 @@ static void in_recompute(Stage *s, float fs) {
     (void)fs;
     ((InState *)s->state)->lin = s->params[IN_LEVEL].value;
 }
-static void in_process(Stage *s, float *buf, int n) {
-    float lin = ((InState *)s->state)->lin;
-    for (int i = 0; i < n; i++) buf[i] *= lin;
-}
+// ⚠ in_process is a NO-OP: the input trim is now applied in main.cpp BEFORE the IR convolution (so the
+// signal order is input -> in -> IR -> EQ ... and the studio panel can show `in` first). The stage stays
+// in s_chain purely for metadata — dump, the `in.level` command and the OLED menu all still see it; the
+// actual gain is read back via dsp_chain_in_gain(). The IR is LINEAR, so trim-before-IR is tonally
+// identical to the old trim-after — this is signal ORDER only, not tone.
+static void in_process(Stage *s, float *buf, int n) { (void)s; (void)buf; (void)n; }
 
 // ---------------------------------------------------------------------------
 // Chain wiring
@@ -325,6 +327,13 @@ Stage *dsp_chain_stage(int i)      { return (i >= 0 && i < N_STAGES) ? s_chain[i
 // Effective IR state for es8388_test's foreground loop: on only if the IR stage is
 // enabled AND global bypass is off.
 bool dsp_chain_ir_enabled(void) { return s_ir.enabled && !g_dsp_bypass; }
+
+// Effective input-trim gain to apply ahead of the IR in main.cpp (in_process itself is a no-op now): the
+// dialed level when the stage is on, else 1.0. Returns 1.0 under global bypass so bypass stays TRUE UNITY.
+float dsp_chain_in_gain(void) {
+    if (g_dsp_bypass || !s_in.enabled) return 1.0f;
+    return s_in_params[IN_LEVEL].value;
+}
 
 // Host-driven IR stage enable (main.cpp sets this from the current IR selection:
 // off when "none" is selected, on when a real IR is loaded).

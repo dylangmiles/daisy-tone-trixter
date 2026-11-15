@@ -61,6 +61,7 @@ uint8_t  tt_reamp_streaming(void);               // host streaming INTO the peda
 uint32_t tt_reamp_read(float* out, uint32_t n);  // drain n mono samples to out[] (pads silence); returns got
 uint32_t tt_reamp_packets(void);                 // OUT packets received (bench telemetry)
 uint32_t tt_reamp_ring_fill(void);               // OUT ring fill (samples)
+void     tt_reamp_recenter(void);                // prime ring to target on play-start
 
 #ifdef __cplusplus
 }

@@ -78,6 +78,10 @@ float dsp_chain_comp_in_db(void);
 float dsp_chain_comp_gr_db_host(void);
 float dsp_chain_comp_in_db_host(void);
 
+// Input-trim gain to apply BEFORE the IR (the `in` stage runs pre-IR now; in_process is a no-op). 1.0 when
+// the stage is off or under global bypass.
+float dsp_chain_in_gain(void);
+
 // --- Presets: named bundles of (IR ref + every stage's params/enables) ----------
 // A preset is plain data so it can come from the built-in table OR be parsed from
 // an SD card (see audio/tt_store) and installed at runtime. `ir` names the impulse
