@@ -12,8 +12,8 @@
 #define TT_USBD_VID              0x0483   // STMicroelectronics, as libDaisy uses
 #define TT_USBD_PID              0x5750   // distinct from the CDC device (0x5740)
 #define TT_USBD_LANGID           1033
-#define TT_MANUFACTURER_STRING   "Tone Trixter"
-#define TT_PRODUCT_STRING        "Tone Trixter SD Card"
+#define TT_MANUFACTURER_STRING   "Tone Trixie"
+#define TT_PRODUCT_STRING        "Tone Trixie SD Card"
 #define TT_CONFIG_STRING         "SD card"
 #define TT_INTERFACE_STRING      "Mass storage"
 #define TT_SERIAL_LEN            0x1A

@@ -1039,7 +1039,7 @@ static void OledBoot(const char* stage)
     if(!oled_ok)
         return;
     oled_clear();
-    oled_text(28, 0, "Tone Trixter");
+    oled_text(31, 0, "Tone Trixie");
     oled_text(46, 16, "Seed3");
     oled_text(0, 40, stage);
     if(g_boot_step < kBootSteps)
@@ -1338,7 +1338,7 @@ static void OledHome(void)
     // --- what is SET ---------------------------------------------------------------------------
     // ⚠ CPU on the title row, where it is glanceable without costing a line. It shares the row's
     // page, so it does not add a page to the flush.
-    snprintf(buf, sizeof(buf), "Tone Trixter %s%3d%%",
+    snprintf(buf, sizeof(buf), "Tone Trixie %s%3d%%",
              g_dsp_bypass ? "BYP" : " ON", (int)(g_cpu_avg + 0.5f));
     oled_text(0, 0, buf);
 
