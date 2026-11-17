@@ -607,8 +607,14 @@ in an **RTC backup register** (`RTC_BKP0R`) then `NVIC_SystemReset()`s; the next
 (before `StartLog`/any `f_mount`), clears it FIRST, and enters `UsbDriveMode()`. Clearing first means a
 crash in drive mode can't loop back into it. The backup register is used (not a no-init RAM var) because
 `BOOT_SRAM` re-copies the app into SRAM on every reset but leaves the backup domain alone. ⚠ On the H750
-the backup registers live in **RTC**, not TAMP. v1 return trip = power-cycle; auto-return on host eject
-is the planned v2.
+the backup registers live in **RTC**, not TAMP.
+
+⚠ **AUTO-RETURN (v2):** drive mode self-resets back to normal when the host **ejects** the card — no power
+cycle. The SCSI layer already records the eject (`START_STOP_UNIT` with LOEJ) as `SCSI_MEDIUM_EJECTED` in
+the BOT handle, so `usb_msc_host_ejected()` just READS
+`hUsbMsc.pClassDataCmsit[classId]->scsi_medium_state` (no fork of ST's `usbd_msc_scsi.c`); the drive-mode
+loop polls it ~4 Hz and `NVIC_SystemReset()`s. The studio's Sync ejects at the end, so it comes back on its
+own; power-cycle only if it doesn't.
 ⚠ `irs` lists /tonetrix/ir + current; `ir <name>` loads one LIVE (not saved to the preset — same as the
 encoder menu pick) — the studio's IR picker dropdown uses these. `irtaps` streams the loaded IR's raw f32
 taps (`g_ir_buf`) over the **non-blocking `fsend` transport** (`FsendStartMem`) — the studio runs them
