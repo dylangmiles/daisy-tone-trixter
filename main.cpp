@@ -1986,6 +1986,45 @@ void        app_pga_set_nib(int n)      { (void)n; }
 
 } // extern "C"
 
+// ---- USB drive mode from software (the `drive` command) -----------------------------------------
+// MSC is boot-only and must NEVER coexist with a mounted FatFs in one power cycle -- that corrupts the
+// card. So `drive` cannot call UsbDriveMode() live (FatFs is already mounted). It sets a reset-surviving
+// flag and resets; the next boot sees the flag, clears it, and enters drive mode cleanly -- a fresh power
+// cycle, FatFs never touched. The flag is a TAMP backup register: it survives a software reset, and the
+// BOOT_SRAM bootloader (which re-copies the app into SRAM on every reset) leaves the backup domain alone,
+// where a no-init RAM variable would be overwritten.
+static constexpr uint32_t kDriveMagic = 0x5750D11Eu; // arbitrary sentinel
+
+// Direct CMSIS register access (the build is LL + CMSIS, not HAL-RCC). On the H750 the reset-surviving
+// backup registers live in the RTC (RTC_BKP0R..31R) -- TAMP holds them only on the newer H7A3/B3.
+static void BackupRegAccess(void)
+{
+    PWR->CR1 |= PWR_CR1_DBP;                 // unlock the backup domain for writes
+    RCC->APB4ENR |= RCC_APB4ENR_RTCAPBEN;    // APB bus clock to the RTC backup registers
+    (void)RCC->APB4ENR;                      // read-back so the clock is live before the first access
+}
+
+// Read the drive flag AND clear it (so a crash inside drive mode can't loop straight back into it).
+static bool DriveFlagTakeIfSet(void)
+{
+    BackupRegAccess();
+    if(RTC->BKP0R == kDriveMagic)
+    {
+        RTC->BKP0R = 0;
+        return true;
+    }
+    return false;
+}
+
+// Set the flag, then reset -- the next boot comes up in USB drive mode. Never returns.
+static void RebootToDriveMode(void)
+{
+    BackupRegAccess();
+    RTC->BKP0R = kDriveMagic;
+    __DSB();
+    NVIC_SystemReset();
+}
+
 static void PrintFullReport();
 
 static void HandleCommand(const char* line)
@@ -2004,6 +2043,7 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  times             worst-case loop timings + cpu, then RESET");
         hw.PrintLine("  usbaud            USB-audio counters (frames/underruns/overruns/fill)");
         hw.PrintLine("  dfu               reboot to the bootloader");
+        hw.PrintLine("  drive             reboot into USB drive mode (card as a disk; power-cycle to exit)");
         hw.PrintLine(" -- presets / audio --");
         hw.PrintLine("  presets           list presets");
         hw.PrintLine("  preset <n|name>   select preset (loads its IR)");
@@ -2512,6 +2552,17 @@ static void HandleCommand(const char* line)
     // ⚠ `dump` prints the chain stages AND the board-level state the chain does not know about
     // (IR, ir.dry, byp/bk/lp levels, preset, pga). Keys match presets.txt so the numbers are
     // copy-ready. Without this the dump omitted the IR and everything outside dsp_chain.
+    if(strcmp(line, "drive") == 0)
+    {
+        // Reboot INTO USB drive mode so the host (the studio's Sync) can write the card. Audio stops and
+        // the pedal returns as a USB mass-storage disk; the only way back is a power cycle (v1).
+        hw.PrintLine(">> entering USB drive mode -- resetting; the pedal will mount as a disk.");
+        hw.PrintLine(">> power-cycle it once the host is done to return to normal.");
+        System::Delay(40);                // let the line flush over CDC before the reset
+        RebootToDriveMode();              // never returns
+        return;
+    }
+
     if(strcmp(line, "dump") == 0)
     {
         dsp_chain_command("dump");        // in/eq/comp/out, as before
@@ -2685,8 +2736,9 @@ int main(void)
 {
     hw.Init();
 
-    // ⚠ USB DRIVE MODE is decided FIRST -- before the CDC logger takes the USB port.
-    if(BootGestureUsbDrive())
+    // ⚠ USB DRIVE MODE is decided FIRST -- before the CDC logger takes the USB port. Either the encoder
+    // gesture at power-up, OR the `drive` command set the reset-surviving flag before resetting us here.
+    if(BootGestureUsbDrive() || DriveFlagTakeIfSet())
         UsbDriveMode();                     // never returns
     // ⚠ StartLog(FALSE) -- do NOT wait for a PC.
     //
