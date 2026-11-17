@@ -599,7 +599,16 @@ in front of it in `HandleCommand()`.
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
 `bk` · `bk <n>|off` · `bklevel <0..2>` · `lplevel <0..2>` · `irdry <0..1>` · `irs` · `ir <name>` ·
 `irfreq` · `ircomb` · `irtaps` · `iron on|off` · `fsend <path>` · `reamp` · `reampmix <live> <reamp>` ·
-`usbstat` · `heartbeat on|off` · `dfu` — plus every `dsp_chain` command.
+`usbstat` · `heartbeat on|off` · `drive` · `dfu` — plus every `dsp_chain` command.
+
+⚠ **`drive`** reboots the pedal INTO USB drive mode from software (for the studio's one-click Sync),
+so the card can be written without the encoder-hold-at-boot gesture. It sets a reset-surviving flag
+in an **RTC backup register** (`RTC_BKP0R`) then `NVIC_SystemReset()`s; the next boot checks the flag
+(before `StartLog`/any `f_mount`), clears it FIRST, and enters `UsbDriveMode()`. Clearing first means a
+crash in drive mode can't loop back into it. The backup register is used (not a no-init RAM var) because
+`BOOT_SRAM` re-copies the app into SRAM on every reset but leaves the backup domain alone. ⚠ On the H750
+the backup registers live in **RTC**, not TAMP. v1 return trip = power-cycle; auto-return on host eject
+is the planned v2.
 ⚠ `irs` lists /tonetrix/ir + current; `ir <name>` loads one LIVE (not saved to the preset — same as the
 encoder menu pick) — the studio's IR picker dropdown uses these. `irtaps` streams the loaded IR's raw f32
 taps (`g_ir_buf`) over the **non-blocking `fsend` transport** (`FsendStartMem`) — the studio runs them
