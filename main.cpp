@@ -2719,6 +2719,14 @@ static void UsbDriveMode(void)
         if((uint32_t)(now - last) < 250)
             continue;
         last = now;
+        // AUTO-RETURN (v2): the host ejected the disk -> reset straight back to normal, no power cycle.
+        // The eject means the host has flushed and released the card, so a reset here is clean.
+        if(usb_msc_host_ejected())
+        {
+            screen(cap, "host ejected", "resuming...", nullptr);
+            System::Delay(300);
+            NVIC_SystemReset();
+        }
         const bool     c = usb_msc_configured();
         const uint32_t r = usb_msc_reads(), w = usb_msc_writes(), e = usb_msc_errors();
         hw.SetLed(((now / 250) & 1) || r != lr || w != lw);   // slow blink, solid on activity

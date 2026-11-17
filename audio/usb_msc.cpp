@@ -8,6 +8,8 @@
 #include "usb_msc.h"
 #include "usbd_core.h"
 #include "usbd_msc.h"
+#include "usbd_msc_bot.h"   // USBD_MSC_BOT_HandleTypeDef (scsi_medium_state)
+#include "usbd_msc_scsi.h"  // SCSI_MEDIUM_EJECTED
 #include "stm32h7xx_hal.h"
 #include <stdio.h>
 
@@ -45,6 +47,17 @@ bool usb_msc_start(void)
 }
 
 bool     usb_msc_configured(void) { return hUsbMsc.dev_state == USBD_STATE_CONFIGURED; }
+
+// True once the host has EJECTED the disk (diskutil eject / "Eject" in Finder). SCSI_StartStopUnit()
+// records it as SCSI_MEDIUM_EJECTED in the BOT handle; we just read it so drive mode can self-reset back
+// to normal -- the auto-return, no power cycle. The reset is a fresh boot, so the "FatFs vs disk in one
+// power cycle" rule is still honoured.
+bool     usb_msc_host_ejected(void)
+{
+    USBD_MSC_BOT_HandleTypeDef *hmsc
+        = (USBD_MSC_BOT_HandleTypeDef *)hUsbMsc.pClassDataCmsit[hUsbMsc.classId];
+    return hmsc != NULL && hmsc->scsi_medium_state == SCSI_MEDIUM_EJECTED;
+}
 
 extern "C" PCD_HandleTypeDef hpcd_USB_OTG_FS;
 void usb_msc_diag(char *out, int cap)

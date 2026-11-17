@@ -17,6 +17,7 @@ extern "C" {
 
 bool     usb_msc_start(void);        // sd_init() must already have succeeded
 bool     usb_msc_configured(void);   // host has enumerated and configured us
+bool     usb_msc_host_ejected(void); // host ejected the disk -> drive mode self-resets (auto-return)
 uint32_t usb_msc_reads(void);        // blocks served, for the panel
 uint32_t usb_msc_writes(void);
 uint32_t usb_msc_errors(void);
