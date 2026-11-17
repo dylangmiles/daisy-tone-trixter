@@ -209,3 +209,13 @@ backing: moon140
 name: Bad Moon 170
 backing: moon170
 # Same bed at 170 bpm -- almost full speed (the record is ~180), to see how it feels.
+---
+# Eagles "Hotel California" -- the slow learning take and the real tempo. Beds synthesised by
+# gen_backing_loops.py (the "hotel_cal" feel: laid-back 4/4 rock ballad). Record tempo ~75 bpm.
+name: Hotel Cal 60
+backing: hotel60
+# 60 bpm -- slowed practice bed for learning the picking.
+---
+name: Hotel Cal 75
+backing: hotel75
+# ~75 bpm -- the actual song tempo.

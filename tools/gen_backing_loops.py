@@ -522,6 +522,24 @@ STYLES = {
         },
         fill_from=14,
         fill={"snare": [(14, 0.75), (15, 0.85)]}),
+
+    # ---- added 2026-11-17 --------------------------------------------------------------------
+    "hotel_cal": dict(
+        fn="hotel", bpm=75, bars=4, div=16, swing=0.03,
+        note="Slow, laid-back rock ballad in 4/4: kick on 1 with a push on the & of 2 into 3, firm "
+             "backbeat on 2 and 4, steady 8th hat, a touch of lilt. Hotel California feel -- full kit "
+             "but relaxed, sitting under the arpeggios. bpm is the quarter (~75 = the record).",
+        # Hotel California (Eagles): a FEEL, not a cover -- generated at 60 (slow learning take) and
+        # 75 (the record tempo). A guitar carries the song; the bed just keeps 1 and the 2 & 4 backbeat.
+        pattern={
+            "kick":  [(0, 0.95), (6, 0.55), (8, 0.70)],
+            "snare": [(4, 1.00), (12, 1.00)],
+            "hat":   [(0, 0.50), (2, 0.34), (4, 0.46), (6, 0.34),
+                      (8, 0.50), (10, 0.34), (12, 0.46), (14, 0.40)],
+        },
+        fill_from=12,
+        fill={"snare": [(12, 1.00), (14, 0.80)],
+              "hat":   [(12, 0.46), (13, 0.30), (14, 0.40), (15, 0.32)]}),
 }
 
 # ----------------------------------------------------------------- rendering

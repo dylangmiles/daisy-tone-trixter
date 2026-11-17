@@ -12,3 +12,6 @@ tools/.venv/
 .history/
 __pycache__/
 *.pyc
+
+# Studio save-preset backups
+*.txt.bak
