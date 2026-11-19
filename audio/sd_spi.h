@@ -1,14 +1,21 @@
-// audio/sd_spi.h — SD card over BIT-BANGED SPI. DAISY SEED3 PIN NUMBERS.
+// audio/sd_spi.h — SD card over BIT-BANGED SPI. DAISY SEED3 "D" PIN NUMBERS.
 //
-// ⚠ Bit-banged for a HARDWARE reason, not preference: the breakout presents a fixed pin order
-// that matches no SPI instance, and 1-bit SDMMC is impossible because the Daisy's SDMMC CMD line
-// is D5 — which this board wires to the microSD module's GND (row 15, cut and jumpered).
+// ⚠ Bit-banged, not SDMMC: the original perfboard's breakout presented a fixed pin order that
+// matched no SPI instance, and 1-bit SDMMC needed the CMD line on a pin the layout couldn't give.
+// The manufactured PCB keeps bit-bang so the hard-won sd_spi.c protocol driver stays shared.
 //
-// Pins are Daisy "D" numbers, header at col 6 rows 11-17:
-//   CS=D1 (r11) · MOSI=D2 (r12) · VCC=D3 (r13, cut+jumper) · SCK=D4 (r14)
-//   GND=D5 (r15, cut+jumper) · MISO=D6 (r16) · CD=D7 (r17)
+// ⚠⚠ PIN WIRING DIFFERS BY BOARD — set the #defines below to match the board being flashed:
 //
-// ⚠ The breakout silkscreen is CARD-referenced: its "DO" is MISO at the host and "DI" is MOSI.
+//   Rev A PCB  (CURRENT — DM3AT socket, JLC-assembled):
+//     CS=D1 · MOSI=D5 · SCK=D6 · MISO=D4
+//     socket→net→Daisy:  DAT3→CS(D1) · CMD→MOSI(D5) · CLK→SCK(D6) · DAT0→MISO(D4)
+//     (confirmed vs the PCB schematic note 2026-11-20; proto pins gave "no card" on this board)
+//
+//   ORIGINAL PERFBOARD  (Adafruit breakout — SUPERSEDED; restore these defines to reflash it):
+//     CS=D1 (r11) · MOSI=D2 (r12) · VCC=D3 (r13, cut+jumper) · SCK=D4 (r14)
+//     GND=D5 (r15, cut+jumper) · MISO=D6 (r16) · CD=D7 (r17)
+//     ⚠ There D5 (SDMMC CMD) was cut+jumpered to the module's GND (row 15).
+//     ⚠ Breakout silk is CARD-referenced: its "DO" is MISO, its "DI" is MOSI.
 //
 // Reads for FatFs (IR / preset files); writes exist for USB DRIVE MODE (main.cpp), where the host
 // owns the card through the MSC class -- FatFs itself stays read-only (sd_diskio.c). Init runs at ~250 kHz (SD spec caps identify mode at 400 kHz);
@@ -24,10 +31,11 @@
 extern "C" {
 #endif
 
-#define SD_MISO_PIN   6   // D6, breakout "DO"
-#define SD_CS_PIN     1   // D1
-#define SD_SCK_PIN    4   // D4
-#define SD_MOSI_PIN   2   // D2, breakout "DI"
+// Rev A PCB (see header). ⚠ Perfboard values in ( ) — restore them to reflash the perfboard.
+#define SD_MISO_PIN   4   // D4  PCB DAT0   (perfboard: D6, breakout "DO")
+#define SD_CS_PIN     1   // D1  PCB DAT3   (perfboard: D1, unchanged)
+#define SD_SCK_PIN    6   // D6  PCB CLK    (perfboard: D4)
+#define SD_MOSI_PIN   5   // D5  PCB CMD    (perfboard: D2, breakout "DI")
 
 bool     sd_init(void);                          // power-up + SPI-mode init; false if no card
 bool     sd_read_block(uint32_t lba, uint8_t *dst);   // read one 512-byte sector (LBA)

@@ -66,6 +66,15 @@ void tt_shim_gpio_pull_down(uint32_t pin)
     g_inited[pin] = true;
 }
 
+void tt_shim_gpio_disable_pulls(uint32_t pin)
+{
+    GPIO* g = Pin_(pin);
+    if(!g)
+        return;
+    g->Init(DaisySeed::GetPin((uint8_t)pin), GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+    g_inited[pin] = true;
+}
+
 void tt_shim_busy_wait_us(uint32_t us)
 {
     System::DelayUs(us);

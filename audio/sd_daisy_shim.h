@@ -29,6 +29,7 @@ void tt_shim_gpio_put(uint32_t pin, int value);
 int  tt_shim_gpio_get(uint32_t pin);
 void tt_shim_gpio_pull_up(uint32_t pin);
 void tt_shim_gpio_pull_down(uint32_t pin);
+void tt_shim_gpio_disable_pulls(uint32_t pin);
 void     tt_shim_busy_wait_us(uint32_t us);
 uint32_t tt_shim_now_ms(void);
 uint32_t tt_shim_now_us(void);
@@ -45,6 +46,7 @@ void tt_shim_sleep_ms(uint32_t ms);
 #define gpio_get(p)         tt_shim_gpio_get(p)
 #define gpio_pull_up(p)     tt_shim_gpio_pull_up(p)
 #define gpio_pull_down(p)   tt_shim_gpio_pull_down(p)
+#define gpio_disable_pulls(p) tt_shim_gpio_disable_pulls(p)
 #define busy_wait_us(u)     tt_shim_busy_wait_us(u)
 
 // ⚠ Pico timeout API, mapped onto a plain millisecond counter. The Pico's absolute_time_t is an

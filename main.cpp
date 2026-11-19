@@ -448,6 +448,7 @@ extern "C" uint32_t tt_shim_now_us(void);
 // talks to the card directly, before FatFs exists.
 extern "C" bool     sd_init(void);
 extern "C" uint32_t sd_sector_count(void);
+extern "C" void     sd_pin_check(void);   // float/short test on the SD lines (for the `sdpins` command)
 
 static char           g_cmd[96];
 static volatile int   g_cmd_len   = 0;
@@ -2056,6 +2057,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  irfreq            24-pt smoothed log-magnitude of the loaded IR (studio overlay)");
         hw.PrintLine("  ircomb            300-pt log-magnitude of the loaded IR (studio comb overlay)");
         hw.PrintLine("  sdbench [path]    measure SD read KB/s (default: current IR; pass a backing track)");
+        hw.PrintLine("  sdpins            SD line float/short test -- REMOVE the card first (checks CS/SCK/MOSI/MISO)");
+        hw.PrintLine("  sdcheck           re-run the microSD CMD0 test live (re-seat a card, then run -- no reboot)");
         hw.PrintLine("  fsend <path>      stream a file to the host (async, non-blocking; studio reassembles)");
         hw.PrintLine("  irtaps            stream the loaded IR's raw f32 taps (studio EXACT host-FFT overlay)");
         hw.PrintLine("  lplevel <0..2>    looper playback level");
@@ -2370,6 +2373,16 @@ static void HandleCommand(const char* line)
         float kbps = dt > 0 ? (float)total / 1.024f / (float)dt : 0.f;   // bytes/ms * 1000/1024
         hw.PrintLine("sdbench %s: %lu B / %lu ms = %.0f KB/s (%d passes, 2 KB reads)",
                      path, (unsigned long)total, (unsigned long)dt, (double)kbps, passes);
+        return;
+    }
+    if(strcmp(line, "sdpins") == 0)   // SD line float/short test -- REMOVE the card first.
+    {                                 // toggles each SD pin's internal pull + checks it follows:
+        sd_pin_check();               // a pin that won't follow = shorted or claimed by another peripheral.
+        return;
+    }
+    if(strcmp(line, "sdcheck") == 0)  // re-run the boot microSD test (CMD0) LIVE -- re-seat a card then run this.
+    {                                 // avoids a power-cycle whose boot report is lost before CDC enumerates.
+        TestSd();                     // prints card-detect + CMD0 and updates the cached status `status` shows.
         return;
     }
     if(strncmp(line, "fsend ", 6) == 0)   // async file -> host (non-blocking, foreground-paced over CDC)
