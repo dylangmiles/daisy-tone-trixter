@@ -43,6 +43,7 @@ bool     sd_write_blocks(uint32_t lba, const uint8_t *src, uint32_t n);  // CMD2
 uint32_t sd_sector_count(void);                  // total 512-byte sectors (from CSD), 0 if unknown
 bool     sd_is_ready(void);                      // initialised OK
 bool     sd_is_sdhc(void);                       // block-addressed (SDHC/SDXC) vs byte (SDSC)
+void     sd_set_offline(void);                   // mark not-ready (card pulled); next sd_init() re-inits
 void     sd_set_verbose(bool v);                 // print a CMD0/CMD8/ACMD41 init trace
 void     sd_pin_check(void);                      // DISCONNECT module first: float/short test on GP6/8/9/10
 

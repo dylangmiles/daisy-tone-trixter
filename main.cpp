@@ -448,6 +448,8 @@ extern "C" uint32_t tt_shim_now_us(void);
 // talks to the card directly, before FatFs exists.
 extern "C" bool     sd_init(void);
 extern "C" uint32_t sd_sector_count(void);
+extern "C" bool     sd_is_ready(void);
+extern "C" void     sd_set_offline(void);   // card-reader drive mode: mark not-ready on card removal
 extern "C" void     sd_pin_check(void);   // float/short test on the SD lines (for the `sdpins` command)
 // Raw GPIO shim (same path the SD bit-bang uses) -- for the `pindrive` static drive test.
 extern "C" void     tt_shim_gpio_init(uint32_t pin);
@@ -1932,6 +1934,50 @@ const char* app_preset_name(int i)      { return dsp_chain_preset_name(i); }
 int         app_preset_current(void)    { return g_preset_idx; }
 void        app_preset_load(int i)      { SelectPreset(i); }
 
+// Re-mount the SD card and (re-)enumerate presets / backing / IRs after a runtime (re-)insert --
+// the normal-mode companion to the drive-mode card reader. ⚠ FOREGROUND ONLY: it blocks on SD reads
+// and re-inits the convolver (via SelectPreset), a brief dropout exactly like a preset switch. Fine
+// at setup time, which is when a card gets inserted. The card must have had a clean power-up (an
+// insert after boot) for sd_init to succeed -- a cold-boot-hung card needs a physical re-insert.
+static void ReloadCard(void)
+{
+    if(!sd_init())                                   // re-init the freshly-inserted card
+    {
+        g_sd_mounted = false;
+        snprintf(g_sd_status, sizeof(g_sd_status), "card insert: sd_init failed (re-insert)");
+        hw.PrintLine("  card insert: sd_init failed -- re-insert to power-cycle it");
+        return;
+    }
+    if(f_mount(&g_fs, g_sd_path, 1) != FR_OK)        // opt=1 forces a fresh BPB read (handles a swap)
+    {
+        g_sd_mounted = false;
+        snprintf(g_sd_status, sizeof(g_sd_status), "card insert: mount FAILED (not FAT?)");
+        hw.PrintLine("  card insert: mounted the card but no FAT filesystem");
+        return;
+    }
+    g_sd_mounted   = true;
+    g_preset_count = 0;
+    if(tt_store_load())
+    {
+        const Preset* pr = tt_store_presets(&g_preset_count);
+        if(pr && g_preset_count > 0)
+            dsp_chain_install_presets(pr, g_preset_count);
+    }
+    backing_scan();
+    IrScan();
+    const char* boot = tt_store_boot_preset();
+    int         idx  = (boot && *boot) ? dsp_chain_find_preset(boot) : 0;
+    if(idx < 0)
+        idx = 0;
+    if(g_preset_count > 0)
+        SelectPreset(idx);                           // audio-safe: clears IR, loads WAV, re-inits convolver
+    snprintf(g_sd_status, sizeof(g_sd_status), "%d preset(s), %d backing, %d IR",
+             g_preset_count, backing_count(), g_ir_file_count);
+    hw.PrintLine("  card loaded: %d preset(s), %d backing track(s), %d IR(s)",
+                 g_preset_count, backing_count(), g_ir_file_count);
+    g_oled_dirty = true;
+}
+
 // IR picker over the card's /tonetrix/ir/ folder (IrScan fills g_ir_files). Menu index 0 is a
 // synthetic "none" (dry); 1..g_ir_file_count are the scanned files. ⚠ A pick is LIVE ONLY and NOT
 // saved to the card -- selecting a preset reloads that preset's own IR over it (like IR-dry / BYP).
@@ -2809,21 +2855,24 @@ static void UsbDriveMode(void)
         oled_flush();
     };
 
+    // ⚠ CARD-READER BEHAVIOUR (2026-11-20). Do NOT demand a working card at entry. On Rev A the card's
+    // power-on reset hangs when it powers up on the shared +3V3D rail at cold boot (pcb_rev_b_backlog #6);
+    // only a physical re-insert power-cycles it. So this mounts like a USB card reader: enumerate with no
+    // media and run sd_init() when a card is (re-)inserted -- a fresh insert powers up clean because the
+    // SPI lines are already driven. A card already good at entry (insert-after-boot, or Rev B's load
+    // switch) mounts immediately. The MSC storage callbacks gate on sd_is_ready(), so the host just polls
+    // the removable drive until media appears.
+    static GPIO sd_cd_pin;
+    sd_cd_pin.Init(tt::P(tt::kSdCd), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    auto card_in = [&sd_cd_pin]() { return !sd_cd_pin.Read(); };  // CD is active-low: low = card present
+
+    char cap[22] = "insert a card";
     screen("card...", nullptr, nullptr, nullptr);
-    if(!sd_init())
+    if(card_in() && sd_init())
     {
-        // Nothing to export. Stay here rather than fall through to a boot the builder did not ask
-        // for -- the message says what happened.
-        screen("NO CARD", "check the socket", nullptr, nullptr);
-        for(;;)
-        {
-            hw.SetLed(false); System::Delay(100);
-            hw.SetLed(true);  System::Delay(100);
-        }
+        const uint32_t mb = sd_sector_count() / 2048u;           // 512-byte sectors -> MB
+        snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
     }
-    char cap[22];
-    const uint32_t mb = sd_sector_count() / 2048u;          // 512-byte sectors -> MB
-    snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
 
     if(!usb_ok)
     {
@@ -2834,7 +2883,7 @@ static void UsbDriveMode(void)
 
     // Idle on __WFI (SysTick and the USB interrupt both wake it); repaint on change, 4 Hz at most.
     uint32_t last = 0, lr = 0xFFFFFFFFu, lw = 0xFFFFFFFFu, le = 0xFFFFFFFFu;
-    bool     lc   = false;
+    bool     lc = false, lready = false, lpresent = false;
     for(;;)
     {
         __WFI();
@@ -2842,24 +2891,48 @@ static void UsbDriveMode(void)
         if((uint32_t)(now - last) < 250)
             continue;
         last = now;
+
         // AUTO-RETURN (v2): the host ejected the disk -> reset straight back to normal, no power cycle.
-        // The eject means the host has flushed and released the card, so a reset here is clean.
         if(usb_msc_host_ejected())
         {
             screen(cap, "host ejected", "resuming...", nullptr);
             System::Delay(300);
             NVIC_SystemReset();
         }
+
+        // Track the card like a reader. Touch the SD bus ONLY while not ready -- once ready the host owns
+        // it and sd_init() must never race the MSC read/write ISR.
+        const bool present = card_in();
+        if(present && !sd_is_ready())
+        {
+            if(sd_init())                                        // (re-)insert powers up clean -> mounts
+            {
+                const uint32_t mb = sd_sector_count() / 2048u;
+                snprintf(cap, sizeof(cap), "card %lu MB", (unsigned long)mb);
+            }
+        }
+        else if(!present && sd_is_ready())
+        {
+            sd_set_offline();                                    // card pulled -> host sees media gone
+        }
+
+        const bool     ready = sd_is_ready();
         const bool     c = usb_msc_configured();
         const uint32_t r = usb_msc_reads(), w = usb_msc_writes(), e = usb_msc_errors();
-        hw.SetLed(((now / 250) & 1) || r != lr || w != lw);   // slow blink, solid on activity
-        if(c == lc && r == lr && w == lw && e == le)
-            continue;                       // nothing changed: no I2C traffic at all
-        lc = c; lr = r; lw = w; le = e;
-        char rw[22], er[22];
-        snprintf(rw, sizeof(rw), "rd %lu  wr %lu", (unsigned long)r, (unsigned long)w);
-        snprintf(er, sizeof(er), "errors %lu", (unsigned long)e);
-        screen(cap, c ? "host: connected" : "host: waiting", rw, e ? er : nullptr);
+        hw.SetLed(ready ? (((now / 250) & 1) || r != lr || w != lw) : ((now / 500) & 1));
+        if(c == lc && r == lr && w == lw && e == le && ready == lready && present == lpresent)
+            continue;                        // nothing changed
+        lc = c; lr = r; lw = w; le = e; lready = ready; lpresent = present;
+        if(!ready)
+            screen(present ? "RE-INSERT CARD" : "INSERT CARD",
+                   present ? "to power-cycle it" : nullptr, nullptr, nullptr);
+        else
+        {
+            char rw[22], er[22];
+            snprintf(rw, sizeof(rw), "rd %lu  wr %lu", (unsigned long)r, (unsigned long)w);
+            snprintf(er, sizeof(er), "errors %lu", (unsigned long)e);
+            screen(cap, c ? "host: connected" : "host: waiting", rw, e ? er : nullptr);
+        }
     }
 }
 
@@ -3189,6 +3262,14 @@ int main(void)
     uint32_t last_report = last_blink;
     bool     led         = false;
 
+    // Card-detect watch: auto-load the card's content when one is (re-)inserted at runtime, so the
+    // cold-boot/insert-after-boot card dance doesn't need a reboot. Seed from the boot state so a card
+    // already loaded at boot does not trigger a redundant reload.
+    static GPIO cd_pin;
+    cd_pin.Init(tt::P(tt::kSdCd), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    bool     cd_last = !cd_pin.Read();          // CD active-low: low = card present
+    uint32_t cd_next = last_blink + 500;
+
     while(true)
     {
         uint32_t t = System::GetNow();
@@ -3423,6 +3504,28 @@ int main(void)
                 g_t_wraps++;
             else if(d > g_t_service)
                 g_t_service = d;
+        }
+
+        // Card-detect watch: (re-)enumerate SD content on insert, drop it on removal. Edge-triggered +
+        // rate-limited. ReloadCard blocks and re-inits the convolver (a brief dropout, like a preset
+        // switch) -- fine, since a card is inserted at setup, not mid-song.
+        if((int32_t)(t - cd_next) >= 0)
+        {
+            cd_next = t + 400;
+            const bool cd_now = !cd_pin.Read();
+            if(cd_now && !cd_last)              // inserted
+            {
+                System::Delay(60);             // contact settle before talking to the card
+                hw.PrintLine("  SD card inserted -- loading...");
+                ReloadCard();
+            }
+            else if(!cd_now && cd_last)        // removed
+            {
+                sd_set_offline();
+                g_sd_mounted = false;
+                hw.PrintLine("  SD card removed (re-insert to reload)");
+            }
+            cd_last = cd_now;
         }
 
         FsendPump();   // async file->host transfer: at most kFsendPerPass lines/pass, only while TX idle

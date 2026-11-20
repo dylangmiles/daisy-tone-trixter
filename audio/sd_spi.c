@@ -14,6 +14,7 @@ static bool s_verbose = false;   // print an init trace (bench bring-up)
 
 bool sd_is_ready(void) { return s_ready; }
 bool sd_is_sdhc(void)  { return s_sdhc; }
+void sd_set_offline(void) { s_ready = false; }   // card pulled: force a fresh sd_init() before use
 void sd_set_verbose(bool v) { s_verbose = v; }
 
 // Half-clock delay: only during identify (spec caps identify clock at 400 kHz). After init
