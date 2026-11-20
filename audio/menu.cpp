@@ -9,19 +9,19 @@
 
 #include <stdio.h>
 
-enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING, M_BKLEVEL, M_LPLEVEL, M_BYPLEVEL, M_IRDRY };
+enum { M_STAGES, M_PARAMS, M_EDIT, M_PRESET, M_IR, M_PGA, M_BACKING, M_BKLEVEL, M_LPLEVEL, M_BYPLEVEL, M_IRDRY, M_HPVOL };
 
 static int s_mode  = M_STAGES;
 // ⚠ DAISY PORT: the PGA row is REMOVED. The Pico drove the ES8388's input PGA in 3 dB steps; the
 // Seed3's TAC5242 is hardware-strapped with no software gain control at all, so the row was a
 // control that did nothing. Front-end level is set by the analogue daughter instead.
-static int s_sel   = 0;   // main rows: 0 back,1 Preset,2 IR,3 BK,4 BK level,5 LP level,6 BYP level,7 IR dry,8 Meters,9 I2C,10+ stage
+static int s_sel   = 0;   // main rows: 0 back,1 Preset,2 IR,3 BK,4 BK level,5 LP level,6 BYP level,7 IR dry,8 Meters,9 I2C,10 HP vol,11+ stage
 static int s_stage = 0;   // entered stage (PARAMS / EDIT levels)
 static int s_item  = 0;   // selected item in PARAMS: 0 = "< back", 1 = enable, 2+ = param[item-2]
 static int s_pick  = 0;   // selected entry in the PRESET / IR picker
 static bool s_go_home = false;  // set when "< back" clicked at MAIN; consumed by menu_take_home()
 
-#define N_SPECIAL 10      // rows before stages: back,Preset,IR,BK,BK level,LP level,BYP level,IR dry,Meters,I2C
+#define N_SPECIAL 11      // rows before stages: back,Preset,IR,BK,BK level,LP level,BYP level,IR dry,Meters,I2C,HP vol
 #define VIS_ROWS  7       // visible list rows below the title (8 text rows total, row 0 = title)
 
 void menu_init(void) { s_mode = M_STAGES; s_sel = 0; s_stage = 0; s_item = 0; s_pick = 0; s_go_home = false; }
@@ -60,6 +60,7 @@ bool menu_event(int turn, bool click) {
             else if (s_sel == 7) { s_mode = M_IRDRY; }                // ⚠ Daisy addition: dry-blend on the IR (pick attack)
             else if (s_sel == 8) { app_gr_set(!app_gr_enabled()); }   // toggle ALL home meters in place
             else if (s_sel == 9) { app_i2c_cycle(); }                 // ⚠ Daisy addition: cycle bus clock
+            else if (s_sel == 10){ s_mode = M_HPVOL; }                // ⚠ Daisy addition: headphone monitor volume
             else                 { s_mode = M_PARAMS; s_stage = s_sel - N_SPECIAL; s_item = 0; }
         }
         return turn || click;
@@ -104,6 +105,11 @@ bool menu_event(int turn, bool click) {
         // clack returns. Turn up until the attack is there without the quack; copy into the preset's
         // ir.dry -- not saved to the card. Only audible with an IR loaded.
         if (turn) app_ir_dry_set(app_ir_dry() + 0.05f * turn);
+        if (click) s_mode = M_STAGES;
+        return turn || click;
+    }
+    if (s_mode == M_HPVOL) {                           // ⚠ Daisy addition: live headphone monitor volume
+        if (turn) app_hp_vol_set(app_hp_vol() + 2 * turn);   // TPA6130A2 6-bit word, 2/detent (~2 dB)
         if (click) s_mode = M_STAGES;
         return turn || click;
     }
@@ -200,6 +206,7 @@ void menu_render(void) {
             else if (it == 7) snprintf(line, sizeof line, "IR dry    %.2f", (double)app_ir_dry());
             else if (it == 8) snprintf(line, sizeof line, "Meters    %s", app_gr_enabled() ? "on" : "off");
             else if (it == 9) snprintf(line, sizeof line, "I2C     %4dk", app_i2c_khz());
+            else if (it == 10) snprintf(line, sizeof line, "HP vol    %2d", app_hp_vol());
             else {
                 Stage *st = dsp_chain_stage(it - N_SPECIAL);
                 // value column at char 10, aligned with the "Meters    <on/off>" row above
@@ -232,6 +239,12 @@ void menu_render(void) {
         snprintf(line, sizeof line, "%.2f  (0 = pure IR)", (double)app_ir_dry());
         oled_text(0, 26, line);
         oled_text(0, 42, "adds pick attack");
+        oled_text(0, 50, "turn to set, click ok");
+    } else if (s_mode == M_HPVOL) {
+        oled_text(0, 0, "-- HP VOLUME --");
+        snprintf(line, sizeof line, "%2d / 63", app_hp_vol());
+        oled_text(0, 26, line);
+        oled_text(0, 42, "headphone monitor");
         oled_text(0, 50, "turn to set, click ok");
     } else if (s_mode == M_BACKING) {
         picker("-- BACKING --", bk_count(), s_pick, bk_name, bk_active());

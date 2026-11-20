@@ -934,6 +934,28 @@ static bool ScanI2c(I2CHandle& i2c)
 }
 
 // ---------------------------------------------------------------------------------------------
+// Headphone monitor — TPA6130A2 (I2C 0x60, on the OLED bus). It powers up with the amps OFF, mutes
+// ON and volume at −59.5 dB, so it is silent until configured. Input is AOUT1 (the main out), fed
+// dual-mono, so we run the chip in DUAL-MONO mode (left input → both ears). Register map (datasheet
+// Table 3/4): reg 0x01 Control = HP_EN_L(7) HP_EN_R(6) Mode[5:4] (01=dual-mono) SWS(0); reg 0x02 =
+// Mute_L(7) Mute_R(6) Volume[5:0] (6-bit audio taper, 0x00=−59.5 dB … 0x3F=+4 dB).
+static const uint8_t kHpAmpAddr = 0x60;       // 7-bit I2C
+static uint8_t        g_hp_vol  = 0x1C;        // 0x1C = −13.7 dB — usable default; `hpvol`/menu to adjust
+static bool           g_hp_on   = true;
+
+static void HpWrite(uint8_t reg, uint8_t val)
+{
+    uint8_t b[2] = { reg, val };
+    g_i2c_h.TransmitBlocking(kHpAmpAddr, b, 2, 100);
+}
+
+static void HpAmpApply(void)
+{
+    HpWrite(0x01, g_hp_on ? 0xD0 : 0x00);      // 0xD0 = HP_EN_L|HP_EN_R, dual-mono (Mode=01), SWS=0
+    HpWrite(0x02, g_hp_vol & 0x3F);            // mute bits 7:6 = 0 (unmuted) + 6-bit volume
+}
+
+// ---------------------------------------------------------------------------------------------
 // Test 4 — microSD bus, by bit-banged SPI CMD0.
 //
 // ⚠ BIT-BANGED DELIBERATELY. The breakout presents a FIXED pin order that matches no hardware SPI
@@ -2027,6 +2049,8 @@ bool        app_gr_enabled(void)        { return g_meters_on; }
 void        app_gr_set(bool on)         { g_meters_on = on; g_gr_on = on; g_oled_dirty = true; }
 float       app_ir_dry(void)            { return g_ir_dry; }
 void        app_ir_dry_set(float d)     { g_ir_dry = d < 0.f ? 0.f : (d > 1.f ? 1.f : d); }
+int         app_hp_vol(void)            { return g_hp_vol; }
+void        app_hp_vol_set(int v)       { if(v<0) v=0; if(v>63) v=63; g_hp_vol=(uint8_t)v; HpWrite(0x02, g_hp_vol & 0x3F); }
 
 // ⚠ NO PGA ON THIS BOARD. These exist only because menu.cpp calls them. The Pico drove the
 // ES8388's input PGA (0..+24 dB in 3 dB steps); the Seed3's TAC5242 is hardware-strapped with no
@@ -2314,6 +2338,25 @@ static void HandleCommand(const char* line)
         g_tune_aud_at = 0;
         g_oled_dirty = true;
         hw.PrintLine("tuner=%s", g_tuner_on ? "on" : "off");
+        return;
+    }
+    if(strncmp(line, "hpvol ", 6) == 0)      // TPA6130A2 headphone volume, 6-bit word 0..63
+    {
+        int v = atoi(line + 6);
+        if(v < 0) v = 0;
+        if(v > 63) v = 63;
+        g_hp_vol = (uint8_t)v;
+        HpWrite(0x02, g_hp_vol & 0x3F);       // live, unmuted
+        // audio-taper reference: 0x00 −59.5 | 0x0C −30 | 0x14 −20 | 0x20 −11 | 0x30 −1.7 | 0x3F +4 dB
+        hw.PrintLine("HP vol word = 0x%02X (%d/63)  [0x0C=-30 0x14=-20 0x20=-11 0x30=-1.7 0x3F=+4 dB]",
+                     g_hp_vol, g_hp_vol);
+        return;
+    }
+    if(strncmp(line, "hp ", 3) == 0)         // hp on | hp off
+    {
+        g_hp_on = (strcmp(line + 3, "on") == 0);
+        HpWrite(0x01, g_hp_on ? 0xD0 : 0x00);
+        hw.PrintLine("HP amp=%s", g_hp_on ? "on (dual-mono)" : "off");
         return;
     }
     if(strncmp(line, "tunerdbg ", 9) == 0)
@@ -3028,7 +3071,12 @@ int main(void)
     if(i2c.Init(cfg) != I2CHandle::Result::OK)
         hw.PrintLine("  I2C init FAILED");
     else
+    {
         i2c_ok = ScanI2c(i2c);
+        HpAmpApply();                       // bring up the TPA6130A2 headphone monitor (bus up, OLED or not)
+        hw.PrintLine("  HP amp (TPA6130A2 0x60): %s, vol 0x%02X (start −30 dB; `hpvol`/`hp` to adjust)",
+                     g_hp_on ? "dual-mono ON" : "off", g_hp_vol);
+    }
     hw.PrintLine("  %s", i2c_ok ? "PASS" : "FAIL");
     g_i2c_ok = i2c_ok;
     failures += i2c_ok ? 0 : 1;

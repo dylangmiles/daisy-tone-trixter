@@ -32,6 +32,8 @@ void        app_i2c_cycle(void);
 
 float       app_ir_dry(void);             // dry-piezo blend on the IR, 0..1 (pick attack)
 void        app_ir_dry_set(float d);
+int         app_hp_vol(void);             // TPA6130A2 headphone volume word, 0..63 (-59.5..+4 dB)
+void        app_hp_vol_set(int v);
 
 // ES8388 input PGA (reg 0x09, both channels). Nibble 0..8 = 0..+24 dB in 3 dB steps.
 // +12 dB (nibble 4) = OPA1642 op-amp daughter; +18 dB (nibble 6) = JFET source-follower
