@@ -43,17 +43,16 @@ constexpr uint8_t kFswBypass = 25; // A10 / D25 (row 18)
 constexpr uint8_t kFswTuner  = 21; // A6  / D21 (row 22)
 
 // ---------------------------------------------------------------- microSD (bit-banged SPI)
-// Header col 6, rows 11-17. ⚠ These deliberately do NOT sit on the SPI1 peripheral: the breakout
-// presents a fixed pin order that no hardware SPI instance matches, so it must be bit-banged.
-// Rows 13 and 15 are cut and jumpered to power, hence the gaps in the D-numbers.
-//
-// ⚠ Breakout silkscreen is CARD-referenced: its "DO" is data OUT of the card = MISO at the host,
-// and "DI" is data IN = MOSI. Do not wire them by name alone.
-constexpr uint8_t kSdCs   = 1; // D1 (row 11)
-constexpr uint8_t kSdMosi = 2; // D2 (row 12) — breakout "DI"
-constexpr uint8_t kSdSck  = 4; // D4 (row 14)
-constexpr uint8_t kSdMiso = 6; // D6 (row 16) — breakout "DO"
-constexpr uint8_t kSdCd   = 7; // D7 (row 17) — card detect, optional
+// ⚠⚠ MUST MATCH sd_spi.h's SD_*_PIN defines — these feed TestSd (the boot report + `sdcheck`),
+// a SECOND bit-bang separate from sd_spi.c's real FatFs driver. They were left on the OLD PERFBOARD
+// pins (CS=1/MOSI=2/SCK=4/MISO=6) long after sd_spi.h moved to the Rev A PCB (DM3AT) pinout, so the
+// diagnostic drove D4/D2/D6 — which on the PCB are DAT0/DAT2/CLK — and read 0xFF forever while the
+// real driver worked. Fixed 2026-11-20. ⚠ Bit-banged (no SPI1): the layout matches no SPI instance.
+constexpr uint8_t kSdCs   = 1; // D1  PCB DAT3 (CS)
+constexpr uint8_t kSdMosi = 5; // D5  PCB CMD  (MOSI)   (was D2 — perfboard)
+constexpr uint8_t kSdSck  = 6; // D6  PCB CLK  (SCK)    (was D4 — perfboard)
+constexpr uint8_t kSdMiso = 4; // D4  PCB DAT0 (MISO)   (was D6 — perfboard)
+constexpr uint8_t kSdCd   = 7; // D7  PCB card detect
 
 // ---------------------------------------------------------------- Audio
 // Handled by libDaisy's SAI setup, listed here for reference only.

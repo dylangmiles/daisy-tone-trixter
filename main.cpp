@@ -449,6 +449,11 @@ extern "C" uint32_t tt_shim_now_us(void);
 extern "C" bool     sd_init(void);
 extern "C" uint32_t sd_sector_count(void);
 extern "C" void     sd_pin_check(void);   // float/short test on the SD lines (for the `sdpins` command)
+// Raw GPIO shim (same path the SD bit-bang uses) -- for the `pindrive` static drive test.
+extern "C" void     tt_shim_gpio_init(uint32_t pin);
+extern "C" void     tt_shim_gpio_set_dir(uint32_t pin, int out);
+extern "C" void     tt_shim_gpio_put(uint32_t pin, int value);
+extern "C" void     tt_shim_gpio_pull_up(uint32_t pin);
 
 static char           g_cmd[96];
 static volatile int   g_cmd_len   = 0;
@@ -2059,6 +2064,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  sdbench [path]    measure SD read KB/s (default: current IR; pass a backing track)");
         hw.PrintLine("  sdpins            SD line float/short test -- REMOVE the card first (checks CS/SCK/MOSI/MISO)");
         hw.PrintLine("  sdcheck           re-run the microSD CMD0 test live (re-seat a card, then run -- no reboot)");
+        hw.PrintLine("  sdscope           loop CMD0 ~8 s so SCK/MOSI/CS/MISO repeat for a scope (card in)");
+        hw.PrintLine("  pindrive <n> <0|1> static push-pull drive of D<n>, held -- meter it (e.g. pindrive 6 1)");
         hw.PrintLine("  fsend <path>      stream a file to the host (async, non-blocking; studio reassembles)");
         hw.PrintLine("  irtaps            stream the loaded IR's raw f32 taps (studio EXACT host-FFT overlay)");
         hw.PrintLine("  lplevel <0..2>    looper playback level");
@@ -2383,6 +2390,109 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "sdcheck") == 0)  // re-run the boot microSD test (CMD0) LIVE -- re-seat a card then run this.
     {                                 // avoids a power-cycle whose boot report is lost before CDC enumerates.
         TestSd();                     // prints card-detect + CMD0 and updates the cached status `status` shows.
+        return;
+    }
+    if(strcmp(line, "sdscope") == 0)  // loop sd_init continuously (~8 s) so SCK/MOSI/CS/MISO REPEAT for a scope.
+    {
+        hw.PrintLine("sdscope: looping CMD0 ~30 s -- scope now. Trigger on CS (D1) falling.");
+        hw.PrintLine("  Daisy pins: SCK=D6 MOSI=D5 CS=D1 MISO=D4");
+        hw.PrintLine("  DM3AT pads: CLK=5 CMD=3 CS/DAT3=2 DAT0/MISO=7  (VDD=4 VSS=6)");
+        uint32_t t0 = System::GetNow(), n = 0;
+        while(System::GetNow() - t0 < 30000) { sd_init(); n++; }
+        hw.PrintLine("sdscope: %lu CMD0 cycles done", (unsigned long)n);
+        return;
+    }
+    if(strncmp(line, "pindrive ", 9) == 0)  // STATIC push-pull drive of any D-pin -- measure its DC level with a DMM.
+    {                                        // same shim path the SD bit-bang uses. `pindrive 6 1` then meter D6->GND.
+        int pin = -1, val = -1;
+        sscanf(line + 9, "%d %d", &pin, &val);
+        if(pin >= 0 && pin <= 30 && (val == 0 || val == 1))
+        {
+            tt_shim_gpio_init((uint32_t)pin);
+            tt_shim_gpio_set_dir((uint32_t)pin, 1);  // 1 = push-pull OUTPUT
+            tt_shim_gpio_put((uint32_t)pin, val);
+            hw.PrintLine("D%d driven %s (push-pull) and HELD -- measure D%d to GND now.",
+                         pin, val ? "HIGH (expect ~3.3V)" : "LOW (expect ~0V)", pin);
+        }
+        else
+            hw.PrintLine("usage: pindrive <0..30> <0|1>   e.g. 'pindrive 6 1' = SCK high, 'pindrive 1 1' = CS high");
+        return;
+    }
+    if(strcmp(line, "sdpu") == 0)  // pull up the floating DAT1(D3)/DAT2(D2) lines, then re-run CMD0.
+    {                               // the perfboard breakout pulled these up; the bare DM3AT doesn't.
+        tt_shim_gpio_pull_up(3);    // SD_DAT1 -> Daisy D3
+        tt_shim_gpio_pull_up(2);    // SD_DAT2 -> Daisy D2
+        System::Delay(5);           // let the ~40k pull-ups settle
+        hw.PrintLine("DAT1(D3)+DAT2(D2) internal pull-ups ON -- re-running CMD0:");
+        TestSd();                   // TestSd never touches D2/D3, so the pull-ups persist through it.
+        return;
+    }
+    if(strcmp(line, "sdreset") == 0)  // aggressive clock-reset: can a long clock train recover a cold-boot card?
+    {
+        sd_cs.Init(tt::P(tt::kSdCs), GPIO::Mode::OUTPUT);
+        sd_sck.Init(tt::P(tt::kSdSck), GPIO::Mode::OUTPUT);
+        sd_mosi.Init(tt::P(tt::kSdMosi), GPIO::Mode::OUTPUT);
+        sd_miso.Init(tt::P(tt::kSdMiso), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        uint8_t r = 0xFF;
+        for(int attempt = 0; attempt < 4 && r != 0x01; attempt++)
+        {
+            sd_cs.Write(true);
+            sd_mosi.Write(true);
+            for(int i = 0; i < 256; i++) SdByte(0xFF);   // ~2048 dummy clocks, CS HIGH
+            System::Delay(2);
+            sd_cs.Write(false);                           // select + CMD0
+            const uint8_t cmd0[] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x95};
+            for(size_t i = 0; i < sizeof(cmd0); i++) SdByte(cmd0[i]);
+            r = 0xFF;
+            for(int i = 0; i < 16 && r == 0xFF; i++) r = SdByte(0xFF);
+            sd_cs.Write(true);
+            SdByte(0xFF);
+            hw.PrintLine("sdreset attempt %d: CMD0 = 0x%02X", attempt + 1, r);
+            System::Delay(10);
+        }
+        hw.PrintLine(r == 0x01 ? "  RECOVERED -> firmware reset works (no hardware needed)"
+                               : "  still 0xFF -> card POR hung; needs a VDD power-cycle (load switch)");
+        g_sd_r1 = r;
+        return;
+    }
+    if(strcmp(line, "sdmiso") == 0)  // is the card DRIVING MISO at all? flip D4 to pull-DOWN and clock it.
+    {
+        sd_cs.Init(tt::P(tt::kSdCs), GPIO::Mode::OUTPUT);
+        sd_sck.Init(tt::P(tt::kSdSck), GPIO::Mode::OUTPUT);
+        sd_mosi.Init(tt::P(tt::kSdMosi), GPIO::Mode::OUTPUT);
+        sd_miso.Init(tt::P(tt::kSdMiso), GPIO::Mode::INPUT, GPIO::Pull::PULLDOWN);  // ← pull-DOWN
+        System::Delay(10);
+        sd_cs.Write(true);
+        sd_sck.Write(false);
+        for(int i = 0; i < 10; i++) SdByte(0xFF);         // warm-up, CS high
+        sd_cs.Write(false);                               // select the card
+        const uint8_t cmd0[] = {0x40, 0x00, 0x00, 0x00, 0x00, 0x95};
+        for(size_t i = 0; i < sizeof(cmd0); i++) SdByte(cmd0[i]);
+        uint8_t  last = 0x00;
+        int      nz   = 0;
+        for(int i = 0; i < 16; i++) { uint8_t b = SdByte(0xFF); if(b != 0x00) nz++; last = b; }
+        sd_cs.Write(true);
+        SdByte(0xFF);
+        hw.PrintLine("MISO pull-DOWN, CMD0: last=0x%02X, non-zero bytes=%d of 16", last, nz);
+        hw.PrintLine("  all 0x00  -> card is NOT driving MISO (silent / no DAT0 contact)");
+        hw.PrintLine("  any 1-bits-> card IS driving MISO high (alive, overpowers pull-down)");
+        return;
+    }
+    if(strcmp(line, "scktoggle") == 0)  // toggle D6 ALONE, 50%% duty ~250 kHz, 8 s -- scope-free amplitude test.
+    {
+        tt_shim_gpio_init(6);
+        tt_shim_gpio_set_dir(6, 1);      // push-pull output
+        hw.PrintLine("D6 toggling 50%% ~250 kHz for 30 s. DMM (DC V) on D6->GND:");
+        hw.PrintLine("  ~1.6 V = reaching full 3.3 V (clock FINE)  |  ~0.3 V = stuck at ~600 mV (clock WEAK)");
+        uint32_t t0 = System::GetNow();
+        while(System::GetNow() - t0 < 30000)
+        {
+            tt_shim_gpio_put(6, 1);
+            System::DelayUs(2);
+            tt_shim_gpio_put(6, 0);
+            System::DelayUs(2);
+        }
+        hw.PrintLine("scktoggle done (D6 left low)");
         return;
     }
     if(strncmp(line, "fsend ", 6) == 0)   // async file -> host (non-blocking, foreground-paced over CDC)
