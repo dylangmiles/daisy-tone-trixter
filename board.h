@@ -54,6 +54,13 @@ constexpr uint8_t kSdSck  = 6; // D6  PCB CLK  (SCK)    (was D4 — perfboard)
 constexpr uint8_t kSdMiso = 4; // D4  PCB DAT0 (MISO)   (was D6 — perfboard)
 constexpr uint8_t kSdCd   = 7; // D7  PCB card detect
 
+// ---------------------------------------------------------------- CH B / XLR 48 V phantom
+// PH_EN net: D26/PD11 → 1k series → 2N7002 gate → pulls the AO3401 P-FET gate low → LM2577 boost
+// input powered → 48 V phantom ON. Drive HIGH = phantom ON; LOW/float = OFF (a 100k gate pulldown
+// holds it OFF at boot/float, so phantom is OFF on USB-5 V and before firmware drives the pin).
+// ⚠ Default LOW. NEVER enable phantom with a dynamic/ribbon mic connected.
+constexpr uint8_t kPhantomEn = 26; // D26 / PD11  PCB PH_EN (phantom 48 V enable)
+
 // ---------------------------------------------------------------- Audio
 // Handled by libDaisy's SAI setup, listed here for reference only.
 // AUDIO IN 1 = pin 16 (row 25) · AUDIO OUT 1 = pin 18 (row 27).

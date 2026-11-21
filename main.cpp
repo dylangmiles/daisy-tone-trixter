@@ -680,6 +680,12 @@ static volatile float    g_peak  = 0.f;   // peak |sample| since the display las
 static volatile uint32_t g_clips     = 0;
 static volatile bool     g_clip_recent = false;   // sticky until the splash shows it
 
+// CH B / XLR bring-up — touched in the callback, so declared up here (the phantom GPIO + its command
+// live further down near the HP amp). g_ch2_mon sums raw AIN2 (in[1]) into the output to hear CH2;
+// g_ch2_peak is its input-level envelope for the `ch2` readout. See `phantom`/`ch2`/`ch2mon`.
+static volatile float    g_ch2_mon  = 0.f;   // CH2(AIN2) → output monitor gain, 0 = off
+static volatile float    g_ch2_peak = 0.f;   // CH2 input peak envelope (|in[1]|)
+
 static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
 {
     const uint32_t t_cb0 = System::GetTick();
@@ -708,6 +714,7 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         tt_reamp_read(g_reamp_buf, (uint32_t)size);
 
     // Meter the INPUT before any processing -- this is the front end's level, not the chain's.
+    float ch2pk = 0.f;                          // CH B (AIN2 = in[1]) peak this block, for bring-up
     for(size_t i = 0; i < size; i++)
     {
         float a = fabsf(in[0][i]);
@@ -718,9 +725,15 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
             g_clips++;
             g_clip_recent = true;
         }
+        float a2 = fabsf(in[1][i]);             // CH2 peak -- cheap, always on (no CH2 chain yet)
+        if(a2 > ch2pk)
+            ch2pk = a2;
         // chain input = live piezo * live_level + USB reamp * reamp_level (unchanged = in[0] when off)
         g_work[i] = reamp_on ? (in[0][i] * live_g + g_reamp_buf[i] * reamp_g) : in[0][i];
     }
+    // CH2 input level envelope (fast attack / slow release, same shape as g_in_env) for the `ch2` readout.
+    if(ch2pk > g_ch2_peak) g_ch2_peak = ch2pk;
+    else                   g_ch2_peak += (ch2pk - g_ch2_peak) * 0.002f;
     // ⚠ USB ch3 DRY = the CHAIN INPUT (post reamp-mix), not the raw ADC. In normal play the chain input
     // IS in[0] (unchanged), but during a USB reamp this makes DRY show the REAMP SOURCE the chain is
     // processing — so the studio's DRY trace and the DRY↔WET transfer stay meaningful while reamping
@@ -797,6 +810,14 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     // audio and must not be run through the IR, EQ or compressor. Putting the bed through the
     // guitar's processing would be both wrong and a waste of the budget.
     backing_mix(g_work, (int)size);
+
+    // CH B bring-up monitor: fold the RAW CH2 input (AIN2 = in[1]) into the mix so the combo's hi-Z
+    // 1/4" jack OR the INA163 mic-preamp output can be heard/recorded on the main out without a scope.
+    // 0 = off (normal). No DSP on it -- a raw listen tap for validating the analog block. (`ch2mon`.)
+    const float ch2g = g_ch2_mon;
+    if(ch2g > 0.f)
+        for(size_t i = 0; i < size; i++)
+            g_work[i] += in[1][i] * ch2g;
 
     // ⚠ TUNER MUTES THE OUTPUT, backing track included. That is what a tuner pedal does, and it is
     // what makes it usable on stage. Detection is unaffected: the tuner reads the INPUT, upstream of
@@ -954,6 +975,18 @@ static void HpAmpApply(void)
     HpWrite(0x01, g_hp_on ? 0xD0 : 0x00);      // 0xD0 = HP_EN_L|HP_EN_R, dual-mono (Mode=01), SWS=0
     HpWrite(0x02, g_hp_vol & 0x3F);            // mute bits 7:6 = 0 (unmuted) + 6-bit volume
 }
+
+// ---------------------------------------------------------------------------------------------
+// CH B / XLR bring-up hooks (2026-11-21). The firmware has NO CH2 signal path yet — these are the
+// two things needed to validate the combo input + 48 V phantom on the bench (g_ch2_mon / g_ch2_peak
+// are declared up by the callback, which touches them):
+//   1. phantom enable on D26 (PH_EN) — drive HIGH = phantom ON. Default OFF (a dynamic/ribbon mic
+//      can be damaged by phantom). The LM2577 boost only powers up when this GPIO is high.
+//   2. a raw CH2 monitor — the codec's 2nd input (AIN2 = in[1]) summed into the main out, so the
+//      hi-Z 1/4" jack OR the INA163 mic-preamp output can be HEARD/recorded without a scope.
+// Both are deliberately dumb/raw: no DSP, no mode machine — just enough to prove the analog block.
+static GPIO           g_phantom_en;            // D26 PH_EN (output; HIGH = phantom on)
+static bool           g_phantom_on  = false;   // default OFF (safety)
 
 // ---------------------------------------------------------------------------------------------
 // Test 4 — microSD bus, by bit-banged SPI CMD0.
@@ -2140,6 +2173,10 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  irtaps            stream the loaded IR's raw f32 taps (studio EXACT host-FFT overlay)");
         hw.PrintLine("  lplevel <0..2>    looper playback level");
         hw.PrintLine("  tuner on|off      tuner");
+        hw.PrintLine(" -- CH B / XLR bring-up --");
+        hw.PrintLine("  phantom on|off    48 V phantom enable (D26) -- NO dynamic/ribbon mic!");
+        hw.PrintLine("  ch2               CH2 (AIN2) input peak/dBFS + phantom + monitor state");
+        hw.PrintLine("  ch2mon <gain>     sum raw CH2 into the main out to hear it (0 = off)");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
         hw.PrintLine("  i2c 100|400|1000  bus clock kHz -- see the note, edges not clock");
@@ -2357,6 +2394,32 @@ static void HandleCommand(const char* line)
         g_hp_on = (strcmp(line + 3, "on") == 0);
         HpWrite(0x01, g_hp_on ? 0xD0 : 0x00);
         hw.PrintLine("HP amp=%s", g_hp_on ? "on (dual-mono)" : "off");
+        return;
+    }
+    if(strncmp(line, "phantom ", 8) == 0)    // 48 V phantom enable (D26 PH_EN); default OFF
+    {
+        // ⚠ Bring the boost up with NO mic connected (or a condenser only). A dynamic/ribbon mic can
+        // be damaged by phantom. Measure the 48 V rail + XLR pins 2/3 (each ~48 V, matched) unloaded.
+        g_phantom_on = (strcmp(line + 8, "on") == 0);
+        g_phantom_en.Write(g_phantom_on);
+        hw.PrintLine("phantom 48V = %s  (D26 %s)%s", g_phantom_on ? "ON" : "off",
+                     g_phantom_on ? "HIGH" : "LOW",
+                     g_phantom_on ? "  -- NO dynamic/ribbon mic connected!" : "");
+        return;
+    }
+    if(strncmp(line, "ch2mon", 6) == 0)      // CH2 (AIN2) raw monitor into the main out; arg = gain
+    {
+        if(line[6] == ' ')
+            g_ch2_mon = (float)atof(line + 7);
+        if(g_ch2_mon < 0.f) g_ch2_mon = 0.f;
+        hw.PrintLine("CH2 monitor gain = %.2f  (0 = off; raw AIN2 summed to the main out)", (double)g_ch2_mon);
+        return;
+    }
+    if(strcmp(line, "ch2") == 0)             // CH2 input level -- a signal here needs no mic to see
+    {
+        float db = g_ch2_peak > 1e-6f ? 20.f * log10f(g_ch2_peak) : -120.f;
+        hw.PrintLine("CH2 (AIN2) peak = %.4f  (%.1f dBFS)   phantom=%s   mon=%.2f",
+                     (double)g_ch2_peak, (double)db, g_phantom_on ? "ON" : "off", (double)g_ch2_mon);
         return;
     }
     if(strncmp(line, "tunerdbg ", 9) == 0)
@@ -3100,6 +3163,12 @@ int main(void)
 
     for(size_t i = 0; i < kNumInputs; i++)
         inputs[i].gpio.Init(tt::P(inputs[i].pin), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+
+    // CH B: phantom-enable GPIO (D26 PH_EN) driven LOW = 48 V phantom OFF at boot. The hardware gate
+    // pulldown already holds it off; this makes it explicit and gives `phantom on|off` a handle.
+    g_phantom_en.Init(tt::P(tt::kPhantomEn), GPIO::Mode::OUTPUT);
+    g_phantom_en.Write(false);
+    hw.PrintLine("  phantom 48V enable (D26) driven LOW -- OFF (use `phantom on`, NO dynamic/ribbon mic)");
 
     g_enc.Init(tt::P(tt::kEncA), tt::P(tt::kEncB), tt::P(tt::kEncSw));
 
