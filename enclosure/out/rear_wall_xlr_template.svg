@@ -16,9 +16,9 @@
 <circle cx="138.8" cy="61.45" r="5.0" fill="none" stroke="#777" stroke-width="0.3"/>
 <circle cx="138.8" cy="61.45" r="0.4" fill="#777"/>
 <text x="138.8" y="55.650000000000006" font-size="2.2" fill="#555" text-anchor="middle">OUT Ø10 z10.55</text>
-<circle cx="117.0" cy="56.0" r="6.0" fill="none" stroke="#777" stroke-width="0.3"/>
-<circle cx="117.0" cy="56.0" r="0.4" fill="#777"/>
-<text x="117.0" y="49.2" font-size="2.2" fill="#555" text-anchor="middle">USB Ø12 z16</text>
+<circle cx="117.0" cy="61.45" r="6.0" fill="none" stroke="#777" stroke-width="0.3"/>
+<circle cx="117.0" cy="61.45" r="0.4" fill="#777"/>
+<text x="117.0" y="54.650000000000006" font-size="2.2" fill="#555" text-anchor="middle">USB Ø12 z10.55</text>
 <circle cx="99.0" cy="61.45" r="6.0" fill="none" stroke="#777" stroke-width="0.3"/>
 <circle cx="99.0" cy="61.45" r="0.4" fill="#777"/>
 <text x="99.0" y="54.650000000000006" font-size="2.2" fill="#555" text-anchor="middle">DC Ø12 z10.55</text>

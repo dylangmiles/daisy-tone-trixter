@@ -55,7 +55,7 @@
 <text x="26.00" y="43.84" class="dim" text-anchor="end">33 top inner (fold)</text>
 <text x="12.00" y="93.17" class="note" text-anchor="start">Jacks BOTTOM-MOUNTED: barrel hangs below the board -> axis z=10.55 (~32% up the 33 mm wall, lower third).</text>
 <text x="12.00" y="96.67" class="note" text-anchor="start">Budget: Seed 16.5 + PCB 1.6 + gap 7 = 25.1 of 33 mm cavity -> ~7.9 mm spare over the base.</text>
-<text x="12.00" y="103.67" class="dim" text-anchor="start">Check the plug + base-plate battery box don't crowd down there. TRS/DC bottom-mount (legs up); USB = PAN-USBCC panel socket O12 @ z16, barrel 16.9 into the under-board space (Seed USB faces player-L, lead loops to it).</text>
+<text x="12.00" y="103.67" class="dim" text-anchor="start">Check the plug + base-plate battery box don't crowd down there. TRS/DC bottom-mount (legs up); USB = PAN-USBCC panel socket O12 @ z10.55, barrel 16.9 into the under-board space (Seed USB faces player-L, lead loops to it).</text>
 <line x1="12.00" y1="109.17" x2="112.00" y2="109.17" stroke="#111" stroke-width="0.4"/>
 <line x1="12.00" y1="107.17" x2="12.00" y2="111.17" stroke="#111" stroke-width="0.3"/>
 <line x1="22.00" y1="107.17" x2="22.00" y2="111.17" stroke="#111" stroke-width="0.3"/>

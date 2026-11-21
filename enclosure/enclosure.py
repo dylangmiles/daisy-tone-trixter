@@ -103,10 +103,12 @@ JACK_Z   = 10.55        # barrel axis above the base (bottom-mount). K3599 centr
 #   (PAN-USBCC datasheet): drilled hole O12.0, front bezel O13.9 x 1.8 proud, barrel O11.6 x 16.9 deep behind
 #   the wall + locking nut (A/F ~14). Lead: 6x AWG22, USB 2.0 + CC -> DFU + PD both work.
 USB_BEZEL_OD = 13.9     # finished outer bezel (keep-clear vs neighbours); the DRILLED hole is 12.0
-USB_Z    = 16.0         # panel-hole centre above base -- sits just UNDER the board (board top 24.76, bottom
-                        #   23.16; barrel O11.6 tops out ~21.8) so the 16.9 mm barrel runs in the under-board
-                        #   space between the hanging jack barrels, rearward of the Seed (Y<=95). ~1.4 mm under
-                        #   the PCB -- revisit if the board height drops. Bezels clear OUT (22.4) + DC (18.7).
+USB_Z    = JACK_Z       # panel-hole centre above base -- LEVELLED with the DC/OUT/IN A row (JACK_Z=10.55),
+                        #   2026-11-21 (builder's call: USB bezel aligned with DC out for a clean rear row).
+                        #   Was 16.0 (tucked just under the board). At 10.55 the O11.6 barrel tops out ~13.45 --
+                        #   MORE board clearance than before -- and its 16.9 mm depth runs forward in the x~46 gap
+                        #   BETWEEN the OUT (x24.2) and DC (x64) barrels, so the parallel tubes don't foul.
+                        #   ⚠ COMBO (IN B) sits 1.15 mm LOWER at COMBO_Z 9.40; USB x46 is clear of the combo x88.
 # IN B is now the Neutrik NCJ9FI-H COMBO (XLR + switching 1/4in) -- a big Neutrik D / Combo-A cut-out,
 # NOT a small TRS hole (2026-10-30).
 COMBO_D = 24.0          # main connector hole O24 (standard Neutrik D / Combo-A cut-out).
