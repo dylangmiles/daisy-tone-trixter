@@ -26,10 +26,10 @@
 <rect x="115.00" y="42.94" width="6.00" height="7.00" fill="#eef" stroke="#55a" stroke-width="0.4"/>
 <rect x="117.00" y="26.33" width="2.00" height="16.61" fill="#eef" stroke="#55a" stroke-width="0.3"/>
 <text x="122.00" y="34.63" class="dim" text-anchor="start">encoder shaft (+16.61 over top)</text>
-<line x1="140.00" y1="51.54" x2="140.00" y2="60.39" stroke="#111" stroke-width="0.4"/>
-<rect x="134.00" y="60.39" width="24.00" height="10.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
+<line x1="140.00" y1="51.54" x2="140.00" y2="59.39" stroke="#111" stroke-width="0.4"/>
+<rect x="134.00" y="59.39" width="24.00" height="12.00" fill="#fff" stroke="#111" stroke-width="0.5"/>
 <line x1="130.00" y1="65.39" x2="159.00" y2="65.39" stroke="#111" stroke-width="0.3" stroke-dasharray="3 1"/>
-<text x="133.00" y="59.39" class="dim" text-anchor="start">OUT/IN A/DC jack z=10.55</text>
+<text x="133.00" y="58.39" class="dim" text-anchor="start">OUT/IN A/DC jack z=10.55</text>
 <circle cx="148.00" cy="66.54" r="12.00" fill="none" stroke="#c33" stroke-width="0.3"/>
 <circle cx="148.00" cy="66.54" r="11.70" fill="none" stroke="#c33" stroke-width="0.3" stroke-dasharray="1.5 1"/>
 <circle cx="148.00" cy="55.04" r="1.60" fill="none" stroke="#c33" stroke-width="0.3"/>

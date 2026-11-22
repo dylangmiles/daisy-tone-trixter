@@ -124,11 +124,11 @@ COMBO_SCREW_D  = 3.2
 COMBO_SCREW_DX = 10.0   # +/- from the barrel centre -> 20 mm apart horizontally
 COMBO_SCREW_DY = 11.5   # +/- from the barrel centre -> 23 mm apart vertically (diagonal pair)
 REAR = [  # (board_ref, label, x_enclosure, dia_or_wh, kind, z_axis)
-    ("J2",  "OUT",  24.2,  10.0,        "trs",  JACK_Z),
+    ("J2",  "OUT",  24.2,  12.0,        "trs",  JACK_Z),  # ⚠ Ø12 (was 10, 2026-11-22): K3599 barrel is M11×1.25/Ø11 — a Ø10 hole is UNDER the barrel. Ø12 = nearest step up that clears; the nut covers it.
     (None,  "USB",  46.0,  12.0,        "usbc", USB_Z),  # PAN-USBCC panel socket, O12 nut-mount; Seed USB via lead
-    ("J3",  "DC",   64.0,  12.0,        "dc",   JACK_Z),  # panel jack + flying lead; x is a design choice. Ø12 = generic DC-022/099 (local). ⚠ DRILL-TIME FINALISE to the part actually used (Cliff FC681473 = ½"/M12.7 → Ø13).
+    ("J3",  "DC",   64.0,  8.0,         "dc",   JACK_Z),  # panel jack + flying lead; x is a design choice. ⚠ Ø8 (was 12, 2026-11-22): switched to a smaller Ø8 nut-mount DC jack. Confirm the actual part's thread/bushing Ø before drilling.
     ("J8",  "IN B", 88.0,  COMBO_D,     "combo",COMBO_Z), # IN B = NCJ9FI-H combo (O24 + 2x M3, mark from part); x reverse-synced from the board (combo centre kicad 77.0, hard against IN A) 2026-10-30
-    ("J1",  "IN A", 113.8, 10.0,        "trs",  JACK_Z),   # IN A outermost-right (primary guitar input)
+    ("J1",  "IN A", 113.8, 12.0,        "trs",  JACK_Z),   # IN A outermost-right (primary guitar input). ⚠ Ø12 (was 10, 2026-11-22): K3599 M11 barrel needs ≥Ø11.
 ]
 
 # LEFT wall holes (X=0 wall), viewed from outside. HP jack on a 3.5 mm panel socket + flying lead to J11.

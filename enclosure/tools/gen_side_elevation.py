@@ -64,7 +64,7 @@ _Z_JACK_MEASURED = Z_BRD_TOP + JACK_AX_ABOVE_BRD      # measured -> ~9.31
 Z_JACK     = e.JACK_Z             # AUTHORITATIVE rear-wall hole centre = fold-up template + PCB (9.31)
 assert abs(_Z_JACK_MEASURED - Z_JACK) < 0.2, \
     f"jack-z DRIFT: measured stack {_Z_JACK_MEASURED:.2f} vs enclosure.JACK_Z {Z_JACK:.2f} -- reconcile before trusting the drawing"
-JACK_DIA   = 10.0                 # TRS barrel, = enclosure.REAR trs size
+JACK_DIA   = 12.0                 # TRS barrel hole, = enclosure.REAR trs size (Ø12 for the M11 K3599, 2026-11-22)
 
 # ---- SVG helpers -----------------------------------------------------------------------------
 def _hdr(w, h):
