@@ -278,23 +278,34 @@ no driver on macOS. First half of "audio + control interface over USB"; the cont
 tone-shaping GUI driving the chain over CDC) is Phase 2.
 
 **Increment 2 (2026-11-10): now a COMPOSITE Audio+CDC device, ALWAYS-ON — no gesture.** Plug USB and
-it enumerates as a 4-in soundcard **and** the serial console at once (device class 0xEF/IAD, PID
+it enumerates as a 5-in soundcard **and** the serial console at once (device class 0xEF/IAD, PID
 0x5752, product "Tone Trixie", mfr "Dylan Miles"). `usb_audio_start()` replaces `StartLog()` at boot
 unconditionally; the composite's CDC half **is** libDaisy's CDC (so the logger, `CDC_Transmit_FS` and
 `UsbRx` — the whole console + command set — work unchanged), and the audio rides EP 0x83 alongside.
-Enumerates as 4-in / 48 kHz / **24-bit** (`AUDIO_BITS = 24U` in `tt_audio_stream.h`; brought up at 16,
-flipped to 24 once it enumerated — `Tx3` is sized for the 24-bit worst case so no FIFO change). 24-bit is
-the deliberate standing choice: the floor to measure is the TAC5242's −120 dB, which 24-bit (−144) captures
-with margin where 16-bit (−96) could not. When CH B lands (6 ch), route **MAIN as mono** (it is a pointless
-ch1/ch2 dup today) to free the one channel 24-bit+reamp needs on the FS FIFO; aux OUT is the first feature to
-shed. 32-bit is impossible on FS (6 ch × 4 B × 48 = 1152 B/frame > the 1023 iso cap) and would measure nothing
-more:
+Enumerates as **5-in** / 48 kHz / **24-bit** (`AUDIO_BITS = 24U` in `tt_audio_stream.h`; brought up at 16,
+flipped to 24 once it enumerated). 24-bit is the deliberate standing choice: the floor to measure is the
+TAC5242's −120 dB, which 24-bit (−144) captures with margin where 16-bit (−96) could not. 32-bit is
+impossible on FS (6 ch × 4 B × 48 = 1152 B/frame > the 1023 iso cap) and would measure nothing more.
+
+⚠ **5-ch since 2026-11-22 (`74896d6`) — CH B landed.** MAIN was collapsed from the pointless ch1/ch2 dup to
+**mono** to free the channel room CH B dry/wet needs at 24-bit (the FS core can't carry 6 ch × 24-bit). The
+FS FIFO was re-carved for the 750 B audio packet (Rx `0x50→0x38`, CDC-data `0x20→0x18`, audio `0x98→0xBC`/188 w
+= 316 ≤ 320 — ⚠ the **RxFIFO is now the tight one** at 56 w, min ~54, stressed only when a studio reamp OUT
+streams at the same time). `AUDIO_CHANNELS` drives the descriptor bNrChannels + max-packet, and the UAC2
+descriptors are fixed-size, so the channel bump needed **no** `CFG_SIZ`/`wTotalLength` change.
 
 | USB ch | Carries |
 |---|---|
-| 1 / 2 | **MAIN** — the full mix out to the jack (processed + looper + backing), mono duplicated |
-| 3 | **CH A DRY** — raw piezo, pre-DSP (`in[0]`) |
-| 4 | **CH A WET** — processed guitar only, no looper/backing (`g_usb_wet`, snapshot after `dsp_chain_process`) |
+| 1 | **MAIN** — the full mix out to the jack (processed + looper + backing) — **MONO** |
+| 2 | **CH A DRY** — raw piezo, pre-DSP (`in[0]`) |
+| 3 | **CH A WET** — processed guitar only, no looper/backing (`g_usb_wet`, snapshot after `dsp_chain_process`) |
+| 4 | **CH B DRY** — raw CH B input (`in[1]` = AIN2: mic / hi-Z / stomp box) |
+| 5 | **CH B WET** — processed CH B · ⚠ **PLACEHOLDER = dry (`in[1]`)** until a CH B DSP chain exists |
+
+⚠ **This is the "studio / recording" multichannel mode.** A 2nd USB mode — plain **2-ch stereo "streaming"**
+(phones etc., likely no CDC/reamp) — is planned as a separate descriptor selected at boot with a USB replug
+(drive-mode pattern), **not built yet**. ⚠ The **studio app must be updated** to open the 5-in device + map
+ch4/5 to CH B (studio session); it was hardwired for 4-ch.
 
 Pieces: `audio/usb_audio.{h,cpp}` (composite start + FIFO re-carve + status/push), `audio/usbd_composite.c`
 (composite class + config descriptor), `audio/usbd_desc_composite.c` (device + strings, PID `0x5752`),
@@ -335,8 +346,8 @@ The audio streaming logic moved to `usbd_audio_in.c` + `tt_audio_stream.h`; the 
 ⚠ **Power = 9 V jack, USB data-only** (USB power puts the front-end Vref out of spec). Reuses the
 drive-mode USB lore: voltage detector + ULPI-sleep-disable in `usb_audio_start()`, idle stays
 `Delay(1)` not `__WFI`. Bench guide + failure modes:
-`private/docs/debugging/daisy_usb_audio_2026-11-09/README.md`. **V2 (two inputs) = 6 ch** (adds CH B
-dry/wet).
+`private/docs/debugging/daisy_usb_audio_2026-11-09/README.md`. ✅ **V2 (two inputs) DONE 2026-11-22 (`74896d6`)
+— 5 ch** (MAIN mono + CH A dry/wet + CH B dry/wet; see the channel table above).
 
 ### Song mode — a set list on the card
 
