@@ -18,7 +18,7 @@ extern "C" {
 // The ring stores 24-bit precision regardless; only the wire packing + descriptor change with this.
 #define AUDIO_BITS          24U
 #define AUDIO_SUBFRAME      (AUDIO_BITS / 8U)         // bytes/sample on the wire: 2 or 3
-#define AUDIO_CHANNELS      4U                        // ch1/2 Main, ch3 Dry, ch4 Wet
+#define AUDIO_CHANNELS      5U                        // ch1 Main(mono) · ch2/3 CH A dry/wet · ch4/5 CH B dry/wet
 #define AUDIO_FREQ          48000U
 #define AUDIO_NOM_SAMPLES   48U                       // samples/frame nominal (async nudges ±1)
 #define AUDIO_MAX_SAMPLES   50U

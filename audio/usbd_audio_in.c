@@ -118,7 +118,8 @@ static inline int32_t f2i24(float x)
     return (int32_t)lrintf(x);
 }
 
-void usb_audio_push(const float *master, const float *dry, const float *wet, uint32_t n)
+void usb_audio_push(const float *master, const float *cha_dry, const float *cha_wet,
+                    const float *chb_dry, const float *chb_wet, uint32_t n)
 {
     if(!s_streaming) return;
     const uint32_t wr   = s_wr;
@@ -127,11 +128,11 @@ void usb_audio_push(const float *master, const float *dry, const float *wet, uin
     uint32_t w = wr;
     for(uint32_t i = 0; i < n; i++)
     {
-        const int32_t m = f2i24(master[i]);
-        s_ring[w++ & RING_MASK] = m;                   // ch1 MAIN
-        s_ring[w++ & RING_MASK] = m;                   // ch2 MAIN (dup)
-        s_ring[w++ & RING_MASK] = f2i24(dry[i]);       // ch3 DRY
-        s_ring[w++ & RING_MASK] = f2i24(wet[i]);       // ch4 WET
+        s_ring[w++ & RING_MASK] = f2i24(master[i]);    // ch1 MAIN (mono)
+        s_ring[w++ & RING_MASK] = f2i24(cha_dry[i]);   // ch2 CH A DRY
+        s_ring[w++ & RING_MASK] = f2i24(cha_wet[i]);   // ch3 CH A WET
+        s_ring[w++ & RING_MASK] = f2i24(chb_dry[i]);   // ch4 CH B DRY
+        s_ring[w++ & RING_MASK] = f2i24(chb_wet[i]);   // ch5 CH B WET
     }
     __DMB();
     s_wr = w;

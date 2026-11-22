@@ -19,16 +19,20 @@ extern "C" USBD_HandleTypeDef      hUsbDeviceFS;             // libDaisy's devic
 extern "C" PCD_HandleTypeDef       hpcd_USB_OTG_FS;
 
 // ⚠ Composite FS FIFO map, in 32-bit words (total ≤ 320 = the FS core's 1.25 KB). Audio TxFIFO3 is
-// sized for the 24-bit worst case (50 samples × 4 ch × 3 B = 600 B ≤ 608). Re-called in order after
-// USBD_Init so each SetTxFiFo recomputes its start address from the live registers (HAL behaviour).
-//   Rx 0x50(80)  Tx0 0x20(32)  Tx1/CDC-in 0x20(32)  Tx2/CDC-cmd 0x10(16)  Tx3/audio 0x98(152) = 312
+// sized for the 24-bit worst case; re-called in order after USBD_Init so each SetTxFiFo recomputes its
+// start address from the live registers (HAL behaviour).
+// ⚠ 5-CH RE-CARVE (2026-11-22): the audio packet grew 4ch→5ch 24-bit = 50×5×3 = 750 B = 188 words (0xBC),
+// so Rx and CDC-data were trimmed to fit: Rx 0x50→0x38 (56: reamp-OUT 150 B + setup + control, STM
+// min ≈54 — tight, but reamp-OUT only streams during a studio reamp, not plain recording), CDC-data
+// Tx1 0x20→0x18 (24: 64 B CDC packets fit).
+//   Rx 0x38(56)  Tx0 0x20(32)  Tx1/CDC-in 0x18(24)  Tx2/CDC-cmd 0x10(16)  Tx3/audio 0xBC(188) = 316 ≤ 320
 static void RecarveFifo(void)
 {
-    HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x50);
+    HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x38);
     HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x20);   // EP0 control
-    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x20);   // EP1 IN  = CDC data   (0x81)
+    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x18);   // EP1 IN  = CDC data   (0x81)
     HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x10);   // EP2 IN  = CDC cmd    (0x82)
-    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0x98);   // EP3 IN  = audio iso  (0x83)
+    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0xBC);   // EP3 IN  = audio iso  (0x83), 5ch×24bit = 750 B
 }
 
 bool usb_audio_start(void)

@@ -839,10 +839,12 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     if(opk > g_out_peak)
         g_out_peak = opk;
 
-    // ⚠ USB capture: ch 1/2 = MAIN (g_work, the final mix out to the jack), ch 3 = DRY (in[0]),
-    // ch 4 = WET (snapshot above). No-op unless the host is recording. Lock-free; never blocks.
+    // ⚠ USB capture (5-ch): ch1 MAIN (g_work, final mix) · ch2 CH A DRY (g_usb_dry) · ch3 CH A WET
+    // (g_usb_wet, snapshot above) · ch4 CH B DRY (raw AIN2 = in[1]) · ch5 CH B WET (⚠ = in[1] for now,
+    // placeholder until a CH B DSP chain exists — then snapshot its processed output here instead).
+    // No-op unless the host is recording. Lock-free; never blocks.
     if(usb_rec)
-        usb_audio_push(g_work, g_usb_dry, g_usb_wet, (uint32_t)size);
+        usb_audio_push(g_work, g_usb_dry, g_usb_wet, in[1], in[1], (uint32_t)size);
 
     // ⚠ Charged against the block PERIOD, not against wall time: what matters is the fraction of
     // each 1.33 ms slot this callback consumes, because that is what runs out.

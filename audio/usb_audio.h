@@ -1,13 +1,18 @@
 // audio/usb_audio.h — USB AUDIO INTERFACE MODE: the Trixie as a class-compliant USB soundcard INPUT.
 //
-// PHASE 1 (record-only, one-way: pedal -> Mac). A 4-channel UAC 1.0 recording device:
+// Record path (one-way: pedal -> Mac). A 5-channel UAC2 recording device (the "studio / recording"
+// multichannel mode — see [[project_usb_audio_routing_convention]]):
 //
-//     USB ch 1 / 2  =  MAIN   (the full mix out to the jack: processed guitar + looper + backing),
-//                      mono duplicated to the stereo pair
-//     USB ch 3      =  CH A DRY  (raw piezo, pre-DSP)
-//     USB ch 4      =  CH A WET  (processed guitar only: IR + EQ + comp + out, no looper/backing)
+//     USB ch 1  =  MAIN   (the full mix out to the jack: processed guitar + looper + backing) — MONO
+//     USB ch 2  =  CH A DRY  (raw piezo, pre-DSP)
+//     USB ch 3  =  CH A WET  (processed guitar only: IR + EQ + comp + out, no looper/backing)
+//     USB ch 4  =  CH B DRY  (raw CH B input = AIN2: mic / hi-Z instrument / stomp box)
+//     USB ch 5  =  CH B WET  (processed CH B — ⚠ PLACEHOLDER = dry until the CH B DSP chain lands)
 //
-// macOS is class-compliant for UAC 1.0, so it appears as a 4-in recording device with NO driver.
+// ⚠ MAIN is now MONO (was ch1/2 duplicated): collapsing it freed the FIFO/channel room for CH B d/w
+// at 24-bit (the FS core can't carry 6 ch × 24-bit). The host sees a 5-in device, no driver.
+// ⚠ FUTURE: a 2nd USB mode — plain 2-ch STEREO "streaming" (phones etc., likely no CDC/reamp) — is a
+// separate descriptor selected at boot with a USB replug (drive-mode pattern); not built yet.
 //
 // ⚠ INCREMENT 2 — now a COMPOSITE Audio+CDC device, always-on when plugged (no gesture). The CDC half
 // is libDaisy's own (console + command set unchanged); the audio half is a custom IN class. Both ride
@@ -38,10 +43,11 @@ bool     usb_audio_start(void);
 bool     usb_audio_configured(void);   // host enumerated + set a configuration
 bool     usb_audio_streaming(void);    // host selected alt-1 on the streaming interface (recording)
 
-// Called ONCE PER BLOCK from the audio callback with the three mono signals of the block.
-// master/dry/wet are float in [-1, 1]; n = block size (samples). No-op until the host is streaming.
+// Called ONCE PER BLOCK from the audio callback with the five mono signals of the block (the 5-ch map).
+// All are float in [-1, 1]; n = block size (samples). No-op until the host is streaming.
 // Lock-free SPSC: this is the only writer; the OTG IN interrupt is the only reader. Never blocks.
-void     usb_audio_push(const float* master, const float* dry, const float* wet, uint32_t n);
+void     usb_audio_push(const float* master, const float* cha_dry, const float* cha_wet,
+                        const float* chb_dry, const float* chb_wet, uint32_t n);
 
 uint32_t usb_audio_frames(void);       // iso IN frames transmitted (panel / diag)
 uint32_t usb_audio_underruns(void);    // frames sent short because the ring was empty
