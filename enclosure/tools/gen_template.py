@@ -143,6 +143,21 @@ s += _txt(TX(BOX_W/2), TY(e.LEDS[0][1])-4, "LED O3 x2 (shape-distinct)", 'dim')
 oc_x, oc_y = e.OLED_CTR
 s += _rect(TX(oc_x - e.OLED_W/2), TY(oc_y + e.OLED_H/2), e.OLED_W, e.OLED_H, sw=0.4)
 s += _txt(TX(oc_x), TY(oc_y + e.OLED_H/2 + 3), f"OLED {e.OLED_W:g}x{e.OLED_H:g}", 'dim')
+# OLED window RELIEF guides. The window is CUT, not drilled, so the template gives two aids INSIDE the
+# solid finished rectangle: a DASHED inner rough-cut line (offset in by the filing margin) and a ~O3
+# relief hole at each of its corners. Drill the 4 corner holes, Dremel along the dashed inner line,
+# then FILE the margin out to the solid window line (the finished edge). Dashed-vs-solid, not colour,
+# tells the two lines apart ([[user_colour_blind]]).
+_relief_d, _relief_inset = 3.0, 1.5
+s += _rect(TX(oc_x - e.OLED_W / 2 + _relief_inset), TY(oc_y + e.OLED_H / 2 - _relief_inset),
+           e.OLED_W - 2 * _relief_inset, e.OLED_H - 2 * _relief_inset, dash='2 1', sw=0.3)  # inner rough-cut
+for _sx in (-1, 1):
+    for _sy in (-1, 1):
+        _rx = oc_x + _sx * (e.OLED_W / 2 - _relief_inset)
+        _ry = oc_y + _sy * (e.OLED_H / 2 - _relief_inset)
+        s += _circ(TX(_rx), TY(_ry), _relief_d, dash='1 1')   # relief-hole Ø
+        s += _cross(TX(_rx), TY(_ry), 1.2)                    # punch point
+s += _txt(TX(oc_x), TY(oc_y) + 0.9, "rough-cut (file out)", 'dim')
 # OLED header ghost (module's 7-pin header, behind the window toward the back wall)
 hx, hy = e.OLED_HEADER
 s += _rect(TX(hx - e.OLED_HDR_W/2), TY(hy + e.OLED_HDR_H/2), e.OLED_HDR_W, e.OLED_HDR_H, stroke='#06c', dash='2 1', sw=0.3)
