@@ -3009,8 +3009,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("    lp.level    = %6.2f    [0..2]  looper playback", (double)looper_level());
         hw.PrintLine("    ch2gain     = %6.3f    [0..4]  CH B input gain (USB ch4/5 + meter)", (double)g_ch2_gain);
         hw.PrintLine("    pga         = %6d dB  (no HW gain on TAC5242 -- stub)", app_pga_db());
-        hw.PrintLine("    bypass=%s  tuner=%s", g_dsp_bypass ? "on" : "off",
-                     g_tuner_on ? "on" : "off");
+        hw.PrintLine("    bypass=%s  tuner=%s  phantom=%s", g_dsp_bypass ? "on" : "off",
+                     g_tuner_on ? "on" : "off", g_phantom_on ? "on" : "off");
         return;
     }
 
