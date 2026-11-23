@@ -31,6 +31,7 @@ static int    s_songs = 0;
 
 static char   s_boot[NAME_MAX] = "";
 static bool   s_gr = false, s_gr_set = false;
+static float  s_ch2gain = 1.f; static bool s_ch2gain_set = false; // CH B input gain default
 static bool   s_have_config = false;
 
 // --- small text helpers ----------------------------------------------------
@@ -122,6 +123,9 @@ static void parse_config(char *buf) {
                 s_have_config = true;
             } else if (strcmp(k, "gr_meter") == 0) {
                 s_gr = parse_bool(v); s_gr_set = true; s_have_config = true;
+            } else if (strcmp(k, "ch2gain") == 0) {
+                s_ch2gain = (float)atof(v); if (s_ch2gain < 0.f) s_ch2gain = 0.f;
+                s_ch2gain_set = true; s_have_config = true;
             }
         }
         if (!nl) break;
@@ -290,6 +294,7 @@ const char *tt_store_song_backing(int i)   { return (i >= 0 && i < s_songs) ? s_
 // --- public API ------------------------------------------------------------
 bool tt_store_load(void) {
     s_n = 0; s_songs = 0; s_have_config = false; s_gr = false; s_gr_set = false; s_boot[0] = 0;
+    s_ch2gain = 1.f; s_ch2gain_set = false;
 
     static char buf[32768];   // ⚠ was 8192: presets.txt outgrew it on 2026-09-18 (comments count)
     if (read_file("/tonetrix/config.txt",  buf, sizeof buf) >= 0) parse_config(buf);
@@ -311,10 +316,16 @@ bool tt_store_gr_meter(bool *was_set) {
     return s_gr;
 }
 
+float tt_store_ch2gain(bool *was_set) {
+    if (was_set) *was_set = s_ch2gain_set;
+    return s_ch2gain;
+}
+
 void tt_store_dump(void) {
     printf("sdcfg: config=%s", s_have_config ? "yes" : "no");
     if (s_boot[0])  printf(" boot_preset=%s", s_boot);
     if (s_gr_set)   printf(" gr_meter=%s", s_gr ? "on" : "off");
+    if (s_ch2gain_set) printf(" ch2gain=%.3f", (double)s_ch2gain);
     printf("\nsdcfg: presets=%d%s\n", s_n, s_n ? "" : " (using built-ins)");
     for (int i = 0; i < s_n; i++)
         printf("  %-16s ir=%s\n", s_sd[i].name, s_sd[i].ir ? s_sd[i].ir : "(keep)");

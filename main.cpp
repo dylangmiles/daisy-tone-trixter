@@ -662,6 +662,7 @@ static volatile float   g_live_level  = 1.f;   // live piezo gain into the chain
 static volatile float   g_reamp_level = 0.f;   // USB reamp inject gain (0 = off, normal play)
 static float            g_reamp_buf[kWorkMax]; // per-block reamp samples pulled from the OUT ring (DTCM)
 static float            g_usb_dry[kWorkMax] __attribute__((section(".sdram_bss"))); // USB ch3 DRY = chain input
+static float            g_chb[kWorkMax] __attribute__((section(".sdram_bss"))); // CH B after input gain (= in[1]*g_ch2_gain): USB ch4/5 + ch2 meter + ch2mon. In SDRAM like the other USB-capture buffers (keeps DTCM headroom for the stack)
 
 // ⚠ DRY-BLEND on the IR (2026-09-25). The body IR is 100% wet and kills the pick-on-string CLACK
 // along with the piezo quack. g_ir_dry (0..1, from the preset's ir.dry or the menu) mixes a
@@ -684,7 +685,8 @@ static volatile bool     g_clip_recent = false;   // sticky until the splash sho
 // live further down near the HP amp). g_ch2_mon sums raw AIN2 (in[1]) into the output to hear CH2;
 // g_ch2_peak is its input-level envelope for the `ch2` readout. See `phantom`/`ch2`/`ch2mon`.
 static volatile float    g_ch2_mon  = 0.f;   // CH2(AIN2) → output monitor gain, 0 = off
-static volatile float    g_ch2_peak = 0.f;   // CH2 input peak envelope (|in[1]|)
+static volatile float    g_ch2_gain = 1.f;   // CH B INPUT gain — scales in[1] into USB ch4/5 + the meter (`ch2gain`)
+static volatile float    g_ch2_peak = 0.f;   // CH2 input peak envelope (post-gain, matches what USB records)
 
 static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, size_t size)
 {
@@ -725,7 +727,8 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
             g_clips++;
             g_clip_recent = true;
         }
-        float a2 = fabsf(in[1][i]);             // CH2 peak -- cheap, always on (no CH2 chain yet)
+        g_chb[i] = in[1][i] * g_ch2_gain;       // CH B input gain, applied once; reused by USB/meter/ch2mon
+        float a2 = fabsf(g_chb[i]);             // CH2 peak (post-gain) -- cheap, always on (no CH2 chain yet)
         if(a2 > ch2pk)
             ch2pk = a2;
         // chain input = live piezo * live_level + USB reamp * reamp_level (unchanged = in[0] when off)
@@ -817,7 +820,7 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
     const float ch2g = g_ch2_mon;
     if(ch2g > 0.f)
         for(size_t i = 0; i < size; i++)
-            g_work[i] += in[1][i] * ch2g;
+            g_work[i] += g_chb[i] * ch2g;       // post-input-gain CH B
 
     // ⚠ TUNER MUTES THE OUTPUT, backing track included. That is what a tuner pedal does, and it is
     // what makes it usable on stage. Detection is unaffected: the tuner reads the INPUT, upstream of
@@ -840,11 +843,11 @@ static void AudioCb(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer out, 
         g_out_peak = opk;
 
     // ⚠ USB capture (5-ch): ch1 MAIN (g_work, final mix) · ch2 CH A DRY (g_usb_dry) · ch3 CH A WET
-    // (g_usb_wet, snapshot above) · ch4 CH B DRY (raw AIN2 = in[1]) · ch5 CH B WET (⚠ = in[1] for now,
-    // placeholder until a CH B DSP chain exists — then snapshot its processed output here instead).
+    // (g_usb_wet, snapshot above) · ch4 CH B DRY (g_chb = in[1] × ch2gain) · ch5 CH B WET (⚠ = g_chb for
+    // now, placeholder until a CH B DSP chain exists — then snapshot its processed output here instead).
     // No-op unless the host is recording. Lock-free; never blocks.
     if(usb_rec)
-        usb_audio_push(g_work, g_usb_dry, g_usb_wet, in[1], in[1], (uint32_t)size);
+        usb_audio_push(g_work, g_usb_dry, g_usb_wet, g_chb, g_chb, (uint32_t)size);
 
     // ⚠ Charged against the block PERIOD, not against wall time: what matters is the fraction of
     // each 1.33 ms slot this callback consumes, because that is what runs out.
@@ -1175,6 +1178,17 @@ static int FindBackingByName(const char* nm)
 }
 
 static void SelectPreset(int idx);
+// Crash-instrumentation breadcrumb phases + helpers (defined with the fault/watchdog block below, but
+// used earlier from the preset/IR/card-load path, so declared here).
+enum {
+    PH_IDLE        = 0,
+    PH_SD_READ     = 2,   // reading an IR WAV off the card (bit-bang SPI, blocking)
+    PH_IR_INIT     = 3,   // re-initialising the convolver under the running callback
+    PH_PRESET      = 4,   // inside SelectPreset (overall)
+    PH_CARD_RELOAD = 5,   // full card (re)load on insert
+};
+static inline void CrashPhase(uint32_t p);
+static inline void WatchdogKick(void);
 
 // Make song i current: stop whatever is playing, load its preset, engage the chain. Does NOT start
 // the backing -- that is PLAY's bypass tap, so a song is armed here and started on the beat.
@@ -1711,6 +1725,7 @@ static bool LoadIr(const char* name)
         snprintf(path, sizeof(path), "/tonetrix/ir/%s", name ? name : "");
 
     uint32_t rate = 0, avail = 0;
+    CrashPhase(PH_SD_READ); WatchdogKick();   // the blocking bit-bang SD read (prime suspect for the freeze)
     int      n    = wav_load_mono_f32(path, g_ir_buf, kIrMaxTaps, &rate, &avail);
     if(n <= 0)
     {
@@ -1743,6 +1758,7 @@ static bool LoadIr(const char* name)
     else
         g_ir_norm_applied = 1.0f;
 
+    CrashPhase(PH_IR_INIT); WatchdogKick();   // re-init under the running callback
     if(!g_convolver.init(kIrHeadBlock, kIrTailBlock, g_ir_buf, (size_t)n))
     {
         hw.PrintLine("  convolver init FAILED (out of memory?)");
@@ -1915,6 +1931,7 @@ static void SelectPreset(int idx)
     if(idx >= g_preset_count)
         idx = 0;
 
+    CrashPhase(PH_PRESET);   // breadcrumb: a crash/hang from here is in the preset load path
     g_ir_active = false;
     System::Delay(5);
 
@@ -1998,6 +2015,7 @@ void        app_preset_load(int i)      { SelectPreset(i); }
 // insert after boot) for sd_init to succeed -- a cold-boot-hung card needs a physical re-insert.
 static void ReloadCard(void)
 {
+    CrashPhase(PH_CARD_RELOAD); WatchdogKick();      // full card reload blocks the foreground for a while
     if(!sd_init())                                   // re-init the freshly-inserted card
     {
         g_sd_mounted = false;
@@ -2022,6 +2040,7 @@ static void ReloadCard(void)
     }
     backing_scan();
     IrScan();
+    { bool cg_set = false; float cg = tt_store_ch2gain(&cg_set); if(cg_set) g_ch2_gain = cg; } // CH B input gain default
     const char* boot = tt_store_boot_preset();
     int         idx  = (boot && *boot) ? dsp_chain_find_preset(boot) : 0;
     if(idx < 0)
@@ -2136,6 +2155,128 @@ static void RebootToDriveMode(void)
     NVIC_SystemReset();
 }
 
+// ---- Crash instrumentation: fault capture + watchdog + load-phase breadcrumb -------------------
+// An intermittent freeze (OLED frozen, USB dropped, needs power cycle) was traced to the preset/IR
+// load path. libDaisy's default fault handler is `bkpt` -- with no debugger it hangs forever and
+// leaves no clue. This turns a freeze into a self-report + auto-recover:
+//   (1) a CPU FAULT is caught, the fault registers + stacked PC/LR saved to RTC backup regs, board
+//       reset -> next boot prints the fault + faulting address (feed PC to addr2line).
+//   (2) a HANG (a blocking SD/I2C read that never returns -- no CPU fault, so no handler runs) is
+//       caught by the IWDG watchdog, which resets the board; the last load-phase breadcrumb (also an
+//       RTC backup reg, survives the reset) then names WHERE it hung.
+// Reuses the RTC-backup access from the `drive` flag above. BKP0R is the drive flag; the crash record
+// uses BKP1R..BKP7R. ⚠ The backup domain is already unlocked at boot (DriveFlagTakeIfSet ran first).
+static constexpr uint32_t kFaultMagic = 0xFA017000u;   // low byte carries the fault cause (1..4)
+
+// Load-phase breadcrumb (RTC->BKP7R): set before each blocking step so a watchdog reset can name it.
+// (The PH_* codes are declared up near the SelectPreset forward declaration.)
+static const char* CrashPhaseName(uint32_t p)
+{
+    switch(p)
+    {
+        case PH_SD_READ:     return "SD read (IR WAV)";
+        case PH_IR_INIT:     return "convolver init";
+        case PH_PRESET:      return "preset load";
+        case PH_CARD_RELOAD: return "card reload";
+        default:             return "idle";
+    }
+}
+static inline void CrashPhase(uint32_t p) { RTC->BKP7R = p; }
+
+// IWDG independent watchdog (~4 s). Once started it cannot be stopped; the monitor loop kicks it, and
+// the long blocking load steps kick it too, so a NORMAL slow load never trips -- only a true hang does.
+static void WatchdogStart(void)
+{
+    // ⚠ NO `while(IWDG1->SR){}` busy-wait here. SR (PVU/RVU) only clears once the IWDG's LSI clock is
+    // running, and libDaisy does not guarantee LSI is up at this point -- so that wait spun FOREVER and
+    // hung the boot on the screen before this call. Instead: write PR/RLR, then START (0xCCCC), which
+    // turns the LSI on and latches the values. No wait, no hang.
+    IWDG1->KR  = 0x5555;   // enable write access to PR/RLR
+    IWDG1->PR  = 6;        // LSI (~32 kHz) / 256 = 125 Hz
+    IWDG1->RLR = 1000;     // 1000 / 125 Hz = 8.0 s -- clears a legit card reload; the real hang is forever
+    IWDG1->KR  = 0xAAAA;   // reload with the new period
+    IWDG1->KR  = 0xCCCC;   // start (enables the LSI + the watchdog)
+}
+static inline void WatchdogKick(void) { IWDG1->KR = 0xAAAA; }
+
+// Fault capture. A naked trampoline grabs the active stack pointer (MSP/PSP per EXC_RETURN bit 2) and a
+// cause code, then tail-calls this. Stacked frame: r0..r3, r12, LR(5), PC(6), xPSR(7).
+extern "C" void tt_fault_capture(uint32_t* frame, uint32_t cause)
+{
+    BackupRegAccess();
+    RTC->BKP1R = kFaultMagic | (cause & 0xFFu);
+    RTC->BKP2R = SCB->CFSR;
+    RTC->BKP3R = SCB->HFSR;
+    RTC->BKP4R = frame[6];  // stacked return PC = the faulting instruction
+    RTC->BKP5R = frame[5];  // stacked LR
+    RTC->BKP6R = (SCB->CFSR & SCB_CFSR_BFARVALID_Msk) ? SCB->BFAR
+               : (SCB->CFSR & SCB_CFSR_MMARVALID_Msk) ? SCB->MMFAR : 0u;
+    __DSB();
+    NVIC_SystemReset();
+    for(;;) { }
+}
+// ⚠ libDaisy defines a STRONG `HardFault_Handler` (a `bkpt` hang) in system.cpp, so we can't override
+// the symbol at link. Instead we give our handlers private names and patch the VECTOR TABLE in RAM at
+// boot (VTOR), which sidesteps every link collision and catches HardFault too.
+#define TT_FAULT_TRAMP(name, cause)                   \
+    extern "C" __attribute__((naked)) void name(void) \
+    {                                                 \
+        __asm volatile(                               \
+            "tst lr, #4\n"                            \
+            "ite eq\n"                                \
+            "mrseq r0, msp\n"                         \
+            "mrsne r0, psp\n"                         \
+            "movs r1, #" #cause "\n"                  \
+            "b tt_fault_capture\n");                  \
+    }
+TT_FAULT_TRAMP(tt_hardfault,  1)
+TT_FAULT_TRAMP(tt_memmanage,  2)
+TT_FAULT_TRAMP(tt_busfault,   3)
+TT_FAULT_TRAMP(tt_usagefault, 4)
+
+// ⚠ APP_TYPE = BOOT_SRAM, so the app's vector table lives in SRAM (region RWX) and is WRITABLE. We
+// patch the four fault entries in place — no RAM copy, no VTOR move, no DTCM cost. Exception vector
+// indices: 3=HardFault 4=MemManage 5=BusFault 6=UsageFault.
+static void InstallFaultVectors(void)
+{
+    volatile uint32_t* vt = (volatile uint32_t*)SCB->VTOR;
+    vt[3] = (uint32_t)&tt_hardfault;
+    vt[4] = (uint32_t)&tt_memmanage;
+    vt[5] = (uint32_t)&tt_busfault;
+    vt[6] = (uint32_t)&tt_usagefault;
+    __DSB();
+    __ISB();
+    // Route bus/mem/usage faults to THEIR own vectors (ours) instead of escalating to HardFault.
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
+// At boot: print any crash record that survived a reset (fault, or an IWDG hang), then clear it.
+static void CrashReportAtBoot(void)
+{
+    BackupRegAccess();
+    const uint32_t rec = RTC->BKP1R;
+    if((rec & 0xFFFFFF00u) == kFaultMagic)
+    {
+        static const char* kNames[] = { "?", "HardFault", "MemManage", "BusFault", "UsageFault" };
+        const uint32_t c = rec & 0xFFu;
+        hw.PrintLine("⚠ RECOVERED FROM FAULT: %s  PC=0x%08lX LR=0x%08lX",
+                     c <= 4 ? kNames[c] : "?", (unsigned long)RTC->BKP4R, (unsigned long)RTC->BKP5R);
+        hw.PrintLine("   CFSR=0x%08lX HFSR=0x%08lX FAR=0x%08lX  phase=%s",
+                     (unsigned long)RTC->BKP2R, (unsigned long)RTC->BKP3R,
+                     (unsigned long)RTC->BKP6R, CrashPhaseName(RTC->BKP7R));
+        hw.PrintLine("   -> arm-none-eabi-addr2line -e build/tone_trixter_daisy.elf 0x%08lX",
+                     (unsigned long)RTC->BKP4R);
+        RTC->BKP1R = 0;
+    }
+    else if(RCC->RSR & RCC_RSR_IWDG1RSTF)
+    {
+        hw.PrintLine("⚠ RECOVERED FROM HANG (watchdog): last phase = %s", CrashPhaseName(RTC->BKP7R));
+        hw.PrintLine("   foreground blocked >4 s with no CPU fault -- a stuck blocking call");
+    }
+    RCC->RSR |= RCC_RSR_RMVF;   // clear the reset-cause flags so the next boot reads clean
+    CrashPhase(PH_IDLE);
+}
+
 static void PrintFullReport();
 
 static void HandleCommand(const char* line)
@@ -2177,7 +2318,8 @@ static void HandleCommand(const char* line)
         hw.PrintLine("  tuner on|off      tuner");
         hw.PrintLine(" -- CH B / XLR bring-up --");
         hw.PrintLine("  phantom on|off    48 V phantom enable (D26) -- NO dynamic/ribbon mic!");
-        hw.PrintLine("  ch2               CH2 (AIN2) input peak/dBFS + phantom + monitor state");
+        hw.PrintLine("  ch2               CH2 (AIN2) input peak/dBFS + phantom + gain + monitor state");
+        hw.PrintLine("  ch2gain <g>       CH B input gain into USB ch4/5 + meter (persist: config.txt ch2gain)");
         hw.PrintLine("  ch2mon <gain>     sum raw CH2 into the main out to hear it (0 = off)");
         hw.PrintLine("  gr on|off         GR band on the home screen");
         hw.PrintLine("  meters on|off     home meter repaints (off = quiet I2C)");
@@ -2409,6 +2551,15 @@ static void HandleCommand(const char* line)
                      g_phantom_on ? "  -- NO dynamic/ribbon mic connected!" : "");
         return;
     }
+    if(strncmp(line, "ch2gain", 7) == 0)     // CH B INPUT gain — scales AIN2 into USB ch4/5 + the meter
+    {
+        if(line[7] == ' ')
+            g_ch2_gain = (float)atof(line + 8);
+        if(g_ch2_gain < 0.f) g_ch2_gain = 0.f;
+        hw.PrintLine("CH B input gain = %.3f  (scales AIN2 into USB ch4/5 + the ch2 meter; persist in config.txt as ch2gain)",
+                     (double)g_ch2_gain);
+        return;
+    }
     if(strncmp(line, "ch2mon", 6) == 0)      // CH2 (AIN2) raw monitor into the main out; arg = gain
     {
         if(line[6] == ' ')
@@ -2420,8 +2571,9 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "ch2") == 0)             // CH2 input level -- a signal here needs no mic to see
     {
         float db = g_ch2_peak > 1e-6f ? 20.f * log10f(g_ch2_peak) : -120.f;
-        hw.PrintLine("CH2 (AIN2) peak = %.4f  (%.1f dBFS)   phantom=%s   mon=%.2f",
-                     (double)g_ch2_peak, (double)db, g_phantom_on ? "ON" : "off", (double)g_ch2_mon);
+        hw.PrintLine("CH2 (AIN2) peak = %.4f  (%.1f dBFS)   phantom=%s   gain=%.3f   mon=%.2f",
+                     (double)g_ch2_peak, (double)db, g_phantom_on ? "ON" : "off",
+                     (double)g_ch2_gain, (double)g_ch2_mon);
         return;
     }
     if(strncmp(line, "tunerdbg ", 9) == 0)
@@ -2855,6 +3007,7 @@ static void HandleCommand(const char* line)
                      (double)dsp_chain_byp_level());
         hw.PrintLine("    bk.level    = %6.2f    [0..2]  backing bed", (double)backing_level());
         hw.PrintLine("    lp.level    = %6.2f    [0..2]  looper playback", (double)looper_level());
+        hw.PrintLine("    ch2gain     = %6.3f    [0..4]  CH B input gain (USB ch4/5 + meter)", (double)g_ch2_gain);
         hw.PrintLine("    pga         = %6d dB  (no HW gain on TAC5242 -- stub)", app_pga_db());
         hw.PrintLine("    bypass=%s  tuner=%s", g_dsp_bypass ? "on" : "off",
                      g_tuner_on ? "on" : "off");
@@ -3047,6 +3200,7 @@ static void UsbDriveMode(void)
 int main(void)
 {
     hw.Init();
+    InstallFaultVectors();   // in-place VTOR patch → our fault handlers (capture CFSR/PC on a CPU fault)
 
     // ⚠ USB DRIVE MODE is decided FIRST -- before the CDC logger takes the USB port. Either the encoder
     // gesture at power-up, OR the `drive` command set the reset-surviving flag before resetting us here.
@@ -3093,6 +3247,8 @@ int main(void)
     hw.PrintLine(" Tone Trixter -- Daisy Seed3 bring-up");
     hw.PrintLine(" built " __DATE__ " " __TIME__);
     hw.PrintLine("=============================================");
+
+    CrashReportAtBoot();     // print + clear any watchdog/fault record that survived the last reset
 
     int failures = 0;
 
@@ -3320,6 +3476,9 @@ int main(void)
             if(pr && g_preset_count > 0)
                 dsp_chain_install_presets(pr, g_preset_count);
 
+            { bool cg_set = false; float cg = tt_store_ch2gain(&cg_set);
+              if(cg_set) { g_ch2_gain = cg; hw.PrintLine("  CH B input gain (config) = %.3f", (double)cg); } }
+
             // Pick the boot preset, falling back to the FIRST one if the name is not found --
             // a config naming a preset that does not exist should not mean no preset at all.
             const char* boot = tt_store_boot_preset();
@@ -3389,8 +3548,14 @@ int main(void)
     bool     cd_last = !cd_pin.Read();          // CD active-low: low = card present
     uint32_t cd_next = last_blink + 500;
 
+    // Start the watchdog only now -- all the long boot-time card work above is done, so it can't trip
+    // on a slow boot. From here a foreground hang >8 s resets the board (and the breadcrumb names it).
+    WatchdogStart();
+
     while(true)
     {
+        WatchdogKick();            // foreground alive -> pet the dog
+        CrashPhase(PH_IDLE);       // breadcrumb: nothing risky in progress
         uint32_t t = System::GetNow();
 
         for(size_t i = 0; i < kNumInputs; i++)

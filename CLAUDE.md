@@ -610,7 +610,14 @@ in front of it in `HandleCommand()`.
 `help` · `status` · `presets` · `preset <n|name>` · `bypass on|off` · `tuner on|off` · `gr on|off` ·
 `bk` · `bk <n>|off` · `bklevel <0..2>` · `lplevel <0..2>` · `irdry <0..1>` · `irs` · `ir <name>` ·
 `irfreq` · `ircomb` · `irtaps` · `iron on|off` · `fsend <path>` · `reamp` · `reampmix <live> <reamp>` ·
+`phantom on|off` · `ch2` · `ch2gain <g>` · `ch2mon <gain>` ·
 `usbstat` · `heartbeat on|off` · `drive` · `dfu` — plus every `dsp_chain` command.
+
+⚠ **`ch2gain <g>`** is the **CH B input gain** (default 1.0): scales the raw AIN2 into USB ch4/5 **and
+recordings** + the `ch2` meter (one `g_chb = in[1]*g_ch2_gain` buffer, reused by the USB push, the
+peak readout and `ch2mon`). Persisted as a GLOBAL default via `config.txt` `ch2gain:` (not per-preset —
+it's a hardware channel balance), applied on every card (re)load; also printed in the `dump` board
+section as `ch2gain`. The studio's **CH B tab** drives it live and seeds its slider from the dump.
 
 ⚠ **`drive`** reboots the pedal INTO USB drive mode from software (for the studio's one-click Sync),
 so the card can be written without the encoder-hold-at-boot gesture. It sets a reset-surviving flag

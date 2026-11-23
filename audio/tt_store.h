@@ -32,6 +32,7 @@ const Preset *tt_store_presets(int *n_out);
 // telling the caller whether config.txt actually specified it.
 const char *tt_store_boot_preset(void);
 bool        tt_store_gr_meter(bool *was_set);
+float       tt_store_ch2gain(bool *was_set); // CH B input gain default (1.0 if unset)
 
 // /tonetrix/songs.txt -- SONG MODE. A song is a name, a preset (by name) and a backing track (a
 // file in /tonetrix/backing, or "none"). Parsed by tt_store_load(); count 0 when the file is absent.
