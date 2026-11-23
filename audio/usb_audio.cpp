@@ -25,13 +25,17 @@ extern "C" PCD_HandleTypeDef       hpcd_USB_OTG_FS;
 // so Rx and CDC-data were trimmed to fit: Rx 0x50→0x38 (56: reamp-OUT 150 B + setup + control, STM
 // min ≈54 — tight, but reamp-OUT only streams during a studio reamp, not plain recording), CDC-data
 // Tx1 0x20→0x18 (24: 64 B CDC packets fit).
-//   Rx 0x38(56)  Tx0 0x20(32)  Tx1/CDC-in 0x18(24)  Tx2/CDC-cmd 0x10(16)  Tx3/audio 0xBC(188) = 316 ≤ 320
+// ⚠ REAMP-OUT HEADROOM (2026-11-23): 56-word Rx starved the reamp iso-OUT after the 5ch recarve (no WET
+// came back during a studio reamp, graphs flat). Give Rx +12 words = the 4 spare + 8 from the CDC-cmd
+// (interrupt) EP, which only sends ~10 B SERIAL_STATE notifications so 8 words is ample. Audio IN + CDC
+// data keep their full FIFOs.
+//   Rx 0x44(68)  Tx0 0x20(32)  Tx1/CDC-in 0x18(24)  Tx2/CDC-cmd 0x08(8)  Tx3/audio 0xBC(188) = 320 ≤ 320
 static void RecarveFifo(void)
 {
-    HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x38);
+    HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x44);      // shared OUT: reamp-OUT + EP0 + CDC data (+12 words)
     HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x20);   // EP0 control
     HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x18);   // EP1 IN  = CDC data   (0x81)
-    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x10);   // EP2 IN  = CDC cmd    (0x82)
+    HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x08);   // EP2 IN  = CDC cmd    (0x82), tiny notifications
     HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0xBC);   // EP3 IN  = audio iso  (0x83), 5ch×24bit = 750 B
 }
 
