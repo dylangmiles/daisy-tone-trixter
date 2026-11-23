@@ -16,8 +16,12 @@
 #include <math.h>
 
 // ---- lock-free SPSC ring (producer = audio callback; consumer = OTG IN interrupt) -----------------
-// int32 words, 24-bit-scaled samples. 8192 words = 32 KB in SDRAM (DTCM is full; see g_usb_wet).
-#define RING_WORDS         8192U
+// int32 words, 24-bit-scaled samples. ⚠ Capacity is RING_WORDS / AUDIO_CHANNELS FRAMES, so the 5ch
+// recarve cut it from 8192/4 = 2048 to 8192/5 = 1638 frames — less overflow headroom, which let the ring
+// drop 64-sample blocks (overrun) / hard-re-center under load, each a single-sample STEP = an audible
+// click (bit 2026-11-23, caught in a studio recording). Doubled to 16384 (power-of-2 for the mask) →
+// 16384/5 = 3276 frames, more headroom than 4ch ever had. 64 KB in SDRAM (64 MB free), trivial.
+#define RING_WORDS         16384U
 #define RING_MASK          (RING_WORDS - 1U)
 static int32_t  s_ring[RING_WORDS] __attribute__((section(".sdram_bss")));
 static volatile uint32_t  s_wr, s_rd;
