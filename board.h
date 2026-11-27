@@ -54,6 +54,17 @@ constexpr uint8_t kSdSck  = 6; // D6  PCB CLK  (SCK)    (was D4 — perfboard)
 constexpr uint8_t kSdMiso = 4; // D4  PCB DAT0 (MISO)   (was D6 — perfboard)
 constexpr uint8_t kSdCd   = 7; // D7  PCB card detect
 
+// ---------------------------------------------------------------- microSD VDD power switch (Rev A bodge)
+// Rev A COLD-BOOT FIX (= Rev B #6, firmware-switched SD VDD, done on Rev A). A logic-level P-channel
+// MOSFET high-side switch sits in the SD VDD line: SOURCE = +3V3D, DRAIN = DM3AT pad 4 (the +3V3D
+// track to pad 4 is CUT, so the card's VDD is fed only through the FET). D28 drives the gate via R_g
+// 1k, with R_gs 100k gate->source. ⚠ ACTIVE LOW: GPIO LOW pulls the gate below source => FET ON =>
+// card POWERED; GPIO HIGH or FLOATING (reset) => gate = source => FET OFF => card UNPOWERED. So the
+// card is held off through the cold-boot inrush (the POR-latch window) and firmware powers it up
+// cleanly once the rails settle. Also enables a full VDD power-cycle recovery for a hung card at
+// runtime. See private/docs/sd_coldboot_bodge_revA.md.
+constexpr uint8_t kSdPwrEn = 28; // D28 (connector pin 35, NC on the PCB) — SD VDD enable, ACTIVE LOW (LOW = on)
+
 // ---------------------------------------------------------------- CH B / XLR 48 V phantom
 // PH_EN net: D26/PD11 → 1k series → 2N7002 gate → pulls the AO3401 P-FET gate low → LM2577 boost
 // input powered → 48 V phantom ON. Drive HIGH = phantom ON; LOW/float = OFF (a 100k gate pulldown

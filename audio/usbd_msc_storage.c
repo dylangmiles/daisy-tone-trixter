@@ -45,6 +45,11 @@ static int8_t STORAGE_IsWriteProtected(uint8_t lun)
 static int8_t STORAGE_Read(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len)
 {
     (void)lun;
+#ifdef TT_SD_SDMMC
+    if (!sd_read_blocks(blk_addr, buf, blk_len)) { g_msc_errors++; return -1; }
+    g_msc_reads += blk_len;
+    return 0;
+#endif
     for (uint16_t i = 0; i < blk_len; i++)
     {
         if (!sd_read_block(blk_addr + i, buf + 512u * i))

@@ -47,6 +47,15 @@ void     sd_set_offline(void);                   // mark not-ready (card pulled)
 void     sd_set_verbose(bool v);                 // print a CMD0/CMD8/ACMD41 init trace
 void     sd_pin_check(void);                      // DISCONNECT module first: float/short test on GP6/8/9/10
 
+#ifdef TT_SD_SDMMC
+// Native SDMMC1 driver only (audio/sd_sdmmc.c, `make SD_SDMMC=1`). It has the same API as above,
+// plus a true multi-block read (CMD18), which is where the speed comes from. sd_spi.c stays
+// byte-identical to the Pico build, so callers use this under the same #ifdef and fall back to
+// sd_read_block() loops otherwise.
+bool     sd_read_blocks(uint32_t lba, uint8_t *dst, uint32_t n);
+uint32_t sd_last_error(void);                    // last HAL_SD ErrorCode (0 = none)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

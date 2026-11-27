@@ -436,6 +436,21 @@ overdub that did not start at the loop top.
 
 ### ⚠ Why bit-banged, and why not libDaisy's FatFSInterface
 
+⚠ **UPDATE 2026-11-27: the Rev A PCB CAN do SDMMC.** It routes all six SD lines to D1..D6 = SDMMC1
+(DAT3/DAT2/DAT1/DAT0/CMD/CLK, from the netlist). The text below describes the SUPERSEDED perfboard. An
+**experimental native driver** is in `audio/sd_sdmmc.c` (same API as `sd_spi.h`, plus multi-block
+`sd_read_blocks`). It's selected with **`make SD_SDMMC=1`**; the default build is still bit-bang. Bring-up knobs
+are `SD_SDMMC_DIV=8` (12.5 MHz) and `SD_SDMMC_1BIT=1`. Changing any of these flags auto-cleans `build/`, so pass the
+same flags to `program-dfu`. Notes:
+- It's polled (no DMA, so any RAM works and it's ISR-safe for MSC), with hardware flow control on and internal
+  pull-ups on CMD/DAT0..3.
+- The bit-bang CMD0 diagnostics (`TestSd` CMD0, `sdpu`, `sdreset`, `sdmiso`) are gated off in this build: a CMD0
+  with DAT3 low drops the card into SPI mode until the next VDD cycle.
+- The goal is recording on the pedal plus a fast FAT scan for macOS auto-mount.
+- ✅ **Bench, 2026-11-27, first try at 4-bit / 25 MHz:** it identified the card (SDHC, 30,000 MB) and FatFs
+  mounted it with all presets/IRs/backing/songs. In **drive mode the Mac AUTO-MOUNTS the full 31 GB card**,
+  which the bit-bang build never managed (the FSKit ~30 s FAT-scan timeout).
+
 **SDMMC is impossible on this board.** The Daisy's SDMMC `CMD` line is **D5**, which the layout wires
 to the microSD module's **GND** (row 15, cut and jumpered). The breakout's fixed pin order also
 matches no SPI instance. Hence bit-bang, exactly as §3b specified.

@@ -72,6 +72,26 @@ C_INCLUDES += -Iaudio/usbd_override -I. -Ilib/FFTConvolver \
 LIBDAISY_DIR ?= /Users/dylan/dev/sdk/daisy/libDaisy
 DAISYSP_DIR  ?= /Users/dylan/dev/sdk/daisy/DaisySP
 
+# SD DRIVER SWITCH. Default SD_SDMMC=1 = audio/sd_sdmmc.c, the STM32's native SDMMC1 on a 4-bit bus
+# (default since 2026-11-27, bench-verified ~6 MB/s). `make SD_SDMMC=0` = the old bit-bang SPI driver (sd_spi.c, ~166 KB/s).
+# The Rev A PCB routes all six SD lines to D1..D6 = SDMMC1, and it is ~20-60x faster.
+#   SD_SDMMC_DIV=8   slower bus clock (default 4 = 25 MHz; 8 = 12.5 MHz) for bring-up
+#   SD_SDMMC_1BIT=1  1-bit bus (DAT0 only) for bring-up
+# Pass the same flags to `make program-dfu`. Switching the flag auto-cleans build/ (see the stamp below),
+# because main.cpp and the diskio/MSC files compile differently under it.
+SD_SDMMC      ?= 1
+SD_SDMMC_DIV  ?= 4
+SD_SDMMC_1BIT ?= 0
+ifeq ($(SD_SDMMC),1)
+C_SOURCES := $(filter-out audio/sd_spi.c,$(C_SOURCES)) audio/sd_sdmmc.c
+C_DEFS    += -DTT_SD_SDMMC -DTT_SDMMC_CLKDIV=$(SD_SDMMC_DIV) -DTT_SDMMC_1BIT=$(SD_SDMMC_1BIT)
+endif
+SD_DRIVER_ID := sdmmc=$(SD_SDMMC),div=$(SD_SDMMC_DIV),1bit=$(SD_SDMMC_1BIT)
+ifneq ($(shell cat build/.sd_driver 2>/dev/null),$(SD_DRIVER_ID))
+$(info SD driver config changed -> $(SD_DRIVER_ID): cleaning build/)
+$(shell rm -rf build && mkdir -p build && echo '$(SD_DRIVER_ID)' > build/.sd_driver)
+endif
+
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
 

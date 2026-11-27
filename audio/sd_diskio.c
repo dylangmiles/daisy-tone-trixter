@@ -35,6 +35,9 @@ static DSTATUS tt_sd_initialize(BYTE lun)
 static DRESULT tt_sd_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
     (void)lun;
+#ifdef TT_SD_SDMMC
+    return sd_read_blocks((uint32_t)sector, buff, count) ? RES_OK : RES_ERROR;   // one CMD18
+#endif
     for(UINT i = 0; i < count; i++)
         if(!sd_read_block((uint32_t)sector + i, buff + (size_t)i * 512))
             return RES_ERROR;

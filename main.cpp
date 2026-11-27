@@ -451,6 +451,10 @@ extern "C" uint32_t sd_sector_count(void);
 extern "C" bool     sd_is_ready(void);
 extern "C" void     sd_set_offline(void);   // card-reader drive mode: mark not-ready on card removal
 extern "C" void     sd_pin_check(void);   // float/short test on the SD lines (for the `sdpins` command)
+#ifdef TT_SD_SDMMC
+extern "C" void     sd_set_verbose(bool v);
+extern "C" uint32_t sd_last_error(void);   // native SDMMC driver only (audio/sd_sdmmc.c)
+#endif
 // Raw GPIO shim (same path the SD bit-bang uses) -- for the `pindrive` static drive test.
 extern "C" void     tt_shim_gpio_init(uint32_t pin);
 extern "C" void     tt_shim_gpio_set_dir(uint32_t pin, int out);
@@ -1037,6 +1041,25 @@ static uint8_t SdByte(uint8_t out)
 
 static bool TestSd()
 {
+#ifdef TT_SD_SDMMC
+    // ⚠ SDMMC build: NO bit-bang CMD0. A CMD0 with CS (= DAT3) low drops the card into SPI mode until
+    // the next VDD power cycle, which would make the native driver fail. Run a real SD-mode identify.
+    {
+        static GPIO cd;
+        cd.Init(tt::P(tt::kSdCd), GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        System::Delay(10);
+        g_sd_cd = cd.Read();
+        hw.PrintLine("  card detect (D%d): %s", tt::kSdCd, g_sd_cd ? "HIGH" : "LOW");
+        sd_set_verbose(true);                    // prints type / size / bus width / divider
+        const bool ok = sd_init();
+        sd_set_verbose(false);
+        g_sd_r1 = ok ? 0x01 : 0xFF;              // keep `status` semantics: 0x01 = card alive
+        if(!ok)
+            hw.PrintLine("  SDMMC identify FAILED (err=0x%08lX) -- no card, or try SD_SDMMC_DIV=8 / SD_SDMMC_1BIT=1",
+                         (unsigned long)sd_last_error());
+        return ok;
+    }
+#endif
     sd_cs.Init(tt::P(tt::kSdCs), GPIO::Mode::OUTPUT);
     sd_sck.Init(tt::P(tt::kSdSck), GPIO::Mode::OUTPUT);
     sd_mosi.Init(tt::P(tt::kSdMosi), GPIO::Mode::OUTPUT);
@@ -2013,15 +2036,76 @@ void        app_preset_load(int i)      { SelectPreset(i); }
 // and re-inits the convolver (via SelectPreset), a brief dropout exactly like a preset switch. Fine
 // at setup time, which is when a card gets inserted. The card must have had a clean power-up (an
 // insert after boot) for sd_init to succeed -- a cold-boot-hung card needs a physical re-insert.
+// ---- microSD VDD power switch (Rev A cold-boot bodge — board.h kSdPwrEn / D28) ----------------------
+// A GPIO-switched high-side P-FET powers the card. ⚠ ACTIVE LOW: LOW = card ON, HIGH/float = OFF. The
+// card is held OFF through the cold-boot inrush by the FET's 100k gate->source at reset, so its
+// power-on reset cannot latch; firmware then powers it up cleanly once the rails are stable. A full
+// VDD power-cycle also recovers a hung card at runtime -- the Rev B win. See
+// private/docs/sd_coldboot_bodge_revA.md.
+static GPIO g_sd_pwr;
+static bool g_sd_pwr_ready = false;
+
+static void SdPowerOn(void)
+{
+    if(!g_sd_pwr_ready) { g_sd_pwr.Init(tt::P(tt::kSdPwrEn), GPIO::Mode::OUTPUT); g_sd_pwr_ready = true; }
+    g_sd_pwr.Write(false);   // LOW  = FET on  = card powered
+}
+
+static void SdPowerOff(void)
+{
+    if(!g_sd_pwr_ready) { g_sd_pwr.Init(tt::P(tt::kSdPwrEn), GPIO::Mode::OUTPUT); g_sd_pwr_ready = true; }
+    g_sd_pwr.Write(true);    // HIGH = FET off = card unpowered
+}
+
+// ⚠ Drive the host-driven SD lines (CS/SCK/MOSI) LOW so they stop PHANTOM-POWERING the card through its
+// input clamp diodes while VDD is switched off. Left high (idle) they hold pad 4 at ~2.8 V even with the
+// FET off, so the card never fully resets; pulling them low lets VDD actually collapse. MISO is set to a
+// plain input (no pull) so it adds no leak and never contends with the card's output. ⚠ After this the
+// SPI pins are NOT usable -- the caller must sd_init() to re-arm them before touching the card again.
+static void SdLinesLow(void)
+{
+    static GPIO cs, sck, mosi, miso;
+    cs.Init(tt::P(tt::kSdCs),     GPIO::Mode::OUTPUT); cs.Write(false);
+    sck.Init(tt::P(tt::kSdSck),   GPIO::Mode::OUTPUT); sck.Write(false);
+    mosi.Init(tt::P(tt::kSdMosi), GPIO::Mode::OUTPUT); mosi.Write(false);
+    miso.Init(tt::P(tt::kSdMiso), GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+#ifdef TT_SD_SDMMC
+    // SDMMC build: DAT1 (D3) and DAT2 (D2) are pulled up too, so they would phantom-power the card as well.
+    static GPIO dat1, dat2;
+    dat1.Init(DaisySeed::GetPin(3), GPIO::Mode::OUTPUT); dat1.Write(false);
+    dat2.Init(DaisySeed::GetPin(2), GPIO::Mode::OUTPUT); dat2.Write(false);
+#endif
+}
+
+// Full VDD power-cycle: idle the data lines low (kill phantom power), drop VDD long enough for a real
+// power-on reset, then power back up. ⚠ Caller MUST sd_init() afterwards to re-arm the SPI pins.
+// ⚠ With no bleed across C_out the 10 uF discharges only through the card's own (shrinking) draw once
+// phantom power is gone, so the OFF delay is generous; a ~4k7 pad4->GND bleed would make it crisp and
+// guaranteed. See private/docs/sd_coldboot_bodge_revA.md.
+static void SdPowerCycle(void)
+{
+    SdLinesLow();            // stop the data lines back-feeding the card
+    SdPowerOff();            // FET off -- now VDD can actually fall
+    System::Delay(150);      // let C_out + the card bleed down through the POR threshold
+    SdPowerOn();             // FET on
+    System::Delay(10);       // VDD rise + the card's own power-on reset
+}
+
 static void ReloadCard(void)
 {
     CrashPhase(PH_CARD_RELOAD); WatchdogKick();      // full card reload blocks the foreground for a while
     if(!sd_init())                                   // re-init the freshly-inserted card
     {
-        g_sd_mounted = false;
-        snprintf(g_sd_status, sizeof(g_sd_status), "card insert: sd_init failed (re-insert)");
-        hw.PrintLine("  card insert: sd_init failed -- re-insert to power-cycle it");
-        return;
+        // Rev A bodge: instead of needing a physical re-insert, give the card a real VDD power-cycle
+        // in firmware (the Rev B win) and retry once.
+        SdPowerCycle();
+        if(!sd_init())
+        {
+            g_sd_mounted = false;
+            snprintf(g_sd_status, sizeof(g_sd_status), "card insert: sd_init failed (after power-cycle)");
+            hw.PrintLine("  card insert: sd_init failed even after a VDD power-cycle");
+            return;
+        }
     }
     if(f_mount(&g_fs, g_sd_path, 1) != FR_OK)        // opt=1 forces a fresh BPB read (handles a swap)
     {
@@ -2688,6 +2772,15 @@ static void HandleCommand(const char* line)
                      path, (unsigned long)total, (unsigned long)dt, (double)kbps, passes);
         return;
     }
+#ifdef TT_SD_SDMMC
+    // ⚠ These bit-bang a CMD0 with CS low, which puts the card into SPI mode until VDD is cycled.
+    // That would break the native SDMMC driver, so they're refused in this build.
+    if(strcmp(line, "sdpu") == 0 || strcmp(line, "sdreset") == 0 || strcmp(line, "sdmiso") == 0)
+    {
+        hw.PrintLine("%s: bit-bang SPI diagnostic -- not available in the SDMMC build (it would switch the card to SPI mode)", line);
+        return;
+    }
+#endif
     if(strcmp(line, "sdpins") == 0)   // SD line float/short test -- REMOVE the card first.
     {                                 // toggles each SD pin's internal pull + checks it follows:
         sd_pin_check();               // a pin that won't follow = shorted or claimed by another peripheral.
@@ -2696,6 +2789,16 @@ static void HandleCommand(const char* line)
     if(strcmp(line, "sdcheck") == 0)  // re-run the boot microSD test (CMD0) LIVE -- re-seat a card then run this.
     {                                 // avoids a power-cycle whose boot report is lost before CDC enumerates.
         TestSd();                     // prints card-detect + CMD0 and updates the cached status `status` shows.
+        return;
+    }
+    if(strncmp(line, "sdpower", 7) == 0)  // Rev A bodge: switch the SD VDD FET (D28). `sdpower on|off|cycle`.
+    {
+        const char* a = line + 7;
+        while(*a == ' ') a++;
+        if(strcmp(a, "off") == 0)        { SdLinesLow(); SdPowerOff(); hw.PrintLine("sdpower: SD VDD OFF (D28 HIGH, data lines low -- card fully depowered)"); }
+        else if(strcmp(a, "cycle") == 0) { SdPowerCycle(); sd_init();  hw.PrintLine("sdpower: SD VDD power-cycled (lines low, off 150ms, on) + re-init"); }
+        else                             { SdPowerOn(); sd_init();     hw.PrintLine("sdpower: SD VDD ON (D28 LOW) + re-init"); }
+        hw.PrintLine("  (then `sdcheck` to re-read CMD0 -- 0x01 = card alive; after `off`, use `sdpower on` to restore)");
         return;
     }
     if(strcmp(line, "sdscope") == 0)  // loop sd_init continuously (~8 s) so SCK/MOSI/CS/MISO REPEAT for a scope.
@@ -3117,8 +3220,10 @@ static void UsbDriveMode(void)
     };
 
     // ⚠ CARD-READER BEHAVIOUR (2026-11-20). Do NOT demand a working card at entry. On Rev A the card's
-    // power-on reset hangs when it powers up on the shared +3V3D rail at cold boot (pcb_rev_b_backlog #6);
-    // only a physical re-insert power-cycles it. So this mounts like a USB card reader: enumerate with no
+    // power-on reset hangs when it powers up on the shared +3V3D rail at cold boot (pcb_rev_b_backlog #6).
+    // ✅ The Rev A bodge (D28 SD-VDD load switch) now powers the card up cleanly BEFORE this runs (main()
+    // switches it on after the inrush), so a cold-booted card mounts here without a physical re-insert.
+    // Without the bodge, only a physical re-insert power-cycles it. So this mounts like a USB card reader: enumerate with no
     // media and run sd_init() when a card is (re-)inserted -- a fresh insert powers up clean because the
     // SPI lines are already driven. A card already good at entry (insert-after-boot, or Rev B's load
     // switch) mounts immediately. The MSC storage callbacks gate on sd_is_ready(), so the host just polls
@@ -3201,6 +3306,14 @@ int main(void)
 {
     hw.Init();
     InstallFaultVectors();   // in-place VTOR patch → our fault handlers (capture CFSR/PC on a CPU fault)
+
+    // ⚠ POWER THE microSD BEFORE ANYTHING TOUCHES IT (Rev A cold-boot bodge, D28 / kSdPwrEn). The card
+    // was held OFF through the power-on inrush by the bodge FET's gate->source resistor, so its POR
+    // could not latch; now the rails are stable, so switch it on cleanly. ⚠ Must precede BOTH the
+    // USB-drive-mode sd_init() just below AND the normal [6] mount. See
+    // private/docs/sd_coldboot_bodge_revA.md.
+    SdPowerOn();
+    System::Delay(10);       // VDD rise through C_out + the card's own power-on reset, before any sd_init
 
     // ⚠ USB DRIVE MODE is decided FIRST -- before the CDC logger takes the USB port. Either the encoder
     // gesture at power-up, OR the `drive` command set the reset-surviving flag before resetting us here.
@@ -3383,7 +3496,11 @@ int main(void)
 
     hw.PrintLine("");
     OledBoot("microSD");
+#ifdef TT_SD_SDMMC
+    hw.PrintLine("[4] microSD -- native SDMMC1 (EXPERIMENTAL build), SD-mode identify");
+#else
     hw.PrintLine("[4] microSD -- bit-banged SPI, CMD0");
+#endif
     bool sd_ok = TestSd();
     hw.PrintLine("  %s", sd_ok ? "PASS" : "FAIL (expected until the card + module are in)");
     g_sd_ok = sd_ok;
